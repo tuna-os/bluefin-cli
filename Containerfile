@@ -2,7 +2,7 @@
 # Using Fedora as base since bluefin-cli is designed for Fedora-based systems
 
 # Builder stage - install Go and dependencies first (cached)
-FROM registry.fedoraproject.org/fedora:43 AS builder
+FROM registry.fedoraproject.org/fedora:44 AS builder
 
 # Install Go and build dependencies (this layer is cached unless Fedora updates)
 RUN dnf install -y golang git && dnf clean all
@@ -23,7 +23,7 @@ COPY . .
 RUN go build -o bluefin-cli
 
 # Test stage - set up base environment first (cached)
-FROM registry.fedoraproject.org/fedora:43
+FROM registry.fedoraproject.org/fedora:44
 
 # Install runtime dependencies for testing (cached layer)
 RUN dnf install -y bash zsh fish curl git grep findutils coreutils && dnf clean all
