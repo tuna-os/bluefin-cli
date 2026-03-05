@@ -7,9 +7,22 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/hanthor/bluefin-cli/internal/env"
 )
 
 const wallpapersTap = "ublue-os/tap"
+
+var knownWallpaperCasks = []string{
+	"bluefin-wallpapers",
+	"aurora-wallpapers",
+	"bazzite-wallpapers",
+}
+
+var (
+	isWSL                     = env.IsWSL
+	syncWallpapersToWindowsWSL = syncWallpapersToWindows
+)
 
 func EnsureBrew() error {
 	if _, err := exec.LookPath("brew"); err != nil {
@@ -88,11 +101,93 @@ func InstallWallpaperCasks(casks []string) error {
 	}
 	fmt.Println(successStyle.Render("✓ Wallpaper casks installed!"))
 
+	postInstallWallpaperSetup(casks)
+
 	// macOS specific instructions
 	if runtime.GOOS == "darwin" {
 		home, _ := os.UserHomeDir()
 		fmt.Println("\n" + infoStyle.Render("Wallpapers installed to: "+filepath.Join(home, "Library/Desktop Pictures")))
 		fmt.Println(infoStyle.Render("To use: System Settings > Wallpaper > Add Folder"))
+	}
+
+	return nil
+}
+
+func postInstallWallpaperSetup(casks []string) {
+	if !isWSL() {
+		return
+	}
+
+	if err := syncWallpapersToWindowsWSL(casks); err != nil {
+		fmt.Println(infoStyle.Render("WSL detected, but Windows wallpaper/theme sync could not be completed: " + err.Error()))
+		fmt.Println(infoStyle.Render("Homebrew wallpaper installation succeeded; continuing without Windows sync."))
+	}
+}
+
+func CleanupWallpapers(all bool) error {
+	if isWSL() {
+		if err := cleanupWindowsWallpaperSyncArtifacts(); err != nil {
+			return err
+		}
+	}
+
+	if !all {
+		return nil
+	}
+
+	if err := uninstallKnownWallpaperCasks(); err != nil {
+		return err
+	}
+
+	if err := removeKnownLinuxWallpaperDirs(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func uninstallKnownWallpaperCasks() error {
+	if err := ensureTap(wallpapersTap); err != nil {
+		return err
+	}
+
+	args := []string{"uninstall", "--cask"}
+	for _, cask := range knownWallpaperCasks {
+		args = append(args, wallpapersTap+"/"+cask)
+	}
+
+	cmd := exec.Command("brew", args...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		message := strings.ToLower(string(out))
+		if strings.Contains(message, "is not installed") {
+			return nil
+		}
+		return fmt.Errorf("failed to uninstall wallpaper casks: %w: %s", err, strings.TrimSpace(string(out)))
+	}
+
+	return nil
+}
+
+func removeKnownLinuxWallpaperDirs() error {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to resolve home directory: %w", err)
+	}
+
+	dirs := []string{
+		filepath.Join(homeDir, ".local", "share", "backgrounds", "bluefin"),
+		filepath.Join(homeDir, ".local", "share", "backgrounds", "aurora"),
+		filepath.Join(homeDir, ".local", "share", "backgrounds", "bazzite"),
+		filepath.Join(homeDir, ".local", "share", "wallpapers", "bluefin"),
+		filepath.Join(homeDir, ".local", "share", "wallpapers", "aurora"),
+		filepath.Join(homeDir, ".local", "share", "wallpapers", "bazzite"),
+	}
+
+	for _, dir := range dirs {
+		if err := os.RemoveAll(dir); err != nil {
+			return fmt.Errorf("failed to remove %s: %w", dir, err)
+		}
 	}
 
 	return nil

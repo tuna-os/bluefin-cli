@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/hanthor/bluefin-cli/internal/env"
 )
 
 func TestShow(t *testing.T) {
@@ -37,6 +39,10 @@ func TestShow(t *testing.T) {
 		"Message of the Day:",
 		"Managed Tools:",
 		"Package Manager:",
+	}
+
+	if env.IsWSL() {
+		expectedStrings = append(expectedStrings, "WSL Wallpaper Sync:")
 	}
 
 	for _, s := range expectedStrings {

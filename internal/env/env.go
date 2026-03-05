@@ -4,6 +4,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strings"
+)
+
+var (
+	runtimeGOOS = runtime.GOOS
+	getEnv      = os.Getenv
+	readFile    = os.ReadFile
 )
 
 // GetConfigDir returns the directory where configuration files should be stored.
@@ -43,4 +51,36 @@ func EnsureConfigDir() (string, error) {
 	}
 
 	return path, nil
+}
+
+// IsWSL returns true when running under Windows Subsystem for Linux.
+// The check is fail-closed: if we cannot confidently detect WSL, it returns false.
+func IsWSL() bool {
+	if runtimeGOOS != "linux" {
+		return false
+	}
+
+	if getEnv("WSL_DISTRO_NAME") != "" || getEnv("WSL_INTEROP") != "" {
+		return true
+	}
+
+	if hasMicrosoftMarker("/proc/sys/kernel/osrelease") {
+		return true
+	}
+
+	if hasMicrosoftMarker("/proc/version") {
+		return true
+	}
+
+	return false
+}
+
+func hasMicrosoftMarker(path string) bool {
+	data, err := readFile(path)
+	if err != nil {
+		return false
+	}
+
+	content := strings.ToLower(string(data))
+	return strings.Contains(content, "microsoft") || strings.Contains(content, "wsl")
 }

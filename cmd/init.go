@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/hanthor/bluefin-cli/internal/install"
 	"github.com/hanthor/bluefin-cli/internal/shell"
 )
 
@@ -31,6 +32,8 @@ Fish (~/.config/fish/config.fish):
 	Args:      cobra.ExactArgs(1),
 	ValidArgs: []string{"bash", "zsh", "fish"},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		_ = install.MaybeRollOverWindowsThemeOnInit()
+
 		shellName := args[0]
 		
 		config, err := shell.LoadConfig(shellName)

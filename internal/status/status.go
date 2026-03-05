@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/hanthor/bluefin-cli/internal/env"
 	"github.com/hanthor/bluefin-cli/internal/motd"
 	"github.com/hanthor/bluefin-cli/internal/shell"
 )
@@ -149,6 +150,51 @@ func Show() error {
 			disabledStyle.Render("not installed"))
 		rightCol += "    Install from: https://brew.sh\n"
 	}
+	rightCol += "\n"
+
+	// WSL wallpaper/theme sync readiness (WSL-only)
+	if env.IsWSL() {
+		rightCol += labelStyle.Render("WSL Wallpaper Sync:") + "\n"
+		rightCol += fmt.Sprintf("  %s Runtime: %s\n",
+			enabledStyle.Render("✓"),
+			enabledStyle.Render("WSL detected"))
+
+		if _, err := exec.LookPath("powershell.exe"); err == nil {
+			rightCol += fmt.Sprintf("  %s powershell.exe: %s\n",
+				enabledStyle.Render("✓"),
+				enabledStyle.Render("available"))
+		} else {
+			rightCol += fmt.Sprintf("  %s powershell.exe: %s\n",
+				disabledStyle.Render("✗"),
+				disabledStyle.Render("not available"))
+		}
+
+		if _, err := exec.LookPath("wslpath"); err == nil {
+			rightCol += fmt.Sprintf("  %s wslpath: %s\n",
+				enabledStyle.Render("✓"),
+				enabledStyle.Render("available"))
+		} else {
+			rightCol += fmt.Sprintf("  %s wslpath: %s\n",
+				disabledStyle.Render("✗"),
+				disabledStyle.Render("not available"))
+		}
+
+		rightCol += fmt.Sprintf("  %s Startup Sync: %s\n",
+			statusSymbol(checkStartupRunEntry()),
+			statusText(checkStartupRunEntry(), "HKCU Run key", "missing"))
+
+		rightCol += fmt.Sprintf("  %s Task: %s\n",
+			statusSymbol(checkTaskExists("BluefinCLI-ThemeModeSync")),
+			statusText(checkTaskExists("BluefinCLI-ThemeModeSync"), "BluefinCLI-ThemeModeSync", "missing"))
+
+		rightCol += fmt.Sprintf("  %s Task: %s\n",
+			statusSymbol(checkTaskExists("BluefinCLI-SetLightAt6AM")),
+			statusText(checkTaskExists("BluefinCLI-SetLightAt6AM"), "BluefinCLI-SetLightAt6AM", "missing"))
+
+		rightCol += fmt.Sprintf("  %s Task: %s\n",
+			statusSymbol(checkTaskExists("BluefinCLI-SetDarkAt6PM")),
+			statusText(checkTaskExists("BluefinCLI-SetDarkAt6PM"), "BluefinCLI-SetDarkAt6PM", "missing"))
+	}
 
 	// Combine columns with padding
 	formatted := lipgloss.JoinHorizontal(lipgloss.Top,
@@ -159,4 +205,39 @@ func Show() error {
 	fmt.Println(formatted)
 
 	return nil
+}
+
+func checkTaskExists(taskName string) bool {
+	if _, err := exec.LookPath("schtasks.exe"); err != nil {
+		return false
+	}
+
+	cmd := exec.Command("schtasks.exe", "/Query", "/TN", taskName)
+	return cmd.Run() == nil
+}
+
+func checkStartupRunEntry() bool {
+	if _, err := exec.LookPath("powershell.exe"); err != nil {
+		return false
+	}
+
+	script := `$runPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"; $name = "BluefinCLIThemeModeSync"; $value = (Get-ItemProperty -Path $runPath -Name $name -ErrorAction SilentlyContinue).$name; if($value){ exit 0 } ; exit 1`
+	cmd := exec.Command("powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script)
+	return cmd.Run() == nil
+}
+
+func statusSymbol(ok bool) string {
+	if ok {
+		return enabledStyle.Render("✓")
+	}
+
+	return disabledStyle.Render("✗")
+}
+
+func statusText(ok bool, successText, failureText string) string {
+	if ok {
+		return enabledStyle.Render(successText)
+	}
+
+	return disabledStyle.Render(failureText)
 }

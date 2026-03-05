@@ -55,3 +55,68 @@ func TestGetConfigDir(t *testing.T) {
 		t.Errorf("Expected Local config %s (fallback), got %s", homeConfig, dir)
 	}
 }
+
+func TestIsWSL(t *testing.T) {
+	originalGOOS := runtimeGOOS
+	originalGetEnv := getEnv
+	originalReadFile := readFile
+	defer func() {
+		runtimeGOOS = originalGOOS
+		getEnv = originalGetEnv
+		readFile = originalReadFile
+	}()
+
+	t.Run("returns false on non-linux", func(t *testing.T) {
+		runtimeGOOS = "darwin"
+		getEnv = func(key string) string { return "" }
+		readFile = func(name string) ([]byte, error) { return nil, os.ErrNotExist }
+
+		if IsWSL() {
+			t.Fatal("expected IsWSL to be false on non-linux")
+		}
+	})
+
+	t.Run("detects via wsl env vars", func(t *testing.T) {
+		runtimeGOOS = "linux"
+		getEnv = func(key string) string {
+			switch key {
+			case "WSL_DISTRO_NAME":
+				return "Fedora"
+			default:
+				return ""
+			}
+		}
+		readFile = func(name string) ([]byte, error) { return nil, os.ErrNotExist }
+
+		if !IsWSL() {
+			t.Fatal("expected IsWSL to be true with WSL env vars")
+		}
+	})
+
+	t.Run("detects via proc markers", func(t *testing.T) {
+		runtimeGOOS = "linux"
+		getEnv = func(key string) string { return "" }
+		readFile = func(name string) ([]byte, error) {
+			if name == "/proc/sys/kernel/osrelease" {
+				return []byte("5.15.153.1-microsoft-standard-WSL2"), nil
+			}
+			return nil, os.ErrNotExist
+		}
+
+		if !IsWSL() {
+			t.Fatal("expected IsWSL to be true with microsoft proc marker")
+		}
+	})
+
+	t.Run("fails closed when no markers", func(t *testing.T) {
+		runtimeGOOS = "linux"
+		getEnv = func(key string) string { return "" }
+		readFile = func(name string) ([]byte, error) {
+			return []byte("Linux version 6.8.0 Fedora"), nil
+		}
+
+		if IsWSL() {
+			t.Fatal("expected IsWSL to be false without WSL markers")
+		}
+	})
+}
