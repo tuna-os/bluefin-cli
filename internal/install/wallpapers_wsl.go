@@ -335,6 +335,7 @@ func ConfigureWindowsThemeAutomation(enableAutoDarkLightSwitch bool) error {
 	}
 
 	syncTaskCmd := `powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "%LOCALAPPDATA%\\BluefinCLI\\theme-mode-sync.ps1"`
+	syncTaskCmd = strings.Replace(syncTaskCmd, "powershell.exe", "powershellw.exe", 1)
 	syncTaskRegistered := false
 	if err := registerWindowsTaskWSL(taskThemeModeSync, []string{"/SC", "MINUTE", "/MO", "1"}, syncTaskCmd); err != nil {
 		if isWindowsAccessDenied(err) {
@@ -370,6 +371,8 @@ func ConfigureWindowsThemeAutomation(enableAutoDarkLightSwitch bool) error {
 
 	lightTaskCmd := `powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "%LOCALAPPDATA%\\BluefinCLI\\set-light-mode.ps1"`
 	darkTaskCmd := `powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "%LOCALAPPDATA%\\BluefinCLI\\set-dark-mode.ps1"`
+	lightTaskCmd = strings.Replace(lightTaskCmd, "powershell.exe", "powershellw.exe", 1)
+	darkTaskCmd = strings.Replace(darkTaskCmd, "powershell.exe", "powershellw.exe", 1)
 
 	if err := registerWindowsTaskWSL(taskSetLightAt6AM, []string{"/SC", "DAILY", "/ST", "06:00"}, lightTaskCmd); err != nil {
 		if isWindowsAccessDenied(err) {
@@ -384,6 +387,17 @@ func ConfigureWindowsThemeAutomation(enableAutoDarkLightSwitch bool) error {
 			fmt.Println(infoStyle.Render("Could not register task " + taskSetDarkAt6PM + ": access denied (skipping auto 6:00 PM dark-mode switch)"))
 		} else {
 			return err
+		}
+	}
+
+	now := nowWSL()
+	if now.Hour() >= 18 || now.Hour() < 6 {
+		if err := runWindowsTaskWSL(taskSetDarkAt6PM); err != nil {
+			fmt.Println(infoStyle.Render("Could not immediately apply dark mode task: " + err.Error()))
+		}
+	} else {
+		if err := runWindowsTaskWSL(taskSetLightAt6AM); err != nil {
+			fmt.Println(infoStyle.Render("Could not immediately apply light mode task: " + err.Error()))
 		}
 	}
 
@@ -428,8 +442,14 @@ func registerWindowsTaskPowerShell(taskName string, scheduleArgs []string, taskC
 		return fmt.Errorf("powershell.exe not available in WSL interop: %w", err)
 	}
 
+	execute, arguments, err := splitTaskCommand(taskCommand)
+	if err != nil {
+		return err
+	}
+
 	escapedTaskName := strings.ReplaceAll(taskName, "'", "''")
-	escapedTaskCommand := strings.ReplaceAll(taskCommand, "'", "''")
+	escapedExecute := strings.ReplaceAll(execute, "'", "''")
+	escapedArguments := strings.ReplaceAll(arguments, "'", "''")
 	escapedDescription := strings.ReplaceAll(description, "'", "''")
 
 	triggerScript, err := powershellTriggerScript(scheduleArgs)
@@ -439,8 +459,8 @@ func registerWindowsTaskPowerShell(taskName string, scheduleArgs []string, taskC
 
 	script := fmt.Sprintf(`$ErrorActionPreference = "Stop"
 %s
-$action = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument '/c %s'
-Register-ScheduledTask -TaskName '%s' -Action $action -Trigger $trigger -Description '%s' -Force | Out-Null`, triggerScript, escapedTaskCommand, escapedTaskName, escapedDescription)
+$action = New-ScheduledTaskAction -Execute '%s' -Argument '%s'
+Register-ScheduledTask -TaskName '%s' -Action $action -Trigger $trigger -Description '%s' -Force | Out-Null`, triggerScript, escapedExecute, escapedArguments, escapedTaskName, escapedDescription)
 
 	cmd := execWSL("powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script)
 	if out, err := cmd.CombinedOutput(); err != nil {
@@ -448,6 +468,21 @@ Register-ScheduledTask -TaskName '%s' -Action $action -Trigger $trigger -Descrip
 	}
 
 	return nil
+}
+
+func splitTaskCommand(command string) (string, string, error) {
+	fields := strings.Fields(strings.TrimSpace(command))
+	if len(fields) == 0 {
+		return "", "", fmt.Errorf("task command is empty")
+	}
+
+	execute := fields[0]
+	arguments := ""
+	if len(fields) > 1 {
+		arguments = strings.Join(fields[1:], " ")
+	}
+
+	return execute, arguments, nil
 }
 
 func powershellTriggerScript(scheduleArgs []string) (string, error) {
