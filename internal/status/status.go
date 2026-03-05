@@ -194,6 +194,12 @@ func Show() error {
 		rightCol += fmt.Sprintf("  %s Task: %s\n",
 			statusSymbol(checkTaskExists("BluefinCLI-SetDarkAt6PM")),
 			statusText(checkTaskExists("BluefinCLI-SetDarkAt6PM"), "BluefinCLI-SetDarkAt6PM", "missing"))
+
+		if mode, ok := windowsThemeMode(); ok {
+			rightCol += fmt.Sprintf("  %s Windows Mode: %s\n",
+				enabledStyle.Render("✓"),
+				enabledStyle.Render(mode))
+		}
 	}
 
 	// Combine columns with padding
@@ -240,4 +246,24 @@ func statusText(ok bool, successText, failureText string) string {
 	}
 
 	return disabledStyle.Render(failureText)
+}
+
+func windowsThemeMode() (string, bool) {
+	if _, err := exec.LookPath("powershell.exe"); err != nil {
+		return "", false
+	}
+
+	script := `$path = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"; $value = (Get-ItemProperty -Path $path -Name AppsUseLightTheme -ErrorAction SilentlyContinue).AppsUseLightTheme; if ($null -eq $value) { exit 1 }; if ($value -eq 0) { Write-Output "🌙 Dark" } else { Write-Output "🌞 Light" }`
+	cmd := exec.Command("powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script)
+	out, err := cmd.Output()
+	if err != nil {
+		return "", false
+	}
+
+	mode := strings.TrimSpace(string(out))
+	if mode == "" {
+		return "", false
+	}
+
+	return mode, true
 }
