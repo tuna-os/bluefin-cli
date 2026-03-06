@@ -3,10 +3,10 @@ package cmd
 import (
 	"github.com/charmbracelet/huh"
 	"github.com/hanthor/bluefin-cli/internal/env"
-	"github.com/spf13/cobra"
 	"github.com/hanthor/bluefin-cli/internal/shell"
 	"github.com/hanthor/bluefin-cli/internal/status"
 	"github.com/hanthor/bluefin-cli/internal/tui"
+	"github.com/spf13/cobra"
 )
 
 var menuCmd = &cobra.Command{
@@ -112,5 +112,3 @@ var menuCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(menuCmd)
 }
-
-

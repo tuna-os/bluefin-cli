@@ -3,7 +3,6 @@ package install
 import (
 	"bufio"
 	"fmt"
-	"github.com/charmbracelet/huh"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,6 +11,8 @@ import (
 	"sort"
 	"strings"
 	"sync"
+
+	"github.com/charmbracelet/huh"
 )
 
 type brewfilePackage struct {
@@ -45,7 +46,7 @@ var (
 	windowsBootstrapManagersOnce sync.Once
 	windowsBootstrapManagers     []string
 	windowsBootstrapErr          error
-	brewDeclLine = regexp.MustCompile(`^\s*(brew|cask)\s+["']([^"']+)["']`)
+	brewDeclLine                 = regexp.MustCompile(`^\s*(brew|cask)\s+["']([^"']+)["']`)
 )
 
 type packageResolver interface {

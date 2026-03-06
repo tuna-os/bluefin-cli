@@ -7,12 +7,12 @@ import (
 
 // Tool represents a CLI tool that can be managed by bluefin-cli
 type Tool struct {
-	Name        string // Display name
-	Description string // Short description
-	Binary      string // Binary name to check for
-	Pkg         string // Homebrew package name
-	Default     bool   // Whether enabled by default
-	ShellDefaults map[string]bool // Per-shell default overrides
+	Name              string          // Display name
+	Description       string          // Short description
+	Binary            string          // Binary name to check for
+	Pkg               string          // Homebrew package name
+	Default           bool            // Whether enabled by default
+	ShellDefaults     map[string]bool // Per-shell default overrides
 	UnsupportedShells map[string]bool // Shells where this tool should not be managed
 }
 
