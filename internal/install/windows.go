@@ -79,25 +79,60 @@ func BundleWindows(nameOrPath string) error {
 		return fmt.Errorf("windows bundle flow is only available on Windows")
 	}
 
-	brewfilePath, cleanup, err := GetBrewfile(nameOrPath)
-	if err != nil {
-		return err
+	if strings.Contains(nameOrPath, "/") || strings.Contains(nameOrPath, "\\") {
+		return fmt.Errorf("custom Brewfiles are not supported on Windows; use bundle names or interactive install")
 	}
-	defer cleanup()
 
-	pkgs, err := parseBrewfilePackages(brewfilePath)
+	pkgs, err := WindowsPackagesForBundles([]string{nameOrPath})
 	if err != nil {
 		return err
 	}
 
 	if len(pkgs) == 0 {
-		return fmt.Errorf("no brew/cask entries found in %s", brewfilePath)
+		return fmt.Errorf("no packages configured for bundle %s", nameOrPath)
 	}
 
-	resolver := windowsResolver{}
-	executor := windowsExecutor{}
+	return InstallWindowsPackages(pkgs)
+}
 
-	availableManagers, err := ensureWindowsManagersBootstrap(executor.AvailableManagers)
+func WindowsPackagesForBundles(bundleNames []string) ([]WindowsPackage, error) {
+	manifest := getWindowsBundleManifest()
+	if len(bundleNames) == 0 {
+		return nil, fmt.Errorf("no bundles selected")
+	}
+
+	seen := map[string]bool{}
+	packages := make([]WindowsPackage, 0)
+	for _, bundleName := range bundleNames {
+		bundleName = strings.TrimSpace(bundleName)
+		if bundleName == "" {
+			continue
+		}
+
+		bundle, ok := manifest[bundleName]
+		if !ok {
+			return nil, fmt.Errorf("unknown Windows bundle: %s", bundleName)
+		}
+
+		for _, pkg := range bundle.Packages {
+			id := strings.TrimSpace(pkg.ID)
+			if id == "" || seen[id] {
+				continue
+			}
+			seen[id] = true
+			packages = append(packages, pkg)
+		}
+	}
+
+	return packages, nil
+}
+
+func InstallWindowsPackages(pkgs []WindowsPackage) error {
+	if len(pkgs) == 0 {
+		return fmt.Errorf("no Windows packages selected")
+	}
+
+	availableManagers, err := ensureWindowsManagersBootstrap(AvailableWindowsManagers)
 	if err != nil {
 		return err
 	}
@@ -105,13 +140,17 @@ func BundleWindows(nameOrPath string) error {
 		return fmt.Errorf("winget is required on Windows and was not found")
 	}
 
-	fmt.Println(infoStyle.Render("📦 Resolving and installing packages on Windows..."))
+	fmt.Println(infoStyle.Render("📦 Installing selected Windows packages..."))
 	fmt.Println(infoStyle.Render("Manager: winget"))
 
 	var unmatched []string
 	for _, pkg := range pkgs {
-		if err := installWindowsPackage(availableManagers, pkg, resolver, executor); err != nil {
-			unmatched = append(unmatched, pkg.name)
+		if err := installWindowsManifestPackage(availableManagers, pkg); err != nil {
+			if strings.TrimSpace(pkg.Name) != "" {
+				unmatched = append(unmatched, fmt.Sprintf("%s (%s)", pkg.Name, pkg.ID))
+			} else {
+				unmatched = append(unmatched, pkg.ID)
+			}
 		}
 	}
 
@@ -130,8 +169,30 @@ func BundleWindows(nameOrPath string) error {
 		}
 	}
 
-	fmt.Println(successStyle.Render("✓ Windows bundle processing complete"))
+	fmt.Println(successStyle.Render("✓ Windows package installation complete"))
 	return nil
+}
+
+func installWindowsManifestPackage(availableManagers []string, pkg WindowsPackage) error {
+	candidates := sanitizeWindowsCandidates(append([]string{pkg.ID}, pkg.Aliases...))
+	if len(candidates) == 0 {
+		return fmt.Errorf("no viable package id for %s", pkg.Name)
+	}
+
+	for _, manager := range availableManagers {
+		for _, candidate := range candidatesForManager(manager, candidates) {
+			if tryInstallWithManager(manager, candidate) == nil {
+				label := pkg.Name
+				if strings.TrimSpace(label) == "" {
+					label = pkg.ID
+				}
+				fmt.Println(successStyle.Render(fmt.Sprintf("✓ %s (%s)", label, manager)))
+				return nil
+			}
+		}
+	}
+
+	return fmt.Errorf("no package match for %s", pkg.ID)
 }
 
 func AvailableWindowsManagers() []string {

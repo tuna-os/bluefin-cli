@@ -230,3 +230,37 @@ func TestWindowsCandidatesUnknownPackage(t *testing.T) {
 		t.Fatalf("expected only original package name, got %v", candidates)
 	}
 }
+
+func TestWindowsBundleManifestLoads(t *testing.T) {
+	manifest := getWindowsBundleManifest()
+	if len(manifest) == 0 {
+		t.Fatal("expected non-empty Windows bundle manifest")
+	}
+
+	ai, ok := manifest["ai"]
+	if !ok {
+		t.Fatal("expected ai bundle in Windows manifest")
+	}
+	if len(ai.Packages) == 0 {
+		t.Fatal("expected ai bundle to include packages")
+	}
+}
+
+func TestWindowsPackagesForBundlesDedupesIDs(t *testing.T) {
+	pkgs, err := WindowsPackagesForBundles([]string{"cncf", "k8s"})
+	if err != nil {
+		t.Fatalf("WindowsPackagesForBundles returned error: %v", err)
+	}
+
+	seen := map[string]bool{}
+	for _, pkg := range pkgs {
+		if seen[pkg.ID] {
+			t.Fatalf("duplicate package id found: %s", pkg.ID)
+		}
+		seen[pkg.ID] = true
+	}
+
+	if len(pkgs) == 0 {
+		t.Fatal("expected at least one package")
+	}
+}

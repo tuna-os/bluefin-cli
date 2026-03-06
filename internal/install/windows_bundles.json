@@ -1,0 +1,123 @@
+{
+  "ai": {
+    "description": "AI tools: Goose, Codex, Gemini, etc.",
+    "packages": [
+      {"id": "sigoden.AIChat", "name": "AIChat", "description": "Terminal-first AI chat client."},
+      {"id": "SST.opencode", "name": "opencode", "description": "Open source coding assistant CLI."},
+      {"id": "charmbracelet.mods", "name": "mods", "description": "AI command-line assistant by Charm."},
+      {"id": "charmbracelet.crush", "name": "crush", "description": "Terminal coding assistant from Charm."},
+      {"id": "Anysphere.Cursor", "name": "Cursor", "description": "AI-first code editor."},
+      {"id": "OpenAI.Codex", "name": "Codex CLI", "description": "Command-line interface for OpenAI Codex."},
+      {"id": "Google.Gemini", "name": "Gemini CLI", "description": "Command-line interface for Google Gemini."},
+      {"id": "Ollama.Ollama", "name": "Ollama", "description": "Local LLM management and CLI."},
+      {"id": "GitHub.Copilot", "name": "GitHub Copilot CLI", "description": "Command-line interface for GitHub Copilot."},
+    ]
+  },
+  "cli": {
+    "description": "CLI essentials: GitHub CLI, chezmoi, etc.",
+    "packages": [
+      {"id": "Git.Git", "name": "Git", "description": "Distributed version control system."},
+      {"id": "GitHub.cli", "name": "GitHub CLI", "description": "Official GitHub command-line tool."},
+      {"id": "twpayne.chezmoi", "name": "chezmoi", "description": "Dotfile manager."},
+      {"id": "eza-community.eza", "name": "eza", "description": "Modern replacement for ls."},
+      {"id": "sharkdp.bat", "name": "bat", "description": "Cat clone with syntax highlighting."},
+      {"id": "sharkdp.fd", "name": "fd", "description": "Simple and fast find alternative."},
+      {"id": "BurntSushi.ripgrep", "name": "ripgrep", "description": "Fast recursive text search."},
+      {"id": "fzf", "name": "fzf", "description": "Fuzzy finder for the command line."},
+      {"id": "ajeetdsouza.zoxide", "name": "zoxide", "description": "Smarter cd command."},
+      {"id": "Starship.Starship", "name": "Starship", "description": "Cross-shell prompt."},
+      {"id": "jqlang.jq", "name": "jq", "description": "Command-line JSON processor."},
+      {"id": "MikeFarah.yq", "name": "yq", "description": "YAML/XML/TOML processor."},
+      {"id": "GNU.wget2", "name": "wget2", "description": "Network downloader."},
+      {"id": "astral-sh.uv", "name": "uv", "description": "Fast Python package/project manager."},
+      {"id": "Atuinsh.Atuin", "name": "Atuin", "description": "Shell history and sync."}
+    ]
+  },
+  "cncf": {
+    "description": "Cloud Native Computing Foundation tools.",
+    "packages": [
+      {"id": "Cilium.CiliumCLI", "name": "Cilium CLI", "description": "CLI for managing Cilium and eBPF networking."},
+      {"id": "Cilium.Hubble", "name": "Hubble", "description": "Network observability platform for Cilium."},
+      {"id": "Istio.Istio", "name": "Istio", "description": "Service mesh control plane and CLI."},
+      {"id": "etcd-io.etcd", "name": "etcd", "description": "Distributed key-value store for Kubernetes control plane."},
+      {"id": "TreasureData.TDAgent", "name": "Td-agent", "description": "Fluentd distribution for log collection and forwarding."},
+      {"id": "GoHarbor.Harbor", "name": "Harbor CLI", "description": "CLI for Harbor container registry operations."},
+      {"id": "Kubernetes.kubectl", "name": "kubectl", "description": "Kubernetes command-line client."},
+      {"id": "Kubernetes.krew", "name": "Krew", "description": "Plugin manager for kubectl."},
+      {"id": "ahmetb.kubectx", "name": "kubectx", "description": "Switch Kubernetes contexts quickly."},
+      {"id": "Derailed.k9s", "name": "k9s", "description": "Terminal UI for Kubernetes clusters."},
+      {"id": "Helm.Helm", "name": "helm", "description": "Kubernetes package manager."},
+      {"id": "FluxCD.Flux", "name": "flux", "description": "GitOps toolkit for Kubernetes."},
+      {"id": "loft-sh.vcluster", "name": "vcluster", "description": "Virtual Kubernetes clusters on top of existing clusters."},
+      {"id": "jaegertracing.jaeger", "name": "Jaeger", "description": "Distributed tracing backend and tooling."},
+      {"id": "AquaSecurity.Trivy", "name": "Trivy", "description": "Vulnerability and misconfiguration scanner."},
+      {"id": "Carvel.ytt", "name": "ytt", "description": "YAML templating tool from Carvel."},
+      {"id": "open-policy-agent.opa", "name": "Open Policy Agent", "description": "General purpose policy engine and CLI."},
+      {"id": "GrafanaLabs.Grafana.Enterprise", "name": "Grafana Enterprise", "description": "Grafana Enterprise observability dashboards."},
+      {"id": "GrafanaLabs.Grafana.OSS", "name": "Grafana OSS", "description": "Open source Grafana dashboards and observability."},
+      {"id": "Prometheus.WindowsExporter", "name": "windows_exporter", "description": "Prometheus exporter for Windows metrics."},
+      {"id": "openobserve.openobserve", "name": "OpenObserve", "description": "Observability platform for logs, metrics, and traces."},
+      {"id": "buildpacks.pack", "name": "pack", "description": "Cloud Native Buildpacks CLI."},
+      {"id": "Crossplane.CrossplaneCli", "name": "Crossplane CLI", "description": "CLI for Crossplane platform management."},
+      {"id": "Dapr.CLI", "name": "Dapr CLI", "description": "Developer CLI for Distributed Application Runtime."},
+      {"id": "kyverno.kyverno", "name": "Kyverno", "description": "Kubernetes-native policy engine CLI."},
+      {"id": "NATSAuthors.CLI", "name": "NATS CLI", "description": "Command-line interface for NATS messaging."},
+      {"id": "NATSAuthors.NATSServer", "name": "NATS Server", "description": "NATS messaging server."},
+      {"id": "NotaryProject.Notation", "name": "Notation CLI", "description": "Sign and verify OCI artifacts."},
+      {"id": "GrafanaLabs.Alloy", "name": "Alloy", "description": "Telemetry collector from Grafana Labs."},
+      {"id": "OpenTelemetry.Weaver", "name": "Weaver", "description": "OpenTelemetry tooling for telemetry pipelines."},
+      {"id": "ORASProject.ORAS", "name": "ORAS CLI", "description": "OCI registry artifact client and tooling."},
+      {"id": "Kubernetes.minikube", "name": "minikube", "description": "Local Kubernetes cluster for development."},
+      {"id": "Kubernetes.kind", "name": "kind", "description": "Run local Kubernetes clusters in containers."},
+      {"id": "SUSE.RancherDesktop", "name": "Rancher Desktop", "description": "Desktop Kubernetes and container management."},
+      {"id": "k3d.k3d", "name": "k3d", "description": "Run lightweight k3s clusters in Docker."},
+      {"id": "Kubernetes.kwok", "name": "kwok", "description": "Kubernetes WithOut Kubelet for cluster simulation."},
+      {"id": "Kubernetes.kwokctl", "name": "kwokctl", "description": "Cluster management CLI for KWOK."}
+    ]
+  },
+  "experimental-ide": {
+    "description": "Experimental IDE tools.",
+    "packages": [
+      {"id": "Anysphere.Cursor", "name": "Cursor", "description": "AI-first code editor."},
+      {"id": "JetBrains.CLion", "name": "CLion", "description": "JetBrains C/C++ IDE."},
+      {"id": "JetBrains.DataGrip", "name": "DataGrip", "description": "JetBrains database IDE."},
+      {"id": "JetBrains.DataSpell", "name": "DataSpell", "description": "JetBrains data science IDE."},
+      {"id": "JetBrains.GoLand", "name": "GoLand", "description": "JetBrains Go IDE."},
+      {"id": "JetBrains.PyCharm", "name": "PyCharm", "description": "JetBrains Python IDE."},
+      {"id": "JetBrains.WebStorm", "name": "WebStorm", "description": "JetBrains JavaScript IDE."},
+      {"id": "VSCodium.VSCodium", "name": "VSCodium", "description": "Community-driven VS Code binaries."},
+      {"id": "RedHat.Podman", "name": "Podman", "description": "Container management engine and tools."},
+      {"id": "RedHat.Podman-Desktop", "name": "Podman Desktop", "description": "Container management desktop application."}
+    ]
+  },
+  "fonts": {
+    "description": "Development fonts: Fira Code, JetBrains Mono, etc.",
+    "packages": [
+      {"id": "Microsoft.CascadiaCode", "name": "Cascadia Code", "description": "Monospaced font for developers."},
+      {"id": "DEVCOM.JetBrainsMonoNerdFont", "name": "JetBrains Mono Nerd Font", "description": "JetBrains Mono with Nerd Font glyphs."},
+      {"id": "DEVCOM.FiraCodeNerdFont", "name": "Fira Code Nerd Font", "description": "Fira Code with Nerd Font glyphs."}
+    ]
+  },
+  "ide": {
+    "description": "IDE tools: VS Code, JetBrains Toolbox, etc.",
+    "packages": [
+      {"id": "Microsoft.VisualStudioCode", "name": "Visual Studio Code", "description": "Code editor from Microsoft."},
+      {"id": "JetBrains.Toolbox", "name": "JetBrains Toolbox", "description": "Launcher/manager for JetBrains IDEs."},
+      {"id": "Neovim.Neovim", "name": "Neovim", "description": "Hyperextensible Vim-based editor."},
+      {"id": "Helix.Helix", "name": "Helix", "description": "Modal text editor written in Rust."},
+      {"id": "zyedidia.micro", "name": "micro", "description": "Terminal text editor with sensible defaults."}
+    ]
+  },
+  "k8s": {
+    "description": "Kubernetes tools: kubectl, k9s, kubectx, etc.",
+    "packages": [
+      {"id": "Kubernetes.kubectl", "name": "kubectl", "description": "Kubernetes command-line client."},
+      {"id": "Derailed.k9s", "name": "k9s", "description": "Terminal UI for Kubernetes clusters."},
+      {"id": "ahmetb.kubectx", "name": "kubectx", "description": "Switch Kubernetes contexts and namespaces."},
+      {"id": "Helm.Helm", "name": "helm", "description": "Kubernetes package manager."},
+      {"id": "Kubernetes.kind", "name": "kind", "description": "Run local Kubernetes clusters in Docker."},
+      {"id": "k3d.k3d", "name": "k3d", "description": "Run k3s in Docker for local development."},
+      {"id": "Kubernetes.krew", "name": "krew", "description": "Kubernetes plugin manager."}
+    ]
+  }
+}

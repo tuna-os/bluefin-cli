@@ -3,10 +3,8 @@ package cmd
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/charmbracelet/huh"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/hanthor/bluefin-cli/internal/env"
 	"github.com/hanthor/bluefin-cli/internal/install"
 	"github.com/hanthor/bluefin-cli/internal/tui"
@@ -185,13 +183,13 @@ func containsTheme(themes []string, theme string) bool {
 }
 
 func runBundlesMenu() error {
-	var selectedBundles []string
+	selectedBundles := []string{}
 
 	for {
 		tui.ClearScreen()
 		tui.RenderHeader("Bluefin CLI", "Main Menu > Install Apps")
-		// Reset selection
-		selectedBundles = []string{}
+
+		var selectedBundle string
 
 		opts := []huh.Option[string]{
 			huh.NewOption("🤖 AI Tools", "ai"),
@@ -225,10 +223,10 @@ func runBundlesMenu() error {
 
 		form := huh.NewForm(
 			huh.NewGroup(
-				huh.NewMultiSelect[string]().
-					Title("Select bundles to install (space to select, enter to confirm)").
+				huh.NewSelect[string]().
+					Title("Select a bundle to install").
 					Options(opts...).
-					Value(&selectedBundles),
+					Value(&selectedBundle),
 			),
 		).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap())
 
@@ -239,22 +237,69 @@ func runBundlesMenu() error {
 			return fmt.Errorf("form error: %w", err)
 		}
 
-		if len(selectedBundles) > 0 {
-			break
+		selectedBundles = []string{selectedBundle}
+
+		if env.IsWindows() {
+			packages, err := install.WindowsPackagesForBundles(selectedBundles)
+			if err != nil {
+				return err
+			}
+			if len(packages) == 0 {
+				return fmt.Errorf("no Windows packages available for selected bundles")
+			}
+
+			selectedPackages := make([]string, 0, len(packages))
+			opts := make([]huh.Option[string], 0, len(packages))
+			for _, pkg := range packages {
+				selectedPackages = append(selectedPackages, pkg.ID)
+				label := pkg.Name
+				if strings.TrimSpace(label) == "" {
+					label = pkg.ID
+				}
+				desc := strings.TrimSpace(pkg.Description)
+				if desc == "" {
+					desc = pkg.ID
+				}
+				opts = append(opts, huh.NewOption(fmt.Sprintf("%s - %s", label, desc), pkg.ID))
+			}
+
+			form := huh.NewForm(
+				huh.NewGroup(
+					huh.NewMultiSelect[string]().
+						Title("Select packages to install (preselected from bundles)").
+						Description("Space toggles package selection. Enter to continue.").
+						Options(opts...).
+						Value(&selectedPackages),
+				),
+			).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap())
+
+			if err := form.Run(); err != nil {
+				if err == huh.ErrUserAborted {
+					continue
+				}
+				return fmt.Errorf("form error: %w", err)
+			}
+
+			if len(selectedPackages) == 0 {
+				return fmt.Errorf("no packages selected")
+			}
+
+			selectedSet := make(map[string]bool, len(selectedPackages))
+			for _, id := range selectedPackages {
+				selectedSet[id] = true
+			}
+
+			finalPackages := make([]install.WindowsPackage, 0, len(selectedPackages))
+			for _, pkg := range packages {
+				if selectedSet[pkg.ID] {
+					finalPackages = append(finalPackages, pkg)
+				}
+			}
+
+			return install.InstallWindowsPackages(finalPackages)
 		}
 
-		// Popup error message
-		msg := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("9")).
-			Bold(true).
-			Render("No Selection") + "\n\n" +
-			"You must select at least one bundle to install.\nUse Space to select items."
-
-		fmt.Println()
-		fmt.Println(tui.PopupStyle.Render(msg))
-		fmt.Println()
-
-		time.Sleep(3 * time.Second)
+		break
 	}
 
 	var brewfiles []string
@@ -276,15 +321,6 @@ func runBundlesMenu() error {
 	}
 
 	if len(brewfiles) > 0 {
-		if env.IsWindows() {
-			for _, brewfilePath := range brewfiles {
-				if err := install.Bundle(brewfilePath); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-
 		if err := install.EnsureBbrew(); err != nil {
 			return err
 		}
