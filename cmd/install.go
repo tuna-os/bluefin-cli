@@ -54,10 +54,11 @@ func init() {
 
 	installWallpapersCmd.Flags().Bool("non-interactive", false, "Skip prompts and use flag values")
 	installWallpapersCmd.Flags().Bool("yes", false, "Non-interactive shortcut: apply theme + enable mode sync + enable 6 AM/6 PM switching")
-	installWallpapersCmd.Flags().Bool("apply-theme", false, "Apply a Windows theme after registration (WSL only)")
+	installWallpapersCmd.Flags().Bool("apply-theme", false, "Apply a Windows theme after registration")
 	installWallpapersCmd.Flags().String("theme", "", "Theme name to apply in non-interactive mode (Bluefin, Aurora, Bazzite)")
 	installWallpapersCmd.Flags().Bool("enable-mode-sync", false, "Enable day/night wallpaper sync task in non-interactive mode")
 	installWallpapersCmd.Flags().Bool("enable-auto-dark-light", false, "Enable 6 AM/6 PM light/dark switching tasks (requires --enable-mode-sync)")
+	installWallpapersCmd.Flags().String("trigger-source", string(install.ThemeSyncTriggerPolling), "Theme sync trigger source: polling, startup, autodarkmode")
 	installWallpapersCleanupCmd.Flags().Bool("all", false, "Also uninstall known wallpaper casks and remove local wallpaper folders")
 }
 
@@ -103,7 +104,7 @@ func maybeHandleWindowsThemePostInstall(cmd *cobra.Command, casks []string) erro
 		return maybePromptForWindowsTheme(casks)
 	}
 
-	if !env.IsWSL() {
+	if !supportsWindowsThemePostInstall() {
 		return nil
 	}
 
@@ -113,6 +114,7 @@ func maybeHandleWindowsThemePostInstall(cmd *cobra.Command, casks []string) erro
 	selectedTheme, _ := cmd.Flags().GetString("theme")
 	enableModeSync, _ := cmd.Flags().GetBool("enable-mode-sync")
 	enableAutoDarkLight, _ := cmd.Flags().GetBool("enable-auto-dark-light")
+	triggerSourceRaw, _ := cmd.Flags().GetString("trigger-source")
 
 	if yes {
 		nonInteractive = true
@@ -125,7 +127,12 @@ func maybeHandleWindowsThemePostInstall(cmd *cobra.Command, casks []string) erro
 		return fmt.Errorf("--enable-auto-dark-light requires --enable-mode-sync")
 	}
 
-	flagsRequestedAutomation := cmd.Flags().Changed("enable-mode-sync") || cmd.Flags().Changed("enable-auto-dark-light")
+	triggerSource, err := install.ParseThemeSyncTriggerSource(triggerSourceRaw)
+	if err != nil {
+		return err
+	}
+
+	flagsRequestedAutomation := cmd.Flags().Changed("enable-mode-sync") || cmd.Flags().Changed("enable-auto-dark-light") || cmd.Flags().Changed("trigger-source")
 	flagsRequestedThemeApply := cmd.Flags().Changed("apply-theme") || cmd.Flags().Changed("theme")
 	if !nonInteractive && !flagsRequestedAutomation && !flagsRequestedThemeApply {
 		return maybePromptForWindowsTheme(casks)
@@ -158,7 +165,7 @@ func maybeHandleWindowsThemePostInstall(cmd *cobra.Command, casks []string) erro
 	}
 
 	if enableModeSync {
-		if err := install.ConfigureWindowsThemeAutomation(enableAutoDarkLight); err != nil {
+		if err := install.ConfigureWindowsThemeAutomation(enableAutoDarkLight, triggerSource); err != nil {
 			return err
 		}
 
@@ -248,10 +255,9 @@ func runBundlesMenu() error {
 				return fmt.Errorf("no Windows packages available for selected bundles")
 			}
 
-			selectedPackages := make([]string, 0, len(packages))
+			selectedPackages := []string{}
 			opts := make([]huh.Option[string], 0, len(packages))
 			for _, pkg := range packages {
-				selectedPackages = append(selectedPackages, pkg.ID)
 				label := pkg.Name
 				if strings.TrimSpace(label) == "" {
 					label = pkg.ID
@@ -266,7 +272,7 @@ func runBundlesMenu() error {
 			form := huh.NewForm(
 				huh.NewGroup(
 					huh.NewMultiSelect[string]().
-						Title("Select packages to install (preselected from bundles)").
+						Title("Select packages to install").
 						Description("Space toggles package selection. Enter to continue.").
 						Options(opts...).
 						Value(&selectedPackages),
@@ -338,7 +344,7 @@ func runBundlesMenu() error {
 			finalPath = brewfiles[0]
 		}
 
-		fmt.Println(tui.InfoStyle.Render(fmt.Sprintf("🍺 Opening apps in bbrew...")))
+		fmt.Println(tui.InfoStyle.Render("🍺 Opening apps in bbrew..."))
 		if err := install.RunBbrew(finalPath); err != nil {
 			return err
 		}
@@ -364,12 +370,15 @@ func runWallpapersMenu() error {
 	}
 
 	var selected []string
+	wallpaperSelect := huh.NewMultiSelect[string]().
+		Title("Select wallpapers to install").
+		Description("Space toggles selections. Enter confirms. If none selected, Enter installs the highlighted item.").
+		Options(opts...).
+		Value(&selected)
+
 	form := huh.NewForm(
 		huh.NewGroup(
-			huh.NewMultiSelect[string]().
-				Title("Select wallpapers to install (space to select, enter to confirm)").
-				Options(opts...).
-				Value(&selected),
+			wallpaperSelect,
 		),
 	).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap())
 	if err := form.Run(); err != nil {
@@ -378,9 +387,15 @@ func runWallpapersMenu() error {
 		}
 		return fmt.Errorf("form error: %w", err)
 	}
+
 	if len(selected) == 0 {
-		return fmt.Errorf("no wallpapers selected")
+		hovered, ok := wallpaperSelect.Hovered()
+		if !ok || strings.TrimSpace(hovered) == "" {
+			return fmt.Errorf("no wallpapers selected")
+		}
+		selected = []string{hovered}
 	}
+
 	if err := install.InstallWallpaperCasks(selected); err != nil {
 		return err
 	}
@@ -389,7 +404,7 @@ func runWallpapersMenu() error {
 }
 
 func maybePromptForWindowsTheme(casks []string) error {
-	if !env.IsWSL() {
+	if !supportsWindowsThemePostInstall() {
 		return nil
 	}
 
@@ -467,6 +482,31 @@ func maybeConfigureWindowsThemeAutomation() error {
 		return nil
 	}
 
+	triggerSource := string(install.ThemeSyncTriggerPolling)
+	triggerOptions := []huh.Option[string]{
+		huh.NewOption("Polling task (every minute)", string(install.ThemeSyncTriggerPolling)),
+		huh.NewOption("Startup only (no polling)", string(install.ThemeSyncTriggerStartup)),
+		huh.NewOption("Auto Dark Mode integration", string(install.ThemeSyncTriggerAutoDarkMode)),
+	}
+
+	triggerPicker := huh.NewSelect[string]().
+		Title("Select mode-sync trigger source").
+		Description("Polling is most automatic. Startup/autodarkmode avoids background polling.").
+		Options(triggerOptions...).
+		Value(&triggerSource)
+
+	if err := huh.NewForm(huh.NewGroup(triggerPicker)).WithTheme(tui.AppTheme).Run(); err != nil {
+		if err == huh.ErrUserAborted {
+			return nil
+		}
+		return err
+	}
+
+	parsedTriggerSource, err := install.ParseThemeSyncTriggerSource(triggerSource)
+	if err != nil {
+		return err
+	}
+
 	var enableAutoDarkLight bool
 	autoConfirm := huh.NewConfirm().
 		Title("Enable automatic dark/light theme switching at 6:00 AM and 6:00 PM?").
@@ -480,7 +520,7 @@ func maybeConfigureWindowsThemeAutomation() error {
 		return err
 	}
 
-	if err := install.ConfigureWindowsThemeAutomation(enableAutoDarkLight); err != nil {
+	if err := install.ConfigureWindowsThemeAutomation(enableAutoDarkLight, parsedTriggerSource); err != nil {
 		return err
 	}
 
@@ -491,4 +531,8 @@ func maybeConfigureWindowsThemeAutomation() error {
 	}
 
 	return nil
+}
+
+func supportsWindowsThemePostInstall() bool {
+	return env.IsWSL() || env.IsWindows()
 }

@@ -6,6 +6,7 @@ require (
 	github.com/charmbracelet/bubbles v0.21.1
 	github.com/charmbracelet/huh v0.8.0
 	github.com/charmbracelet/lipgloss v1.1.0
+	github.com/klauspost/compress v1.18.4
 	github.com/spf13/cobra v1.10.2
 )
 

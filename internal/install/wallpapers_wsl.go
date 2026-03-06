@@ -18,9 +18,9 @@ var (
 	execWSL     = exec.Command
 	nowWSL      = time.Now
 
-	registerWindowsTaskWSL = registerWindowsTask
-	runWindowsTaskWSL      = runWindowsTask
-	deleteWindowsTaskWSL   = deleteWindowsTask
+	registerWindowsTaskWSL   = registerWindowsTask
+	runWindowsTaskWSL        = runWindowsTask
+	deleteWindowsTaskWSL     = deleteWindowsTask
 	ensureStartupRunEntryWSL = ensureWindowsStartupRunEntry
 	deleteStartupRunEntryWSL = deleteWindowsStartupRunEntry
 )
@@ -35,17 +35,25 @@ const (
 	startupRunValueName    = "BluefinCLIThemeModeSync"
 )
 
+type ThemeSyncTriggerSource string
+
+const (
+	ThemeSyncTriggerPolling      ThemeSyncTriggerSource = "polling"
+	ThemeSyncTriggerStartup      ThemeSyncTriggerSource = "startup"
+	ThemeSyncTriggerAutoDarkMode ThemeSyncTriggerSource = "autodarkmode"
+)
+
 var windowsTaskDescriptions = map[string]string{
-	taskThemeModeSync: "Keeps Bluefin wallpaper day/night variant in sync with current Windows light/dark mode.",
+	taskThemeModeSync:      "Keeps Bluefin wallpaper day/night variant in sync with current Windows light/dark mode.",
 	taskThemeModeSyncLogon: "Legacy logon sync task (replaced by HKCU Run startup entry).",
-	taskSetLightAt6AM: "Sets Windows light mode at 6:00 AM and refreshes Bluefin wallpaper variant.",
-	taskSetDarkAt6PM:  "Sets Windows dark mode at 6:00 PM and refreshes Bluefin wallpaper variant.",
+	taskSetLightAt6AM:      "Sets Windows light mode at 6:00 AM and refreshes Bluefin wallpaper variant.",
+	taskSetDarkAt6PM:       "Sets Windows dark mode at 6:00 PM and refreshes Bluefin wallpaper variant.",
 }
 
 type windowsThemeState struct {
-	SelectedTheme    string `json:"selectedTheme"`
-	AutoApplyMonthly bool   `json:"autoApplyMonthly"`
-	LastAppliedMonth string `json:"lastAppliedMonth"`
+	SelectedTheme    string   `json:"selectedTheme"`
+	AutoApplyMonthly bool     `json:"autoApplyMonthly"`
+	LastAppliedMonth string   `json:"lastAppliedMonth"`
 	MonthlyThemes    []string `json:"monthlyThemes,omitempty"`
 }
 
@@ -112,6 +120,83 @@ func syncWallpapersToWindows(casks []string) error {
 	}
 
 	return fmt.Errorf("no Windows themes were registered; verify wallpaper files exist under ~/.local/share/backgrounds")
+}
+
+func syncWallpapersFromWindowsInstall(casks []string) error {
+	if len(casks) == 0 {
+		return nil
+	}
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to resolve home directory: %w", err)
+	}
+
+	installRoot := filepath.Join(homeDir, "Pictures", wallpaperUserInstallRootName)
+	imagesByTheme := map[string][]string{
+		"Bluefin": {},
+		"Aurora":  {},
+		"Bazzite": {},
+	}
+	monthlyThemes := make([]string, 0)
+
+	for _, cask := range casks {
+		normalized := normalizeCaskName(cask)
+		themeName, ok := detectThemeName(normalized)
+		if !ok {
+			continue
+		}
+
+		images := make([]string, 0)
+		candidateDirs := []string{
+			filepath.Join(installRoot, strings.ToLower(themeName)),
+			filepath.Join(installRoot, normalized),
+		}
+
+		for _, dir := range candidateDirs {
+			found, findErr := findImagesInDir(dir)
+			if findErr != nil {
+				continue
+			}
+			images = append(images, found...)
+		}
+
+		if len(images) == 0 {
+			fmt.Println(infoStyle.Render(fmt.Sprintf("Could not find %s wallpapers to register from %s", themeName, installRoot)))
+			continue
+		}
+
+		images = uniqueStrings(images)
+		imagesByTheme[themeName] = append(imagesByTheme[themeName], images...)
+		if supportsMonthlyWallpapers(images) {
+			monthlyThemes = append(monthlyThemes, themeName)
+		}
+	}
+
+	registered := 0
+	for _, themeName := range []string{"Bluefin", "Aurora", "Bazzite"} {
+		images := uniqueStrings(imagesByTheme[themeName])
+		if len(images) == 0 {
+			continue
+		}
+
+		if err := registerWindowsThemeFromWindowsPaths(themeName, images); err != nil {
+			fmt.Println(infoStyle.Render(fmt.Sprintf("Skipping %s theme registration: %v", themeName, err)))
+			continue
+		}
+
+		registered++
+	}
+
+	if registered > 0 {
+		if err := ensureMonthlyThemeAutoRollover(uniqueStrings(monthlyThemes)); err != nil {
+			fmt.Println(infoStyle.Render("Could not persist monthly rollover preferences: " + err.Error()))
+		}
+		fmt.Println(successStyle.Render(fmt.Sprintf("✓ Registered %d Windows theme(s) from downloaded wallpapers", registered)))
+		return nil
+	}
+
+	return fmt.Errorf("no Windows themes were registered; verify wallpaper files exist under %s", installRoot)
 }
 
 func ThemesFromWallpaperCasks(casks []string) []string {
@@ -297,6 +382,25 @@ func registerWindowsTheme(themeName string, linuxImagePaths []string) error {
 		primaryWindows = linuxToWindows[primaryLinux]
 	}
 
+	return registerWindowsThemeWithPaths(themeName, primaryWindows, windowsPaths)
+}
+
+func registerWindowsThemeFromWindowsPaths(themeName string, windowsImagePaths []string) error {
+	windowsPaths := uniqueStrings(windowsImagePaths)
+	if len(windowsPaths) == 0 {
+		return fmt.Errorf("no valid Windows image paths for %s wallpapers", themeName)
+	}
+
+	primaryWindows := selectMonthlyWallpaper(windowsPaths, nowWSL())
+	return registerWindowsThemeWithPaths(themeName, primaryWindows, windowsPaths)
+}
+
+func registerWindowsThemeWithPaths(themeName, primaryWindows string, windowsPaths []string) error {
+	windowsPaths = uniqueStrings(windowsPaths)
+	if len(windowsPaths) == 0 {
+		return fmt.Errorf("no valid Windows paths for %s wallpapers", themeName)
+	}
+
 	scriptPath, err := writeThemeRegistrationScript()
 	if err != nil {
 		return err
@@ -328,23 +432,50 @@ func ApplyWindowsTheme(themeName string) error {
 	return nil
 }
 
-func ConfigureWindowsThemeAutomation(enableAutoDarkLightSwitch bool) error {
+func ParseThemeSyncTriggerSource(value string) (ThemeSyncTriggerSource, error) {
+	source := ThemeSyncTriggerSource(strings.ToLower(strings.TrimSpace(value)))
+	switch source {
+	case "", ThemeSyncTriggerPolling:
+		return ThemeSyncTriggerPolling, nil
+	case ThemeSyncTriggerStartup:
+		return ThemeSyncTriggerStartup, nil
+	case ThemeSyncTriggerAutoDarkMode:
+		return ThemeSyncTriggerAutoDarkMode, nil
+	default:
+		return "", fmt.Errorf("invalid trigger source %q (supported: polling, startup, autodarkmode)", value)
+	}
+}
+
+func ConfigureWindowsThemeAutomation(enableAutoDarkLightSwitch bool, triggerSource ThemeSyncTriggerSource) error {
+	resolvedSource, err := ParseThemeSyncTriggerSource(string(triggerSource))
+	if err != nil {
+		return err
+	}
+
 	if _, err := lookPathWSL("schtasks.exe"); err != nil {
 		fmt.Println(infoStyle.Render("Skipping Windows task automation setup: schtasks.exe not available in WSL interop"))
 		return nil
 	}
 
+	if err := ensureThemeModeHelperScriptsExist(); err != nil {
+		fmt.Println(infoStyle.Render("Could not ensure theme-mode helper scripts exist: " + err.Error()))
+	}
+
 	syncTaskCmd := `powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "%LOCALAPPDATA%\\BluefinCLI\\theme-mode-sync.ps1"`
 	syncTaskCmd = strings.Replace(syncTaskCmd, "powershell.exe", "powershellw.exe", 1)
 	syncTaskRegistered := false
-	if err := registerWindowsTaskWSL(taskThemeModeSync, []string{"/SC", "MINUTE", "/MO", "1"}, syncTaskCmd); err != nil {
-		if isWindowsAccessDenied(err) {
-			fmt.Println(infoStyle.Render("Could not register task " + taskThemeModeSync + ": access denied (continuing without this task)"))
+	if resolvedSource == ThemeSyncTriggerPolling {
+		if err := registerWindowsTaskWSL(taskThemeModeSync, []string{"/SC", "MINUTE", "/MO", "1"}, syncTaskCmd); err != nil {
+			if isWindowsAccessDenied(err) {
+				fmt.Println(infoStyle.Render("Could not register task " + taskThemeModeSync + ": access denied (continuing without this task)"))
+			} else {
+				return err
+			}
 		} else {
-			return err
+			syncTaskRegistered = true
 		}
 	} else {
-		syncTaskRegistered = true
+		_ = deleteWindowsTaskWSL(taskThemeModeSync)
 	}
 
 	if err := ensureStartupRunEntryWSL(startupRunValueName, syncTaskCmd); err != nil {
@@ -355,12 +486,20 @@ func ConfigureWindowsThemeAutomation(enableAutoDarkLightSwitch bool) error {
 		}
 	}
 
+	if resolvedSource == ThemeSyncTriggerAutoDarkMode {
+		fmt.Println(infoStyle.Render("Auto Dark Mode trigger source selected: configure Auto Dark Mode custom scripts to call set-light-mode.ps1 and set-dark-mode.ps1 from %LOCALAPPDATA%\\BluefinCLI."))
+	}
+
 	if syncTaskRegistered {
 		if err := runWindowsTaskWSL(taskThemeModeSync); err != nil {
 			fmt.Println(infoStyle.Render("Could not immediately run theme mode sync task: " + err.Error()))
 		}
 	} else {
-		fmt.Println(infoStyle.Render("Theme mode sync task was not registered; you can still switch themes manually."))
+		if err := runThemeModeSyncScriptNow(); err != nil {
+			fmt.Println(infoStyle.Render("Theme mode sync task was not registered and immediate sync script failed: " + err.Error()))
+		} else {
+			fmt.Println(infoStyle.Render("Theme mode sync configured via startup run entry (no polling task)."))
+		}
 	}
 
 	if !enableAutoDarkLightSwitch {
@@ -399,6 +538,149 @@ func ConfigureWindowsThemeAutomation(enableAutoDarkLightSwitch bool) error {
 		if err := runWindowsTaskWSL(taskSetLightAt6AM); err != nil {
 			fmt.Println(infoStyle.Render("Could not immediately apply light mode task: " + err.Error()))
 		}
+	}
+
+	return nil
+}
+
+func runThemeModeSyncScriptNow() error {
+	script := `& "$env:LOCALAPPDATA\BluefinCLI\theme-mode-sync.ps1"`
+	cmd := execWSL("powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("failed to run theme-mode-sync.ps1: %w: %s", err, strings.TrimSpace(string(out)))
+	}
+
+	return nil
+}
+
+func ensureThemeModeHelperScriptsExist() error {
+	if _, err := lookPathWSL("powershell.exe"); err != nil {
+		return fmt.Errorf("powershell.exe not available in WSL interop: %w", err)
+	}
+
+	script := `$syncDir = Join-Path $env:LOCALAPPDATA "BluefinCLI"
+New-Item -Path $syncDir -ItemType Directory -Force | Out-Null
+
+$syncScriptPath = Join-Path $syncDir "theme-mode-sync.ps1"
+if (-not (Test-Path -LiteralPath $syncScriptPath)) {
+	$syncScript = @'
+param()
+
+$themeRegPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes"
+$personalizePath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+$desktopPath = "HKCU:\Control Panel\Desktop"
+
+function Set-WallpaperPath {
+	param([string]$Path)
+
+	if (-not (Test-Path -LiteralPath $Path)) {
+		return
+	}
+
+	Set-ItemProperty -Path $desktopPath -Name Wallpaper -Value $Path -ErrorAction SilentlyContinue
+
+	Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+public class WallpaperInterop {
+	[DllImport("user32.dll", SetLastError=true, CharSet=CharSet.Unicode)]
+	public static extern bool SystemParametersInfo(int action, int param, string vparam, int winIni);
+}
+"@ -ErrorAction SilentlyContinue | Out-Null
+
+	[WallpaperInterop]::SystemParametersInfo(20, 0, $Path, 3) | Out-Null
+}
+
+try {
+	$currentTheme = (Get-ItemProperty -Path $themeRegPath -Name CurrentTheme -ErrorAction Stop).CurrentTheme
+} catch {
+	return
+}
+
+$themeName = [System.IO.Path]::GetFileNameWithoutExtension($currentTheme)
+if ($themeName -notin @("Bluefin", "Aurora", "Bazzite")) {
+	return
+}
+
+$themeDir = Join-Path (Join-Path $env:USERPROFILE "Pictures\Wallpapers") $themeName
+if (-not (Test-Path -LiteralPath $themeDir)) {
+	return
+}
+
+$images = Get-ChildItem -LiteralPath $themeDir -File | Sort-Object Name
+if (-not $images -or $images.Count -eq 0) {
+	return
+}
+
+$appsUseLight = 1
+try {
+	$appsUseLight = (Get-ItemProperty -Path $personalizePath -Name AppsUseLightTheme -ErrorAction Stop).AppsUseLightTheme
+} catch {
+}
+
+$target = $null
+$currentWallpaper = $null
+try {
+	$currentWallpaper = (Get-ItemProperty -Path $desktopPath -Name Wallpaper -ErrorAction Stop).Wallpaper
+} catch {
+}
+
+if ($currentWallpaper -and (Test-Path -LiteralPath $currentWallpaper)) {
+	$currentName = [System.IO.Path]::GetFileNameWithoutExtension($currentWallpaper)
+	$currentExt = [System.IO.Path]::GetExtension($currentWallpaper)
+	if ($currentName -match '^(.*?)-(day|night)$') {
+		$stem = $matches[1]
+		$desiredSuffix = if ($appsUseLight -eq 0) { 'night' } else { 'day' }
+		$candidate = Join-Path $themeDir ($stem + '-' + $desiredSuffix + $currentExt)
+		if (Test-Path -LiteralPath $candidate) {
+			$target = Get-Item -LiteralPath $candidate
+		}
+	}
+}
+
+if (-not $target) {
+	if ($appsUseLight -eq 0) {
+		$target = $images | Where-Object { $_.BaseName -match '(night|dark)' } | Select-Object -First 1
+	} else {
+		$target = $images | Where-Object { $_.BaseName -match '(day|light)' } | Select-Object -First 1
+	}
+}
+
+if (-not $target) {
+	$target = $images | Select-Object -First 1
+}
+
+if ($target) {
+	Set-WallpaperPath -Path $target.FullName
+}
+'@
+
+	Set-Content -Path $syncScriptPath -Value $syncScript -Encoding UTF8
+}
+
+$lightScriptPath = Join-Path $syncDir "set-light-mode.ps1"
+if (-not (Test-Path -LiteralPath $lightScriptPath)) {
+	$lightScript = @'
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Name AppsUseLightTheme -Value 1 -Type DWord -ErrorAction SilentlyContinue
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Name SystemUsesLightTheme -Value 1 -Type DWord -ErrorAction SilentlyContinue
+& "$env:LOCALAPPDATA\BluefinCLI\theme-mode-sync.ps1"
+'@
+	Set-Content -Path $lightScriptPath -Value $lightScript -Encoding UTF8
+}
+
+$darkScriptPath = Join-Path $syncDir "set-dark-mode.ps1"
+if (-not (Test-Path -LiteralPath $darkScriptPath)) {
+	$darkScript = @'
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Name AppsUseLightTheme -Value 0 -Type DWord -ErrorAction SilentlyContinue
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Name SystemUsesLightTheme -Value 0 -Type DWord -ErrorAction SilentlyContinue
+& "$env:LOCALAPPDATA\BluefinCLI\theme-mode-sync.ps1"
+'@
+	Set-Content -Path $darkScriptPath -Value $darkScript -Encoding UTF8
+}`
+
+	cmd := execWSL("powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("failed to ensure theme helper scripts: %w: %s", err, strings.TrimSpace(string(out)))
 	}
 
 	return nil
