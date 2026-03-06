@@ -11,6 +11,13 @@
       {"id": "Google.Gemini", "name": "Gemini CLI", "description": "Command-line interface for Google Gemini."},
       {"id": "Ollama.Ollama", "name": "Ollama", "description": "Local LLM management and CLI."},
       {"id": "GitHub.Copilot", "name": "GitHub Copilot CLI", "description": "Command-line interface for GitHub Copilot."},
+      {"id": "ElementLabs.LMStudio", "name": "LM Studio", "description": "Local LLM management and CLI from Element Labs."},
+      {"id": "nomic.gpt4all", "name": "GPT-4 All", "description": "Local GPT-4 model management and CLI from Nomic."},
+      {"id": "Jan.Jan", "name": "Jan", "description": "AI assistant for developers with CLI access."},
+      {"id": "Anthropic.ClaudeCode", "name": "ClaudeCode", "description": "AI assistant for developers with CLI access."},
+      {"id": "Nvidia.CUDA", "name": "CUDA", "description": "NVIDIA CUDA toolkit for GPU computing."},
+      {"id": "Anaconda.Anaconda3", "name": "Anaconda3", "description": "Python distribution for scientific computing."},
+      {"id": "conda-forge.MambaForge", "name": "MambaForge", "description": "Conda-based Python distribution with Mamba package manager."}
     ]
   },
   "cli": {
