@@ -6,17 +6,28 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
 )
 
+func toolsForCurrentPlatform() []Tool {
+	if runtime.GOOS == "windows" {
+		return ToolsForShell("powershell")
+	}
+
+	return Tools
+}
+
 // InstallTools iterates through the config and installs enabled tools
 func InstallTools(cfg *Config) {
+	tools := toolsForCurrentPlatform()
+
 	// First check if we need to install anything
 	needsInstall := false
-	for _, tool := range Tools {
+	for _, tool := range tools {
 		if cfg.IsEnabled(tool.Name) {
 			if _, err := exec.LookPath(tool.Binary); err != nil {
 				needsInstall = true
@@ -35,13 +46,18 @@ func InstallTools(cfg *Config) {
 		return
 	}
 
+	if runtime.GOOS == "windows" {
+		installToolsWindows(cfg)
+		return
+	}
+
 	// Ensure Homebrew is available
 	if err := ensureHomebrew(); err != nil {
 		fmt.Println(errorStyle.Render(fmt.Sprintf("Skipping tool installation: %v", err)))
 		return
 	}
 
-	for _, tool := range Tools {
+	for _, tool := range tools {
 		if cfg.IsEnabled(tool.Name) {
 			if err := ensureTool(tool.Binary, tool.Pkg); err != nil {
 				fmt.Println(errorStyle.Render(fmt.Sprintf("Warning: Failed to install %s: %v", tool.Pkg, err)))
@@ -56,9 +72,116 @@ func InstallTools(cfg *Config) {
 	}
 }
 
+func installToolsWindows(cfg *Config) {
+	if err := ensurePowerShellModules(); err != nil {
+		fmt.Println(errorStyle.Render(fmt.Sprintf("Warning: Failed to ensure PowerShell modules: %v", err)))
+	}
+
+	availableManagers := availableWindowsManagers()
+	if len(availableManagers) == 0 {
+		fmt.Println(errorStyle.Render("Skipping tool installation: winget not found"))
+		return
+	}
+
+	fmt.Println(infoStyle.Render("Installing enabled components using winget."))
+
+	tools := ToolsForShell("powershell")
+
+	for _, tool := range tools {
+		if strings.EqualFold(tool.Name, "Gsudo") && cfg.IsEnabled(tool.Name) {
+			if err := ensureWindowsTool(tool.Binary, tool.Pkg, availableManagers); err != nil {
+				fmt.Println(errorStyle.Render(fmt.Sprintf("Warning: Failed to install %s: %v", tool.Pkg, err)))
+			}
+			break
+		}
+	}
+
+	if err := primeGsudoCache(); err != nil {
+		fmt.Println(infoStyle.Render("Proceeding without gsudo elevation cache: " + err.Error()))
+	}
+
+	for _, tool := range tools {
+		if strings.EqualFold(tool.Name, "Gsudo") {
+			continue
+		}
+
+		if cfg.IsEnabled(tool.Name) {
+			if err := ensureWindowsTool(tool.Binary, tool.Pkg, availableManagers); err != nil {
+				fmt.Println(errorStyle.Render(fmt.Sprintf("Warning: Failed to install %s: %v", tool.Pkg, err)))
+			}
+		}
+	}
+
+	if cfg.IsEnabled("Motd") {
+		if err := ensureWindowsTool("glow", "charmbracelet.glow", availableManagers); err != nil {
+			fmt.Println(errorStyle.Render(fmt.Sprintf("Warning: Failed to install glow: %v", err)))
+		}
+	}
+}
+
+func ensurePowerShellModules() error {
+	modules := []string{"PSReadLine", "Terminal-Icons", "PSFzf"}
+
+	var failures []string
+	for _, moduleName := range modules {
+		if err := ensurePowerShellModule(moduleName); err != nil {
+			failures = append(failures, fmt.Sprintf("%s (%v)", moduleName, err))
+		}
+	}
+
+	if len(failures) > 0 {
+		return fmt.Errorf("%s", strings.Join(failures, ", "))
+	}
+
+	return nil
+}
+
+func ensurePowerShellModule(moduleName string) error {
+	powerShellExe := windowsPowerShellExe()
+	modulePathReset := `$env:PSModulePath = @("$env:USERPROFILE\Documents\WindowsPowerShell\Modules", "$env:ProgramFiles\WindowsPowerShell\Modules", "$env:WINDIR\System32\WindowsPowerShell\v1.0\Modules") -join ';'`
+
+	checkScript := fmt.Sprintf("%s; if (Get-Module -ListAvailable -Name '%s' -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }", modulePathReset, moduleName)
+	check := exec.Command(powerShellExe, "-NoProfile", "-NonInteractive", "-Command", checkScript)
+	if err := check.Run(); err == nil {
+		return nil
+	}
+
+	fmt.Println(infoStyle.Render(fmt.Sprintf("⬇️  Installing PowerShell module %s...", moduleName)))
+	installScript := fmt.Sprintf("%s; $ErrorActionPreference='Stop'; Import-Module PackageManagement -ErrorAction Stop; Import-Module PowerShellGet -ErrorAction Stop; if (-not (Get-PackageProvider -Name NuGet -ListAvailable -ErrorAction SilentlyContinue)) { Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope CurrentUser -Force | Out-Null }; Set-PSRepository -Name PSGallery -InstallationPolicy Trusted -ErrorAction SilentlyContinue; Install-Module -Name '%s' -Scope CurrentUser -Repository PSGallery -Force -AllowClobber", modulePathReset, moduleName)
+	install := exec.Command(powerShellExe, "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", installScript)
+	install.Stdout = os.Stdout
+	install.Stderr = os.Stderr
+	if err := install.Run(); err != nil {
+		return fmt.Errorf("%w (try in Windows PowerShell: Install-Module -Name %s -Scope CurrentUser -Repository PSGallery -Force)", err, moduleName)
+	}
+
+	verify := exec.Command(powerShellExe, "-NoProfile", "-NonInteractive", "-Command", checkScript)
+	if err := verify.Run(); err != nil {
+		return fmt.Errorf("module %s install completed but module is still not discoverable", moduleName)
+	}
+
+	fmt.Println(successStyle.Render(fmt.Sprintf("✓ PowerShell module %s installed", moduleName)))
+	return nil
+}
+
+func windowsPowerShellExe() string {
+	if runtime.GOOS == "windows" {
+		systemPath := `C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe`
+		if _, err := os.Stat(systemPath); err == nil {
+			return systemPath
+		}
+	}
+
+	return "powershell.exe"
+}
+
 func ensureHomebrew() error {
 	if _, err := exec.LookPath("brew"); err == nil {
 		return nil
+	}
+
+	if runtime.GOOS == "windows" {
+		return fmt.Errorf("homebrew not found on Windows; install shell tools with winget")
 	}
 
 	commonPaths := []string{"/home/linuxbrew/.linuxbrew/bin/brew", "/opt/homebrew/bin/brew", "/usr/local/bin/brew"}
@@ -85,7 +208,7 @@ func ensureHomebrew() error {
 	}
 
 	fmt.Println(infoStyle.Render("⬇️  Installing Homebrew..."))
-	
+
 	cmd := exec.Command("/bin/bash", "-c", "curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | bash")
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -102,7 +225,7 @@ func ensureHomebrew() error {
 			return nil
 		}
 	}
-	
+
 	return fmt.Errorf("homebrew installed but not found in expected locations")
 }
 
@@ -126,11 +249,156 @@ func ensureTool(binary, pkg string) error {
 	return nil
 }
 
+func ensureWindowsTool(binary, pkg string, managers []string) error {
+	if _, err := exec.LookPath(binary); err == nil {
+		return nil
+	}
+
+	candidates := []string{pkg, binary}
+	if pkg != strings.ToLower(pkg) {
+		candidates = append(candidates, strings.ToLower(pkg))
+	}
+
+	seen := map[string]bool{}
+	for _, manager := range managers {
+		for _, candidate := range candidates {
+			candidate = strings.TrimSpace(candidate)
+			if candidate == "" {
+				continue
+			}
+
+			key := manager + "::" + candidate
+			if seen[key] {
+				continue
+			}
+			seen[key] = true
+
+			if err := tryInstallWithWindowsManager(manager, candidate); err == nil {
+				fmt.Println(successStyle.Render(fmt.Sprintf("✓ %s installed via %s", pkg, manager)))
+				return nil
+			}
+
+			if _, err := exec.LookPath(binary); err == nil {
+				fmt.Println(successStyle.Render(fmt.Sprintf("✓ %s is already available", pkg)))
+				return nil
+			}
+		}
+	}
+
+	return fmt.Errorf("no matching package found in available managers")
+}
+
+func availableWindowsManagers() []string {
+	priority := []string{"winget"}
+	available := make([]string, 0, len(priority))
+	for _, manager := range priority {
+		if _, err := exec.LookPath(manager); err == nil {
+			available = append(available, manager)
+		}
+	}
+	return available
+}
+
+func tryInstallWithWindowsManager(manager, candidate string) error {
+	switch manager {
+	case "winget":
+		if wingetPackageInstalled(candidate) {
+			return nil
+		}
+
+		if err := runWingetInstallWithOptionalGsudo("--id", candidate, "--exact", "--source", "winget", "--accept-source-agreements", "--accept-package-agreements", "--silent"); err == nil {
+			return nil
+		}
+
+		if err := runWingetInstallWithOptionalGsudo("--name", candidate, "--source", "winget", "--accept-source-agreements", "--accept-package-agreements", "--silent"); err == nil {
+			return nil
+		}
+
+		if wingetPackageInstalled(candidate) {
+			return nil
+		}
+
+		return fmt.Errorf("winget install failed for %s", candidate)
+	default:
+		return fmt.Errorf("unsupported manager: %s", manager)
+	}
+}
+
+func runWingetInstallWithOptionalGsudo(args ...string) error {
+	wingetArgs := append([]string{"install"}, args...)
+
+	wingetPath := resolveWindowsExecutable("winget")
+	if wingetPath == "" {
+		wingetPath = "winget"
+	}
+
+	if gsudoPath := resolveWindowsExecutable("gsudo"); gsudoPath != "" {
+		commandArgs := append([]string{wingetPath}, wingetArgs...)
+		cmd := exec.Command(gsudoPath, commandArgs...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err == nil {
+			return nil
+		}
+	}
+
+	cmd := exec.Command(wingetPath, wingetArgs...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func primeGsudoCache() error {
+	gsudoPath := resolveWindowsExecutable("gsudo")
+	if gsudoPath == "" {
+		return fmt.Errorf("gsudo not found")
+	}
+
+	cmd := exec.Command(gsudoPath, "cache", "on")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func resolveWindowsExecutable(name string) string {
+	if path, err := exec.LookPath(name); err == nil {
+		return path
+	}
+
+	localAppData := strings.TrimSpace(os.Getenv("LOCALAPPDATA"))
+	if localAppData != "" {
+		candidate := filepath.Join(localAppData, "Microsoft", "WinGet", "Links", name+".exe")
+		if info, err := os.Stat(candidate); err == nil && !info.IsDir() {
+			return candidate
+		}
+	}
+
+	return ""
+}
+
+func wingetPackageInstalled(candidate string) bool {
+	cmd := exec.Command("winget", "list", "--id", candidate, "--exact", "--source", "winget", "--accept-source-agreements")
+	out, err := cmd.Output()
+	if err != nil {
+		return false
+	}
+
+	text := strings.ToLower(string(out))
+	if strings.Contains(text, "no installed package") {
+		return false
+	}
+
+	return strings.Contains(text, strings.ToLower(candidate))
+}
+
 //go:embed resources/shell.sh
 var shellShScript string
 
 //go:embed resources/shell.fish
 var shellFishScript string
+
+//go:embed resources/shell.ps1
+var shellPowerShellScript string
 
 var (
 	successStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Bold(true)
@@ -142,6 +410,10 @@ const shellMaker = "# bluefin-cli shell-config"
 const blingMarker = "# bluefin-cli bling"
 
 func Toggle(shell string, enable bool) error {
+	if isPowerShellShell(shell) {
+		return togglePowerShell(enable)
+	}
+
 	var configFile string
 	var rcLine string
 
@@ -175,6 +447,9 @@ func Toggle(shell string, enable bool) error {
 				}
 			}
 			content = []byte("")
+		} else if os.IsNotExist(err) && !enable {
+			fmt.Println(infoStyle.Render(fmt.Sprintf("%s is already disabled for %s", shell, shell)))
+			return nil
 		} else {
 			return err
 		}
@@ -186,6 +461,9 @@ func Toggle(shell string, enable bool) error {
 	if enable {
 		if hasLine {
 			fmt.Println(infoStyle.Render(fmt.Sprintf("%s is already enabled for %s", shell, shell)))
+			if cfg, err := LoadConfig(shell); err == nil {
+				InstallTools(cfg)
+			}
 			return nil
 		}
 
@@ -229,8 +507,10 @@ func Toggle(shell string, enable bool) error {
 		fmt.Println(successStyle.Render(fmt.Sprintf("✓ Disabled shell experience for %s", shell)))
 	}
 
-	if cfg, err := LoadConfig(shell); err == nil {
-		InstallTools(cfg)
+	if enable {
+		if cfg, err := LoadConfig(shell); err == nil {
+			InstallTools(cfg)
+		}
 	}
 
 	return nil
@@ -241,9 +521,23 @@ func Init(shell string, config *Config) (string, error) {
 		config = DefaultConfig(shell)
 	}
 
+	tools := ToolsForShell(shell)
+
 	var sb strings.Builder
 
-	for _, tool := range Tools {
+	if isPowerShellShell(shell) {
+		for _, tool := range tools {
+			enabled := config.IsEnabled(tool.Name)
+			fmt.Fprintf(&sb, "$env:%s = \"%d\"\n", tool.GetEnvVar(), boolToInt(enabled))
+		}
+		fmt.Fprintf(&sb, "$env:BLUEFIN_SHELL_ENABLE_MOTD = \"%d\"\n", boolToInt(config.IsEnabled("Motd")))
+
+		sb.WriteString("\n")
+		sb.WriteString(shellPowerShellScript)
+		return sb.String(), nil
+	}
+
+	for _, tool := range tools {
 		enabled := config.IsEnabled(tool.Name)
 
 		if shell == "fish" {
@@ -251,6 +545,12 @@ func Init(shell string, config *Config) (string, error) {
 		} else {
 			fmt.Fprintf(&sb, "export %s=%d\n", tool.GetEnvVar(), boolToInt(enabled))
 		}
+	}
+
+	if shell == "fish" {
+		fmt.Fprintf(&sb, "set -gx BLUEFIN_SHELL_ENABLE_MOTD %d\n", boolToInt(config.IsEnabled("Motd")))
+	} else {
+		fmt.Fprintf(&sb, "export BLUEFIN_SHELL_ENABLE_MOTD=%d\n", boolToInt(config.IsEnabled("Motd")))
 	}
 
 	sb.WriteString("\n")
@@ -289,13 +589,16 @@ func CheckStatus() map[string]bool {
 		status[shell] = strings.Contains(string(content), shellMaker) || strings.Contains(string(content), "# bluefin-cli bling")
 	}
 
+	status["powershell"] = checkPowerShellStatus()
+	status["pwsh"] = status["powershell"]
+
 	return status
 }
 
 func CheckDependencies() map[string]bool {
 	status := make(map[string]bool)
 
-	for _, tool := range Tools {
+	for _, tool := range toolsForCurrentPlatform() {
 		_, err := exec.LookPath(tool.Binary)
 		status[tool.Binary] = err == nil
 	}
@@ -312,6 +615,14 @@ func GetInstalledShells() []string {
 		if _, err := exec.LookPath(s); err == nil {
 			installed = append(installed, s)
 		}
+	}
+
+	if _, err := exec.LookPath("pwsh"); err == nil {
+		installed = append(installed, "pwsh")
+	} else if _, err := exec.LookPath("powershell"); err == nil {
+		installed = append(installed, "powershell")
+	} else if _, err := exec.LookPath("powershell.exe"); err == nil {
+		installed = append(installed, "powershell")
 	}
 
 	return installed

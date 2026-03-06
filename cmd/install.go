@@ -7,16 +7,16 @@ import (
 
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/spf13/cobra"
 	"github.com/hanthor/bluefin-cli/internal/env"
 	"github.com/hanthor/bluefin-cli/internal/install"
 	"github.com/hanthor/bluefin-cli/internal/tui"
+	"github.com/spf13/cobra"
 )
 
 var installCmd = &cobra.Command{
 	Use:   "install [bundle]",
-	Short: "Install Homebrew bundles",
-	Long: `Install predefined Homebrew bundles or custom Brewfiles.
+	Short: "Install tool bundles",
+	Long: `Install predefined bundles or custom Brewfiles.
 
 Available bundles:
   ai               - AI tools (Goose, Codex, Gemini, Ramalama, etc.)
@@ -41,7 +41,7 @@ Or provide a path to a local Brewfile.`,
 var installListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List available bundles",
-	Long:  `Show all available Homebrew bundles with descriptions.`,
+	Long:  `Show all available bundles with descriptions.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		install.ListBundles()
 		return nil
@@ -203,8 +203,24 @@ func runBundlesMenu() error {
 			huh.NewOption("☸️  Kubernetes Tools", "k8s"),
 		}
 
+		if env.IsWindows() {
+			opts = []huh.Option[string]{
+				huh.NewOption("AI Tools", "ai"),
+				huh.NewOption("CLI Essentials", "cli"),
+				huh.NewOption("CNCF Tools", "cncf"),
+				huh.NewOption("Experimental IDE", "experimental-ide"),
+				huh.NewOption("Development Fonts", "fonts"),
+				huh.NewOption("IDE Tools", "ide"),
+				huh.NewOption("Kubernetes Tools", "k8s"),
+			}
+		}
+
 		if install.IsLinux() && install.IsGnome() {
-			opts = append(opts, huh.NewOption("🖥️  Full GNOME Desktop", "full-desktop"))
+			if env.IsWindows() {
+				opts = append(opts, huh.NewOption("Full GNOME Desktop", "full-desktop"))
+			} else {
+				opts = append(opts, huh.NewOption("🖥️  Full GNOME Desktop", "full-desktop"))
+			}
 		}
 
 		form := huh.NewForm(
@@ -237,7 +253,7 @@ func runBundlesMenu() error {
 		fmt.Println()
 		fmt.Println(tui.PopupStyle.Render(msg))
 		fmt.Println()
-		
+
 		time.Sleep(3 * time.Second)
 	}
 
@@ -260,6 +276,15 @@ func runBundlesMenu() error {
 	}
 
 	if len(brewfiles) > 0 {
+		if env.IsWindows() {
+			for _, brewfilePath := range brewfiles {
+				if err := install.Bundle(brewfilePath); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+
 		if err := install.EnsureBbrew(); err != nil {
 			return err
 		}

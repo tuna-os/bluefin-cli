@@ -1,0 +1,94 @@
+name: winget
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to submit (e.g. 1.2.3 or v1.2.3)"
+        required: true
+        type: string
+      asset_url:
+        description: "Optional explicit Windows x64 asset URL"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    runs-on: windows-latest
+    env:
+      PACKAGE_ID: Hanthor.BluefinCLI
+      WINGET_TOKEN: ${{ secrets.WINGET_CREATE_GITHUB_TOKEN }}
+    steps:
+      - name: Validate token secret
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:WINGET_TOKEN)) {
+            throw "Missing required secret: WINGET_CREATE_GITHUB_TOKEN"
+          }
+
+      - name: Resolve version and installer URL
+        id: resolve
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "release") {
+            $tag = "${{ github.event.release.tag_name }}"
+          } else {
+            $tag = "${{ inputs.version }}"
+          }
+
+          if ([string]::IsNullOrWhiteSpace($tag)) {
+            throw "Version/tag is empty"
+          }
+
+          $version = $tag.TrimStart('v')
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            throw "Normalized version is empty"
+          }
+
+          $repo = "${{ github.repository }}"
+
+          $manualUrl = "${{ inputs.asset_url }}"
+          if (-not [string]::IsNullOrWhiteSpace($manualUrl)) {
+            $assetUrl = $manualUrl
+          } else {
+            $assetUrl = "https://github.com/$repo/releases/download/$tag/bluefin-cli_${version}_windows_amd64.zip"
+          }
+
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "asset_url=$assetUrl" >> $env:GITHUB_OUTPUT
+
+      - name: Download wingetcreate
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+          ./wingetcreate.exe --version
+
+      - name: Submit update (fallback to new)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $pkg = $env:PACKAGE_ID
+          $ver = "${{ steps.resolve.outputs.version }}"
+          $url = "${{ steps.resolve.outputs.asset_url }}"
+          $token = $env:WINGET_TOKEN
+
+          Write-Host "Submitting to winget-pkgs: $pkg $ver"
+          Write-Host "Installer URL: $url"
+
+          # Try update first for existing package versions.
+          ./wingetcreate.exe update $pkg -u $url -v $ver -t $token --submit
+          if ($LASTEXITCODE -eq 0) {
+            exit 0
+          }
+
+          Write-Host "Update failed, trying first-time package submission..."
+          ./wingetcreate.exe new -i $pkg -u $url -v $ver -t $token --submit
+          if ($LASTEXITCODE -ne 0) {
+            throw "wingetcreate submission failed"
+          }

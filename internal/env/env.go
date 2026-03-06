@@ -75,6 +75,10 @@ func IsWSL() bool {
 	return false
 }
 
+func IsWindows() bool {
+	return runtimeGOOS == "windows"
+}
+
 func hasMicrosoftMarker(path string) bool {
 	data, err := readFile(path)
 	if err != nil {

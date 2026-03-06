@@ -2,6 +2,7 @@ package install
 
 import (
 	"os"
+	"sync"
 	"testing"
 )
 
@@ -115,5 +116,117 @@ func TestDownloadFileInvalidURL(t *testing.T) {
 	err = downloadFile(url, tmpPath)
 	if err == nil {
 		t.Error("Expected error for invalid URL, got nil")
+	}
+}
+
+func TestParseBrewfilePackages(t *testing.T) {
+	tmpFile, err := os.CreateTemp("", "windows-brewfile-*.Brewfile")
+	if err != nil {
+		t.Fatalf("failed to create temp file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	content := `tap "homebrew/core"
+brew "git"
+cask "visual-studio-code"
+# comment
+`
+
+	if _, err := tmpFile.WriteString(content); err != nil {
+		t.Fatalf("failed to write temp Brewfile: %v", err)
+	}
+	tmpFile.Close()
+
+	pkgs, err := parseBrewfilePackages(tmpFile.Name())
+	if err != nil {
+		t.Fatalf("parseBrewfilePackages returned error: %v", err)
+	}
+
+	if len(pkgs) != 2 {
+		t.Fatalf("expected 2 parsed packages, got %d", len(pkgs))
+	}
+
+	if pkgs[0].name != "git" || pkgs[1].name != "visual-studio-code" {
+		t.Fatalf("unexpected parsed package names: %+v", pkgs)
+	}
+}
+
+func TestWindowsCandidatesIncludesAliases(t *testing.T) {
+	candidates := windowsCandidates("visual-studio-code")
+	if len(candidates) < 2 {
+		t.Fatalf("expected aliases for visual-studio-code, got %v", candidates)
+	}
+
+	found := false
+	for _, c := range candidates {
+		if c == "Microsoft.VisualStudioCode" {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		t.Fatalf("expected Microsoft.VisualStudioCode alias in %v", candidates)
+	}
+}
+
+func TestAvailableWindowsManagersPriority(t *testing.T) {
+	originalLookPath := windowsLookPath
+	defer func() {
+		windowsLookPath = originalLookPath
+	}()
+
+	windowsLookPath = func(file string) (string, error) {
+		switch file {
+		case "winget", "choco":
+			return "/mock/" + file, nil
+		default:
+			return "", os.ErrNotExist
+		}
+	}
+
+	managers := AvailableWindowsManagers()
+	if len(managers) != 1 {
+		t.Fatalf("expected 1 manager, got %d (%v)", len(managers), managers)
+	}
+
+	if managers[0] != "winget" {
+		t.Fatalf("unexpected manager order: %v", managers)
+	}
+}
+
+func TestWindowsCandidatesFromLoader(t *testing.T) {
+	originalLoader := windowsPackageAliasesLoad
+	originalAliases := windowsPackageAliases
+	originalOnce := windowsMappingLoadOnce
+
+	defer func() {
+		windowsPackageAliasesLoad = originalLoader
+		windowsPackageAliases = originalAliases
+		windowsMappingLoadOnce = originalOnce
+	}()
+
+	windowsPackageAliasesLoad = func() map[string][]string {
+		return map[string][]string{
+			"custom-pkg": {"Custom.Id", "custom"},
+		}
+	}
+	windowsPackageAliases = nil
+	windowsMappingLoadOnce = sync.Once{}
+
+	candidates := windowsCandidates("custom-pkg")
+	if len(candidates) != 3 {
+		t.Fatalf("expected 3 candidates, got %v", candidates)
+	}
+
+	if candidates[1] != "Custom.Id" || candidates[2] != "custom" {
+		t.Fatalf("unexpected candidates: %v", candidates)
+	}
+}
+
+func TestWindowsCandidatesUnknownPackage(t *testing.T) {
+	candidates := windowsCandidates("unmapped-tool")
+	if len(candidates) != 1 || candidates[0] != "unmapped-tool" {
+		t.Fatalf("expected only original package name, got %v", candidates)
 	}
 }

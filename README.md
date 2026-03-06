@@ -14,31 +14,62 @@ A powerful, modern CLI tool for managing shell configuration and development env
 
 ## 🚀 Installation
 
-### NOT WORKING YET Via Homebrew
+### Windows (PowerShell) - Recommended
+
+Build and install from source:
+
+```powershell
+git clone https://github.com/hanthor/bluefin-cli.git
+cd bluefin-cli
+go build -o bluefin-cli.exe .
+
+# Optional: move to a permanent location on PATH
+New-Item -ItemType Directory -Force "$HOME\\bin" | Out-Null
+Move-Item .\\bluefin-cli.exe "$HOME\\bin\\bluefin-cli.exe" -Force
+$env:PATH = "$HOME\\bin;$env:PATH"
+```
+
+Enable shell integration for both `pwsh` and Windows PowerShell profiles:
+
+```powershell
+bluefin-cli shell powershell on
+```
+
+### macOS / Linux (Go Install)
+
+```bash
+go install github.com/hanthor/bluefin-cli@latest
+```
+
+### Build from Source (Any OS)
+
+**Prerequisites:**
+- Go 1.21 or later
+
+```bash
+git clone https://github.com/hanthor/bluefin-cli.git
+cd bluefin-cli
+go build -o bluefin-cli .
+```
+
+On Windows, use `go build -o bluefin-cli.exe .`.
+
+### Homebrew (Experimental)
 
 ```bash
 brew tap ublue-os/homebrew-experimental-tap
 brew install bluefin-cli
 ```
 
-### Build from Source
+### Winget (Planned)
 
-**Prerequisites:**
-- Go 1.21 or later
-- Homebrew (for package management features)
+Once published to Winget, installation will be:
 
-```bash
-git clone https://github.com/hanthor/bluefin-cli.git
-cd bluefin-cli
-go build -o bluefin-cli
-sudo mv bluefin-cli /usr/local/bin/
+```powershell
+winget install --id Hanthor.BluefinCLI --exact
 ```
 
-### Using Go Install
-
-```bash
-go install github.com/hanthor/bluefin-cli@latest
-```
+Maintainers: automated Winget submission is configured in `.github/workflows/winget.yml`.
 
 ## 📖 Usage
 
@@ -207,6 +238,7 @@ grep    # ugrep (if installed)
 
 - [Interactive Menu Structure](docs/menus.md): A visual guide to the application's menu hierarchy and options.
 - [Available Tools](docs/tools.md): A comprehensive list of all tools and bundles available.
+- [Winget Publishing Guide](docs/winget.md): Steps to publish and maintain the Windows package.
 
 ## 🏗️ Project Structure
 

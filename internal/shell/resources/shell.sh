@@ -14,6 +14,7 @@ SOURCED_BLUEFIN_SHELL=1
 : "${BLUEFIN_SHELL_ENABLE_UUTILSCOREUTILS:=1}"
 : "${BLUEFIN_SHELL_ENABLE_UUTILSFINDUTILS:=1}"
 : "${BLUEFIN_SHELL_ENABLE_UUTILSDIFFUTILS:=1}"
+: "${BLUEFIN_SHELL_ENABLE_MOTD:=1}"
 
 # Default disabled tools
 : "${BLUEFIN_SHELL_ENABLE_CARAPACE:=0}"
@@ -79,6 +80,10 @@ fi
 [ "$BLUEFIN_SHELL_ENABLE_ZOXIDE" -eq 1 ] && [ "$(command -v zoxide)" ] && eval "$(zoxide init ${BLING_SHELL})"
 
 [ "$BLUEFIN_SHELL_ENABLE_CARAPACE" -eq 1 ] && [ "$(command -v carapace)" ] && eval "$(carapace _carapace ${BLING_SHELL})"
+
+if [ "$BLUEFIN_SHELL_ENABLE_MOTD" -eq 1 ] && [ -n "$PS1" ] && [ -t 1 ] && [ "$(command -v bluefin-cli)" ]; then
+    bluefin-cli motd show
+fi
 
 
 

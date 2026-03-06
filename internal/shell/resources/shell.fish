@@ -34,6 +34,9 @@ end
 if not set -q BLUEFIN_SHELL_ENABLE_CARAPACE
     set BLUEFIN_SHELL_ENABLE_CARAPACE 0
 end
+if not set -q BLUEFIN_SHELL_ENABLE_MOTD
+    set BLUEFIN_SHELL_ENABLE_MOTD 1
+end
 
 # ls aliases
 if test "$BLUEFIN_SHELL_ENABLE_EZA" -eq 1; and type -q eza
@@ -93,5 +96,9 @@ if status is-interactive
     if test "$BLUEFIN_SHELL_ENABLE_CARAPACE" -eq 1; and type -q carapace
         set -x CARAPACE_BRIDGES 'zsh,fish,bash,inshellisense'
         carapace _carapace | source
+    end
+
+    if test "$BLUEFIN_SHELL_ENABLE_MOTD" -eq 1; and type -q bluefin-cli
+        bluefin-cli motd show
     end
 end

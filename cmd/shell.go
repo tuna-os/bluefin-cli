@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/huh"
+	"github.com/hanthor/bluefin-cli/internal/env"
 	"github.com/hanthor/bluefin-cli/internal/shell"
 	"github.com/hanthor/bluefin-cli/internal/tui"
 	"github.com/spf13/cobra"
@@ -55,8 +56,12 @@ func runShellMenu() error {
 
 		currentShellPath := os.Getenv("SHELL")
 		currentShell := filepath.Base(currentShellPath)
-	if currentShell == "" || currentShell == "." {
-			currentShell = "bash" // fallback
+		if currentShell == "" || currentShell == "." {
+			if env.IsWindows() {
+				currentShell = "powershell"
+			} else {
+				currentShell = "bash"
+			}
 		}
 
 		status := shell.CheckStatus()
@@ -67,15 +72,24 @@ func runShellMenu() error {
 		}
 
 		var action string
+		componentsLabel := "Configure Components ❯"
+		motdLabel := "📰 MOTD Settings ❯"
+		shellsLabel := "Enable/Disable for other shells ❯"
+		if env.IsWindows() {
+			componentsLabel = "Configure Components >"
+			motdLabel = "MOTD Settings >"
+			shellsLabel = "Enable/Disable for other shells >"
+		}
+
 		if err := huh.NewForm(
 			huh.NewGroup(
 				huh.NewSelect[string]().
 					Title("Choose an option").
 					Options(
 						huh.NewOption(toggleLabel, "toggle_current"),
-						huh.NewOption("Configure Components ❯", "components"),
-						huh.NewOption("📰 MOTD Settings ❯", "motd"),
-						huh.NewOption("Enable/Disable for other shells ❯", "shells"),
+						huh.NewOption(componentsLabel, "components"),
+						huh.NewOption(motdLabel, "motd"),
+						huh.NewOption(shellsLabel, "shells"),
 						huh.NewOption("Exit to Main Menu", "exit"),
 					).
 					Value(&action),
@@ -171,7 +185,11 @@ func configureShellTools() error {
 	currentShellPath := os.Getenv("SHELL")
 	currentShell := filepath.Base(currentShellPath)
 	if currentShell == "" || currentShell == "." {
-		currentShell = "bash" // fallback
+		if env.IsWindows() {
+			currentShell = "powershell"
+		} else {
+			currentShell = "bash"
+		}
 	}
 
 	cfg, err := shell.LoadConfig(currentShell)
@@ -179,15 +197,17 @@ func configureShellTools() error {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
+	availableTools := shell.ToolsForShell(currentShell)
+
 	var selected []string
-	for _, tool := range shell.Tools {
+	for _, tool := range availableTools {
 		if cfg.IsEnabled(tool.Name) {
 			selected = append(selected, tool.Name)
 		}
 	}
 
 	var options []huh.Option[string]
-	for _, tool := range shell.Tools {
+	for _, tool := range availableTools {
 		label := fmt.Sprintf("%s (%s)", tool.Name, tool.Description)
 		options = append(options, huh.NewOption(label, tool.Name))
 	}
@@ -215,7 +235,7 @@ func configureShellTools() error {
 		selectedSet[s] = true
 	}
 
-	for _, tool := range shell.Tools {
+	for _, tool := range availableTools {
 		newCfg.SetEnabled(tool.Name, selectedSet[tool.Name])
 	}
 
@@ -232,10 +252,15 @@ func configureShellTools() error {
 }
 
 func init() {
+	describedTools := shell.Tools
+	if env.IsWindows() {
+		describedTools = shell.ToolsForShell("powershell")
+	}
+
 	// Generate dynamic long description
 	var sb strings.Builder
 	sb.WriteString("Enable or disable shell experience enhancements (modern aliases and tool initialization).\n\nThe Shell Experience provides:\n")
-	for _, tool := range shell.Tools {
+	for _, tool := range describedTools {
 		sb.WriteString(fmt.Sprintf("  - %s: %s\n", tool.Name, tool.Description))
 	}
 	shellCmd.Long = sb.String()

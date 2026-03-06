@@ -1,17 +1,22 @@
 package status
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/hanthor/bluefin-cli/internal/env"
+	"github.com/hanthor/bluefin-cli/internal/install"
 	"github.com/hanthor/bluefin-cli/internal/motd"
 	"github.com/hanthor/bluefin-cli/internal/shell"
 )
+
+const commandTimeout = 1500 * time.Millisecond
 
 var (
 	titleStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("14")).Bold(true).Underline(true)
@@ -41,7 +46,9 @@ func Show() error {
 	// We use `ps -p $PPID -o comm=` to get the command name of the parent process
 	var currentShell string
 	if ppid := os.Getppid(); ppid > 0 {
-		cmd := exec.Command("ps", "-p", fmt.Sprintf("%d", ppid), "-o", "comm=")
+		ctx, cancel := context.WithTimeout(context.Background(), commandTimeout)
+		defer cancel()
+		cmd := exec.CommandContext(ctx, "ps", "-p", fmt.Sprintf("%d", ppid), "-o", "comm=")
 		if out, err := cmd.Output(); err == nil {
 			comm := strings.TrimSpace(string(out))
 			// Handle e.g. /bin/zsh or -zsh
@@ -132,23 +139,38 @@ func Show() error {
 
 	// Homebrew status
 	rightCol += labelStyle.Render("Package Manager:") + "\n"
-	if _, err := exec.LookPath("brew"); err == nil {
-		rightCol += fmt.Sprintf("  %s Homebrew: %s\n",
-			enabledStyle.Render("✓"),
-			enabledStyle.Render("installed"))
-
-		// Try to get Homebrew version
-		if output, err := exec.Command("brew", "--version").Output(); err == nil {
-			version := string(output)
-			if len(version) > 0 {
-				rightCol += fmt.Sprintf("    %s\n", version[:len(version)-1])
-			}
+	if env.IsWindows() {
+		managers := install.AvailableWindowsManagers()
+		if len(managers) == 0 {
+			rightCol += fmt.Sprintf("  %s Windows PMs: %s\n",
+				disabledStyle.Render("✗"),
+				disabledStyle.Render("none detected"))
+			rightCol += "    Install winget, scoop, or chocolatey\n"
+		} else {
+			rightCol += fmt.Sprintf("  %s Windows PMs: %s\n",
+				enabledStyle.Render("✓"),
+				enabledStyle.Render(strings.Join(managers, ", ")))
 		}
 	} else {
-		rightCol += fmt.Sprintf("  %s Homebrew: %s\n",
-			disabledStyle.Render("✗"),
-			disabledStyle.Render("not installed"))
-		rightCol += "    Install from: https://brew.sh\n"
+		if _, err := exec.LookPath("brew"); err == nil {
+			rightCol += fmt.Sprintf("  %s Homebrew: %s\n",
+				enabledStyle.Render("✓"),
+				enabledStyle.Render("installed"))
+
+			ctx, cancel := context.WithTimeout(context.Background(), commandTimeout)
+			defer cancel()
+			if output, err := exec.CommandContext(ctx, "brew", "--version").Output(); err == nil {
+				version := string(output)
+				if len(version) > 0 {
+					rightCol += fmt.Sprintf("    %s\n", version[:len(version)-1])
+				}
+			}
+		} else {
+			rightCol += fmt.Sprintf("  %s Homebrew: %s\n",
+				disabledStyle.Render("✗"),
+				disabledStyle.Render("not installed"))
+			rightCol += "    Install from: https://brew.sh\n"
+		}
 	}
 	rightCol += "\n"
 
@@ -218,7 +240,9 @@ func checkTaskExists(taskName string) bool {
 		return false
 	}
 
-	cmd := exec.Command("schtasks.exe", "/Query", "/TN", taskName)
+	ctx, cancel := context.WithTimeout(context.Background(), commandTimeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "schtasks.exe", "/Query", "/TN", taskName)
 	return cmd.Run() == nil
 }
 
@@ -228,7 +252,9 @@ func checkStartupRunEntry() bool {
 	}
 
 	script := `$runPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"; $name = "BluefinCLIThemeModeSync"; $value = (Get-ItemProperty -Path $runPath -Name $name -ErrorAction SilentlyContinue).$name; if($value){ exit 0 } ; exit 1`
-	cmd := exec.Command("powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script)
+	ctx, cancel := context.WithTimeout(context.Background(), commandTimeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script)
 	return cmd.Run() == nil
 }
 
@@ -254,7 +280,9 @@ func windowsThemeMode() (string, bool) {
 	}
 
 	script := `$path = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"; $value = (Get-ItemProperty -Path $path -Name AppsUseLightTheme -ErrorAction SilentlyContinue).AppsUseLightTheme; if ($null -eq $value) { exit 1 }; if ($value -eq 0) { Write-Output "🌙 Dark" } else { Write-Output "🌞 Light" }`
-	cmd := exec.Command("powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script)
+	ctx, cancel := context.WithTimeout(context.Background(), commandTimeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script)
 	out, err := cmd.Output()
 	if err != nil {
 		return "", false

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/charmbracelet/huh"
+	"github.com/hanthor/bluefin-cli/internal/env"
 	"github.com/spf13/cobra"
 	"github.com/hanthor/bluefin-cli/internal/shell"
 	"github.com/hanthor/bluefin-cli/internal/status"
@@ -26,18 +27,40 @@ var menuCmd = &cobra.Command{
 			}
 
 			var shellLabel string
+			statusLabel := "📊 Status"
+			installLabel := "📦 Install Apps ❯"
+			wallpapersLabel := "🖼  Wallpapers ❯"
+			starshipLabel := "🚀 Starship Theme ❯"
+
+			if env.IsWindows() {
+				statusLabel = "Status"
+				installLabel = "Install Apps >"
+				wallpapersLabel = "Wallpapers >"
+				starshipLabel = "Starship Theme >"
+			}
+
 			if hasShell {
 				shellLabel = "🐚 Bluefin Shell (Enabled)"
 			} else {
 				shellLabel = "🐚 Bluefin Shell (Disabled)"
 			}
 
+			if env.IsWindows() {
+				shellLabel = "Bluefin Shell (Disabled)"
+				if hasShell {
+					shellLabel = "Bluefin Shell (Enabled)"
+				}
+				shellLabel += " >"
+			} else {
+				shellLabel += " ❯"
+			}
+
 			opts := []huh.Option[string]{
-				huh.NewOption("📊 Status", "status"),
-				huh.NewOption(shellLabel+" ❯", "shell"),
-				huh.NewOption("📦 Install Apps ❯", "bundles"),
-				huh.NewOption("🖼  Wallpapers ❯", "wallpapers"),
-				huh.NewOption("🚀 Starship Theme ❯", "starship"),
+				huh.NewOption(statusLabel, "status"),
+				huh.NewOption(shellLabel, "shell"),
+				huh.NewOption(installLabel, "bundles"),
+				huh.NewOption(wallpapersLabel, "wallpapers"),
+				huh.NewOption(starshipLabel, "starship"),
 			}
 			opts = append(opts, huh.NewOption("Exit", "exit"))
 

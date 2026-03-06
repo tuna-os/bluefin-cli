@@ -68,6 +68,10 @@ var bundles = map[string]BundleSpec{
 }
 
 func Bundle(nameOrPath string) error {
+	if runtime.GOOS == "windows" {
+		return BundleWindows(nameOrPath)
+	}
+
 	if _, err := exec.LookPath("brew"); err != nil {
 		return fmt.Errorf("Homebrew not found. Please install Homebrew first: https://brew.sh")
 	}
@@ -195,11 +199,11 @@ func RunBbrew(brewfilePath string) error {
 }
 
 func ListBundles() {
-	fmt.Println(titleStyle.Render("📦 Available Homebrew Bundles"))
+	fmt.Println(titleStyle.Render("📦 Available Bundles"))
 	fmt.Println()
 
 	for name, bundle := range bundles {
-		fmt.Printf("  %s %s\n", 
+		fmt.Printf("  %s %s\n",
 			lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Bold(true).Render(name+":"),
 			bundle.Description)
 	}
