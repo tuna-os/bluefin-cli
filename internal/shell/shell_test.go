@@ -3,6 +3,7 @@ package shell
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -22,27 +23,33 @@ func TestInit(t *testing.T) {
 	defer os.Unsetenv("HOME")
 
 	tests := []struct {
-		name      string
-		shell     string
-		wantIn    []string
-		wantErr   bool
+		name    string
+		shell   string
+		wantIn  []string
+		wantErr bool
 	}{
 		{
-			"Bash init", 
-			"bash", 
-			[]string{"export BLUEFIN_SHELL_ENABLE_EZA=", "shell.sh"}, 
+			"Bash init",
+			"bash",
+			[]string{"export BLUEFIN_SHELL_ENABLE_EZA=", "shell.sh"},
 			false,
 		},
 		{
-			"Fish init", 
-			"fish", 
-			[]string{"set -gx BLUEFIN_SHELL_ENABLE_EZA", "shell.fish"}, 
+			"Fish init",
+			"fish",
+			[]string{"set -gx BLUEFIN_SHELL_ENABLE_EZA", "shell.fish"},
 			false,
 		},
 		{
-			"Zsh init", 
-			"zsh", 
-			[]string{"export BLUEFIN_SHELL_ENABLE_EZA=", "shell.sh"}, 
+			"Zsh init",
+			"zsh",
+			[]string{"export BLUEFIN_SHELL_ENABLE_EZA=", "shell.sh"},
+			false,
+		},
+		{
+			"PowerShell init",
+			"powershell",
+			[]string{"$env:BLUEFIN_SHELL_ENABLE_EZA", "bluefin_init"},
 			false,
 		},
 	}
@@ -54,14 +61,14 @@ func TestInit(t *testing.T) {
 				t.Errorf("Init() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			
+
 			for _, want := range tt.wantIn {
 				// We check if the expected strings (like export commands or script content parts) are present
 				if want == "shell.sh" || want == "shell.fish" {
 					// Check for a known variable that should be in the script
 					want = "BLUEFIN_SHELL_ENABLE_EZA"
 				}
-				
+
 				if !strings.Contains(got, want) {
 					t.Errorf("Init() output missing %q", want)
 				}
@@ -100,7 +107,12 @@ func TestCheckDependencies(t *testing.T) {
 		t.Error("Expected non-nil dependencies map")
 	}
 
-	for _, tool := range Tools {
+	expectedTools := Tools
+	if runtime.GOOS == "windows" {
+		expectedTools = ToolsForShell("powershell")
+	}
+
+	for _, tool := range expectedTools {
 		if _, exists := deps[tool.Binary]; !exists {
 			t.Errorf("Expected tool %s to be in dependencies map", tool.Binary)
 		}

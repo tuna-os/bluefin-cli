@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/hanthor/bluefin-cli/internal/install"
 	"github.com/hanthor/bluefin-cli/internal/shell"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -15,9 +15,9 @@ var (
 )
 
 var initCmd = &cobra.Command{
-	Use:   "init [bash|zsh|fish]",
+	Use:   "init [bash|zsh|fish|powershell|pwsh]",
 	Short: "Generate shell initialization script",
-	Long:  `Generate the shell initialization script for bluefin-cli.
+	Long: `Generate the shell initialization script for bluefin-cli.
 Add the following to your shell configuration file:
 
 Bash (~/.bashrc):
@@ -28,14 +28,17 @@ Zsh (~/.zshrc):
 
 Fish (~/.config/fish/config.fish):
   bluefin-cli init fish | source
+
+PowerShell ($PROFILE):
+  Invoke-Expression (& bluefin-cli init powershell)
 `,
 	Args:      cobra.ExactArgs(1),
-	ValidArgs: []string{"bash", "zsh", "fish"},
+	ValidArgs: []string{"bash", "zsh", "fish", "powershell", "pwsh"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		_ = install.MaybeRollOverWindowsThemeOnInit()
 
 		shellName := args[0]
-		
+
 		config, err := shell.LoadConfig(shellName)
 		if err != nil {
 			config = shell.DefaultConfig(shellName)
@@ -55,29 +58,9 @@ Fish (~/.config/fish/config.fish):
 		if err != nil {
 			return err
 		}
-		
+
 		// Print the bling script
 		fmt.Println(script)
-		fmt.Println()
-
-		// Add MOTD hook if enabled in config
-		if config.IsEnabled("Motd") {
-			switch shellName {
-			case "bash", "zsh":
-				// Only run MOTD if interactive
-				fmt.Println(`# bluefin-cli motd hook
-if [ -n "$PS1" ] && [ -t 1 ]; then
-    bluefin-cli motd show
-fi`)
-			case "fish":
-				fmt.Println(`# bluefin-cli motd hook
-if status is-interactive
-    bluefin-cli motd show
-end`)
-			default:
-				return fmt.Errorf("unsupported shell: %s", shellName)
-			}
-		}
 
 		return nil
 	},
@@ -85,7 +68,7 @@ end`)
 
 func init() {
 	rootCmd.AddCommand(initCmd)
-	
+
 	for _, tool := range shell.Tools {
 		flagName := strings.ToLower(tool.Name)
 		toolFlags[flagName] = initCmd.Flags().Bool(flagName, tool.Default, fmt.Sprintf("Enable %s", tool.Name))
