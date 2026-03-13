@@ -23,6 +23,11 @@ func toolsForCurrentPlatform() []Tool {
 
 // InstallTools iterates through the config and installs enabled tools
 func InstallTools(cfg *Config) {
+	// If MOTD is enabled, ensure Glow is also considered enabled for installation
+	if cfg.IsEnabled("Motd") {
+		cfg.SetEnabled("Glow", true)
+	}
+
 	tools := toolsForCurrentPlatform()
 
 	// First check if we need to install anything
@@ -33,12 +38,6 @@ func InstallTools(cfg *Config) {
 				needsInstall = true
 				break
 			}
-		}
-	}
-
-	if cfg.IsEnabled("Motd") {
-		if _, err := exec.LookPath("glow"); err != nil {
-			needsInstall = true
 		}
 	}
 
@@ -59,15 +58,9 @@ func InstallTools(cfg *Config) {
 
 	for _, tool := range tools {
 		if cfg.IsEnabled(tool.Name) {
-			if err := ensureTool(tool.Binary, tool.Pkg); err != nil {
-				fmt.Println(errorStyle.Render(fmt.Sprintf("Warning: Failed to install %s: %v", tool.Pkg, err)))
+			if err := ensureTool(tool.Binary, tool.GetBrewPkg()); err != nil {
+				fmt.Println(errorStyle.Render(fmt.Sprintf("Warning: Failed to install %s: %v", tool.GetBrewPkg(), err)))
 			}
-		}
-	}
-
-	if cfg.IsEnabled("Motd") {
-		if err := ensureTool("glow", "glow"); err != nil {
-			fmt.Println(errorStyle.Render(fmt.Sprintf("Warning: Failed to install glow: %v", err)))
 		}
 	}
 }
@@ -522,6 +515,62 @@ func Init(shell string, config *Config) (string, error) {
 	}
 
 	tools := ToolsForShell(shell)
+	configUpdated := false
+
+	// Synchronize configuration with installed tools in PATH
+	for _, tool := range tools {
+		isInstalled := false
+		if _, err := exec.LookPath(tool.Binary); err == nil {
+			isInstalled = true
+		}
+
+		isEnabled := config.IsEnabled(tool.Name)
+
+		if isEnabled && !isInstalled {
+			fmt.Fprintf(os.Stderr, "bluefin-cli: %s is enabled but '%s' was not found in PATH.\n", tool.Name, tool.Binary)
+			fmt.Fprintf(os.Stderr, "  - Install it: brew install %s\n", tool.GetBrewPkg())
+			fmt.Fprintf(os.Stderr, "  - Or disable it: bluefin-cli shell config\n")
+
+			config.SetEnabled(tool.Name, false)
+			configUpdated = true
+
+			// If Glow is disabled, also disable MOTD
+			if tool.Name == "Glow" {
+				config.SetEnabled("Motd", false)
+			}
+		} else if !isEnabled && isInstalled {
+			// Auto-enable if found and previously disabled
+			config.SetEnabled(tool.Name, true)
+			configUpdated = true
+			fmt.Fprintf(os.Stderr, "bluefin-cli: %s found in PATH, automatically enabling.\n", tool.Name)
+
+			// If Glow is found, also enable MOTD
+			if tool.Name == "Glow" {
+				config.SetEnabled("Motd", true)
+			}
+		}
+	}
+
+	// MOTD consistency check (if manual override happened)
+	if config.IsEnabled("Motd") && !config.IsEnabled("Glow") {
+		// If MOTD enabled but Glow disabled, try to enable Glow
+		if _, err := exec.LookPath("glow"); err == nil {
+			config.SetEnabled("Glow", true)
+			configUpdated = true
+		} else {
+			// Glow missing, must disable MOTD
+			config.SetEnabled("Motd", false)
+			configUpdated = true
+		}
+	}
+
+	if configUpdated {
+		if err := SaveConfig(config); err != nil {
+			fmt.Fprintf(os.Stderr, "bluefin-cli: failed to save updated config: %v\n", err)
+		} else {
+			fmt.Fprintf(os.Stderr, "bluefin-cli: configuration synchronized with installed components.\n")
+		}
+	}
 
 	var sb strings.Builder
 
@@ -549,8 +598,10 @@ func Init(shell string, config *Config) (string, error) {
 
 	if shell == "fish" {
 		fmt.Fprintf(&sb, "set -gx BLUEFIN_SHELL_ENABLE_MOTD %d\n", boolToInt(config.IsEnabled("Motd")))
+		fmt.Fprintf(&sb, "set -gx BLING_SHELL %s\n", shell)
 	} else {
 		fmt.Fprintf(&sb, "export BLUEFIN_SHELL_ENABLE_MOTD=%d\n", boolToInt(config.IsEnabled("Motd")))
+		fmt.Fprintf(&sb, "export BLING_SHELL=\"%s\"\n", shell)
 	}
 
 	sb.WriteString("\n")

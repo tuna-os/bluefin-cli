@@ -60,9 +60,23 @@ fi
 # Atuin allows these flags: "--disable-up-arrow" and/or "--disable-ctrl-r"
 ATUIN_INIT_FLAGS=${ATUIN_INIT_FLAGS:-""}
 
-# Detect shell
-[ -n "$BASH_VERSION" ] && BLING_SHELL="bash"
-[ -n "$ZSH_VERSION" ] && BLING_SHELL="zsh"
+# Detect shell (macOS/Linux compatible)
+if [ -z "$BLING_SHELL" ]; then
+    if [ -n "$BASH_VERSION" ]; then
+        BLING_SHELL="bash"
+    elif [ -n "$ZSH_VERSION" ]; then
+        BLING_SHELL="zsh"
+    else
+        BLING_SHELL="$(ps -p $$ -o comm= 2>/dev/null | sed 's/^-//' | xargs basename 2>/dev/null)"
+    fi
+fi
+
+if [ "${BLING_SHELL}" = "zsh" ]; then
+    # Ensure compdef is available for zoxide/carapace
+    if ! command -v compdef >/dev/null 2>&1; then
+        autoload -Uz compinit && compinit
+    fi
+fi
 
 if [ "${BLING_SHELL}" = "bash" ]; then
     [ -f "/etc/profile.d/bash-preexec.sh" ] && . "/etc/profile.d/bash-preexec.sh"
