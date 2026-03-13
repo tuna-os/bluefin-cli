@@ -34,6 +34,28 @@ func TestConfigData(t *testing.T) {
 	if !loadedCfg.IsEnabled("Starship") {
 		t.Error("Expected Starship to be enabled (unchanged)")
 	}
-
 }
 
+func TestDefaultConfigPerShell(t *testing.T) {
+	// bash should not have Gsudo enabled
+	bashCfg := DefaultConfig("bash")
+	if bashCfg.IsEnabled("Gsudo") {
+		t.Error("Default bash config should have Gsudo disabled")
+	}
+
+	// powershell SHOULD have Gsudo enabled
+	pwshCfg := DefaultConfig("powershell")
+	if !pwshCfg.IsEnabled("Gsudo") {
+		t.Error("Default powershell config should have Gsudo enabled")
+	}
+
+	// bash should have Ugrep enabled
+	if !bashCfg.IsEnabled("Ugrep") {
+		t.Error("Default bash config should have Ugrep enabled")
+	}
+
+	// powershell should NOT have Ugrep enabled
+	if pwshCfg.IsEnabled("Ugrep") {
+		t.Error("Default powershell config should have Ugrep disabled")
+	}
+}

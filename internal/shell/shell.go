@@ -18,17 +18,26 @@ func toolsForCurrentPlatform() []Tool {
 		return ToolsForShell("powershell")
 	}
 
-	return Tools
+	// For non-Windows platforms, filter out tools that are explicitly unsupported on common shells.
+	// This ensures tools like gsudo (Windows-only) are not included.
+	filtered := make([]Tool, 0, len(Tools))
+	for _, tool := range Tools {
+		if tool.SupportsShell("bash") || tool.SupportsShell("zsh") || tool.SupportsShell("fish") {
+			filtered = append(filtered, tool)
+		}
+	}
+
+	return filtered
 }
 
 // InstallTools iterates through the config and installs enabled tools
-func InstallTools(cfg *Config) {
+func InstallTools(shell string, cfg *Config) {
 	// If MOTD is enabled, ensure Glow is also considered enabled for installation
 	if cfg.IsEnabled("Motd") {
 		cfg.SetEnabled("Glow", true)
 	}
 
-	tools := toolsForCurrentPlatform()
+	tools := ToolsForShell(shell)
 
 	// First check if we need to install anything
 	needsInstall := false
@@ -455,7 +464,7 @@ func Toggle(shell string, enable bool) error {
 		if hasLine {
 			fmt.Println(infoStyle.Render(fmt.Sprintf("%s is already enabled for %s", shell, shell)))
 			if cfg, err := LoadConfig(shell); err == nil {
-				InstallTools(cfg)
+				InstallTools(shell, cfg)
 			}
 			return nil
 		}
@@ -502,7 +511,7 @@ func Toggle(shell string, enable bool) error {
 
 	if enable {
 		if cfg, err := LoadConfig(shell); err == nil {
-			InstallTools(cfg)
+			InstallTools(shell, cfg)
 		}
 	}
 

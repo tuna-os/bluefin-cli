@@ -18,9 +18,15 @@ The project uses `just` as a task runner.
 
 ### Common Commands
 - **`just build`**: Builds the binary locally.
-- **`just test`**: Runs tests inside a container to ensure isolated environment.
+- **`just test`**: Runs integration tests inside a container.
+- **`just unit-test`**: Runs all Go unit tests inside a container.
 - **`just shell-with-bling`**: Spawns a container with the CLI pre-installed and "bling" enabled for manual testing.
 - **`just inspect-bling`**: Verifies that shell configuration files are correctly modified.
+
+### Testing Guidelines
+- **Unit Tests**: Add unit tests for new logic in the respective `internal/` package. Run them locally with `go test ./internal/...` or via `just unit-test`.
+- **Integration Tests**: Integration tests are located in `test/integration_test.go`. Run them via `just test`.
+- **Manual Verification**: Use `just shell-with-bling` to verify UI and shell configuration changes in an isolated environment.
 
 ### Guidelines for Agents
 - **Changing Bundles**: Update `internal/install/install.go` to add/remove bundles or change the source URL.

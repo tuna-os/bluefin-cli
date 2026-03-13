@@ -57,7 +57,7 @@ func togglePowerShell(enable bool) error {
 
 	if enable {
 		if cfg, err := LoadConfig("powershell"); err == nil {
-			InstallTools(cfg)
+			InstallTools("powershell", cfg)
 		}
 	}
 

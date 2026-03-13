@@ -244,7 +244,7 @@ func configureShellTools() error {
 	}
 
 	// Install any newly enabled tools
-	shell.InstallTools(newCfg)
+	shell.InstallTools(currentShell, newCfg)
 
 	fmt.Println(tui.SuccessStyle.Render("Configuration saved! Tools installed/updated."))
 	tui.Pause()

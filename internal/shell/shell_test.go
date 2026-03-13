@@ -3,7 +3,6 @@ package shell
 import (
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 )
@@ -107,12 +106,7 @@ func TestCheckDependencies(t *testing.T) {
 		t.Error("Expected non-nil dependencies map")
 	}
 
-	expectedTools := Tools
-	if runtime.GOOS == "windows" {
-		expectedTools = ToolsForShell("powershell")
-	}
-
-	for _, tool := range expectedTools {
+	for _, tool := range toolsForCurrentPlatform() {
 		if _, exists := deps[tool.Binary]; !exists {
 			t.Errorf("Expected tool %s to be in dependencies map", tool.Binary)
 		}

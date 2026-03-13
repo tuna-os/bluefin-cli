@@ -38,6 +38,11 @@ func DefaultConfig(shell string) *Config {
 	cfg := make(Config)
 
 	for _, tool := range Tools {
+		if !tool.SupportsShell(shell) {
+			cfg[strings.ToLower(tool.Name)] = false
+			continue
+		}
+
 		def := tool.Default
 		if val, ok := tool.ShellDefaults[shell]; ok {
 			def = val
