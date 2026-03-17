@@ -4,7 +4,7 @@ go 1.25.4
 
 require (
 	github.com/charmbracelet/bubbles/v2 v2.0.0
-	github.com/charmbracelet/huh v1.0.0
+	github.com/charmbracelet/huh/v2 v2.0.3
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/klauspost/compress v1.18.4
 	github.com/sixdouglas/suncalc v0.0.0-20250114185126-291b1938b70c
