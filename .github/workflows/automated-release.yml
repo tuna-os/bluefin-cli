@@ -1,0 +1,48 @@
+name: Automated Release
+
+on:
+  push:
+    branches: [ master ]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.26'
+          cache: true
+
+      - name: Install Semantic Release dependencies
+        run: |
+          npm install -g semantic-release \
+                         @semantic-release/commit-analyzer \
+                         @semantic-release/release-notes-generator \
+                         @semantic-release/changelog \
+                         @semantic-release/git \
+                         @semantic-release/github \
+                         @semantic-release/exec
+
+      - name: Install GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          install-only: true
+
+      - name: Semantic Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use a PAT if you want to trigger other workflows or if you need to bypass branch protection
+          # GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: npx semantic-release
