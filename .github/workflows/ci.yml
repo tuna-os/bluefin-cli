@@ -110,7 +110,7 @@ jobs:
         go build -o bluefin-cli-${{ matrix.goos }}-${{ matrix.goarch }} .
         
     - name: Upload artifacts
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: bluefin-cli-${{ matrix.goos }}-${{ matrix.goarch }}
         path: bluefin-cli-${{ matrix.goos }}-${{ matrix.goarch }}
