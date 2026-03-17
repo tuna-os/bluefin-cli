@@ -3,7 +3,7 @@ module github.com/hanthor/bluefin-cli
 go 1.25.4
 
 require (
-	github.com/charmbracelet/bubbles v1.0.0
+	github.com/charmbracelet/bubbles/v2 v2.0.0
 	github.com/charmbracelet/huh v1.0.0
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/klauspost/compress v1.18.4
