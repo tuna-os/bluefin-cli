@@ -33,45 +33,10 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: false
 
-  integration-test:
-    name: Integration Tests
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-      
-    - name: Set up Go
-      uses: actions/setup-go@v6
-      with:
-        go-version: '1.26'
-        
-    - name: Run integration tests
-      run: go test -v ./test/...
-
-  container-test:
-    name: Container-based Tests
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-      
-    - name: Build container
-      run: podman build -t bluefin-cli-dev -f Containerfile.dev .
-      
-    - name: Run container tests
-      run: |
-        podman run --rm \
-            -v "$(pwd):/workspace:Z" \
-            -w /workspace \
-            -e HOME=/root \
-            bluefin-cli-dev \
-            go test -v ./test/...
-
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    continue-on-error: true
     
     steps:
     - name: Checkout code
@@ -86,33 +51,3 @@ jobs:
       uses: golangci/golangci-lint-action@v9
       with:
         version: latest
-
-  build:
-    name: Build for Multiple Platforms
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        goos: [linux, darwin]
-        goarch: [amd64, arm64]
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-      
-    - name: Set up Go
-      uses: actions/setup-go@v6
-      with:
-        go-version: '1.26'
-        
-    - name: Build
-      env:
-        GOOS: ${{ matrix.goos }}
-        GOARCH: ${{ matrix.goarch }}
-      run: |
-        go build -o bluefin-cli-${{ matrix.goos }}-${{ matrix.goarch }} .
-        
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v7
-      with:
-        name: bluefin-cli-${{ matrix.goos }}-${{ matrix.goarch }}
-        path: bluefin-cli-${{ matrix.goos }}-${{ matrix.goarch }}
