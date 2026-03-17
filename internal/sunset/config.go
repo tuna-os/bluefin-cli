@@ -16,6 +16,7 @@ type Config struct {
 	Longitude      float64 `json:"longitude"`
 	DayWallpaper   string  `json:"day_wallpaper"`
 	NightWallpaper string  `json:"night_wallpaper"`
+	WallpaperTheme string  `json:"wallpaper_theme"`
 }
 
 // DefaultConfig returns a default configuration.
@@ -34,21 +35,12 @@ func LoadConfig() (*Config, error) {
 		return nil, err
 	}
 
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		return DefaultConfig(), nil
+	config := &Config{}
+	if err := config.LoadFrom(configPath); err != nil {
+		return nil, err
 	}
 
-	content, err := os.ReadFile(configPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read sunset config: %w", err)
-	}
-
-	var config Config
-	if err := json.Unmarshal(content, &config); err != nil {
-		return nil, fmt.Errorf("failed to parse sunset config: %w", err)
-	}
-
-	return &config, nil
+	return config, nil
 }
 
 // SaveConfig saves the sunset configuration to disk.
@@ -57,19 +49,42 @@ func SaveConfig(config *Config) error {
 	if err != nil {
 		return err
 	}
+	return config.SaveTo(configPath)
+}
 
-	dir := filepath.Dir(configPath)
+// SaveTo saves the configuration to a specific path.
+func (c *Config) SaveTo(path string) error {
+	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return fmt.Errorf("failed to create sunset config directory: %w", err)
+		return fmt.Errorf("failed to create directory: %w", err)
 	}
 
-	content, err := json.MarshalIndent(config, "", "  ")
+	content, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
-		return fmt.Errorf("failed to marshal sunset config: %w", err)
+		return fmt.Errorf("failed to marshal config: %w", err)
 	}
 
-	if err := os.WriteFile(configPath, content, 0644); err != nil {
-		return fmt.Errorf("failed to write sunset config: %w", err)
+	if err := os.WriteFile(path, content, 0644); err != nil {
+		return fmt.Errorf("failed to write config: %w", err)
+	}
+
+	return nil
+}
+
+// LoadFrom loads the configuration from a specific path.
+func (c *Config) LoadFrom(path string) error {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		*c = *DefaultConfig()
+		return nil
+	}
+
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("failed to read config: %w", err)
+	}
+
+	if err := json.Unmarshal(content, c); err != nil {
+		return fmt.Errorf("failed to parse config: %w", err)
 	}
 
 	return nil

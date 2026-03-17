@@ -9,6 +9,10 @@ import (
 func TestGetConfigDir(t *testing.T) {
 	// Mock HOME for consistent test
 	tmpHome := t.TempDir()
+	originalGetHomeDir := getHomeDir
+	getHomeDir = func() (string, error) { return tmpHome, nil }
+	defer func() { getHomeDir = originalGetHomeDir }()
+
 	os.Setenv("HOME", tmpHome)
 	defer os.Unsetenv("HOME")
 

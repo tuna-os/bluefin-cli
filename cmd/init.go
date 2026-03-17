@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hanthor/bluefin-cli/internal/install"
 	"github.com/hanthor/bluefin-cli/internal/shell"
 	"github.com/spf13/cobra"
 )
@@ -35,8 +34,6 @@ PowerShell ($PROFILE):
 	Args:      cobra.ExactArgs(1),
 	ValidArgs: []string{"bash", "zsh", "fish", "powershell", "pwsh"},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		_ = install.MaybeRollOverWindowsThemeOnInit()
-
 		shellName := args[0]
 
 		config, err := shell.LoadConfig(shellName)

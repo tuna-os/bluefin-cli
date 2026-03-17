@@ -15,7 +15,9 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+	"time"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/hanthor/bluefin-cli/internal/env"
 	"github.com/klauspost/compress/zstd"
 )
@@ -40,10 +42,8 @@ var knownWallpaperCasks = []string{
 }
 
 var (
-	isWSL                      = env.IsWSL
-	isWindows                  = env.IsWindows
-	syncWallpapersToWindowsWSL = syncWallpapersToWindows
-	syncWallpapersToWindowsWin = syncWallpapersFromWindowsInstall
+	isWSL     = env.IsWSL
+	isWindows = env.IsWindows
 )
 
 func EnsureBrew() error {
@@ -146,31 +146,10 @@ func InstallWallpaperCasks(casks []string) error {
 }
 
 func postInstallWallpaperSetup(casks []string) {
-	if !isWSL() {
-		if !isWindows() {
-			return
-		}
-
-		if err := syncWallpapersToWindowsWin(casks); err != nil {
-			fmt.Println(infoStyle.Render("Windows detected, but wallpaper/theme sync could not be completed: " + err.Error()))
-			fmt.Println(infoStyle.Render("Wallpaper installation succeeded; continuing without Windows theme registration."))
-		}
-		return
-	}
-
-	if err := syncWallpapersToWindowsWSL(casks); err != nil {
-		fmt.Println(infoStyle.Render("WSL detected, but Windows wallpaper/theme sync could not be completed: " + err.Error()))
-		fmt.Println(infoStyle.Render("Homebrew wallpaper installation succeeded; continuing without Windows sync."))
-	}
+	// Legacy function, no-op now.
 }
 
 func CleanupWallpapers(all bool) error {
-	if isWSL() {
-		if err := cleanupWindowsWallpaperSyncArtifacts(); err != nil {
-			return err
-		}
-	}
-
 	if !all {
 		return nil
 	}
@@ -264,27 +243,58 @@ func installWallpaperCasksWindows(casks []string) error {
 		return fmt.Errorf("failed to create wallpaper install directory: %w", err)
 	}
 
+	successChan := make(chan bool, 1)
+	errChan := make(chan error, 1)
+
 	for _, c := range casks {
 		normalized := normalizeCaskName(c)
-		archiveURL, err := fetchWallpaperArchiveURLFromTap(normalized)
-		if err != nil {
-			return err
+		targetDir := ""
+
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			archiveURL, err := fetchWallpaperArchiveURLFromTap(normalized)
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			targetDirName := normalized
+			if themeName, ok := detectThemeName(normalized); ok {
+				targetDirName = strings.ToLower(themeName)
+			}
+			targetDir = filepath.Join(installRoot, targetDirName)
+
+			if err := downloadAndExtractWallpaperArchive(archiveURL, targetDir); err != nil {
+				errChan <- err
+				return
+			}
+			successChan <- true
+		}()
+
+		// Throbber
+		frames := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
+		i := 0
+	loop:
+		for {
+			select {
+			case <-done:
+				break loop
+			default:
+				fmt.Printf("\r%s %s...", infoStyle.Foreground(lipgloss.Color("13")).Render(frames[i%len(frames)]), infoStyle.Render("Installing "+normalized))
+				i++
+				time.Sleep(100 * time.Millisecond)
+			}
 		}
 
-		targetDirName := normalized
-		if themeName, ok := detectThemeName(normalized); ok {
-			targetDirName = strings.ToLower(themeName)
-		}
-		targetDir := filepath.Join(installRoot, targetDirName)
-
-		if err := downloadAndExtractWallpaperArchive(archiveURL, targetDir); err != nil {
+		select {
+		case err := <-errChan:
 			return fmt.Errorf("failed to install %s: %w", normalized, err)
+		case <-successChan:
+			fmt.Printf("\r\033[K") // Clear throbber line
+			fmt.Println(successStyle.Render(fmt.Sprintf("✓ Installed %s wallpapers to %s", normalized, targetDir)))
 		}
-
-		fmt.Println(successStyle.Render(fmt.Sprintf("✓ Installed %s wallpapers to %s", normalized, targetDir)))
 	}
-
-	postInstallWallpaperSetup(casks)
 
 	fmt.Println(infoStyle.Render("Wallpaper files downloaded without Homebrew."))
 	fmt.Println(infoStyle.Render("You can apply them from Windows Settings > Personalization > Background."))
@@ -352,7 +362,17 @@ func resolveWallpaperArchiveURLFromCask(body []byte) string {
 		return ""
 	}
 
-	// Prefer Linux/general wallpaper archives over macOS and KDE-specific variants.
+	// Prefer variants based on platform.
+	// For Windows, PNG is most compatible.
+	if runtime.GOOS == "windows" {
+		for _, u := range urls {
+			if strings.Contains(strings.ToLower(u), "-png") {
+				return u
+			}
+		}
+	}
+
+	// General preference: PNG/Gnome/Neutral over MacOS/KDE specific ones.
 	for _, u := range urls {
 		l := strings.ToLower(u)
 		if strings.Contains(l, "wallpaper") && (strings.Contains(l, "png") || strings.Contains(l, "gnome")) {
@@ -394,9 +414,17 @@ func downloadAndExtractWallpaperArchive(archiveURL, targetDir string) error {
 	case strings.HasSuffix(lowerURL, ".zip"):
 		return extractImagesFromZip(payload, targetDir)
 	case strings.HasSuffix(lowerURL, ".tar.zstd") || strings.HasSuffix(lowerURL, ".tar.zst"):
-		return extractImagesFromTarZstd(payload, targetDir)
+		if err := extractImagesFromTarZstd(payload, targetDir); err == nil {
+			return nil
+		}
+		// Fallback to plain tar if zstd magic number mismatch
+		return extractImagesFromTar(payload, targetDir)
 	case strings.HasSuffix(lowerURL, ".tar.gz") || strings.HasSuffix(lowerURL, ".tgz"):
-		return extractImagesFromTarGz(payload, targetDir)
+		if err := extractImagesFromTarGz(payload, targetDir); err == nil {
+			return nil
+		}
+		// Fallback to plain tar
+		return extractImagesFromTar(payload, targetDir)
 	default:
 		// Try common archive types for tap assets where extension can be omitted.
 		if err := extractImagesFromZip(payload, targetDir); err == nil {
@@ -405,7 +433,10 @@ func downloadAndExtractWallpaperArchive(archiveURL, targetDir string) error {
 		if err := extractImagesFromTarZstd(payload, targetDir); err == nil {
 			return nil
 		}
-		return extractImagesFromTarGz(payload, targetDir)
+		if err := extractImagesFromTarGz(payload, targetDir); err == nil {
+			return nil
+		}
+		return extractImagesFromTar(payload, targetDir)
 	}
 }
 
@@ -449,32 +480,7 @@ func extractImagesFromTarGz(payload []byte, targetDir string) error {
 	defer gz.Close()
 
 	tr := tar.NewReader(gz)
-	written := 0
-	for {
-		h, err := tr.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return err
-		}
-
-		if h.Typeflag != tar.TypeReg || !isImageFileName(h.Name) {
-			continue
-		}
-
-		name := filepath.Base(h.Name)
-		outPath := filepath.Join(targetDir, name)
-		if err := writeFileFromReader(outPath, tr); err == nil {
-			written++
-		}
-	}
-
-	if written == 0 {
-		return fmt.Errorf("no wallpaper image files found in archive")
-	}
-
-	return nil
+	return extractImagesFromTarReader(tr, targetDir)
 }
 
 func extractImagesFromTarZstd(payload []byte, targetDir string) error {
@@ -485,6 +491,15 @@ func extractImagesFromTarZstd(payload []byte, targetDir string) error {
 	defer zr.Close()
 
 	tr := tar.NewReader(zr)
+	return extractImagesFromTarReader(tr, targetDir)
+}
+
+func extractImagesFromTar(payload []byte, targetDir string) error {
+	tr := tar.NewReader(bytes.NewReader(payload))
+	return extractImagesFromTarReader(tr, targetDir)
+}
+
+func extractImagesFromTarReader(tr *tar.Reader, targetDir string) error {
 	written := 0
 	for {
 		h, err := tr.Next()
@@ -495,7 +510,7 @@ func extractImagesFromTarZstd(payload []byte, targetDir string) error {
 			return err
 		}
 
-		if h.Typeflag != tar.TypeReg || !isImageFileName(h.Name) {
+		if (h.Typeflag != tar.TypeReg && h.Typeflag != tar.TypeRegA) || !isImageFileName(h.Name) {
 			continue
 		}
 
@@ -515,7 +530,47 @@ func extractImagesFromTarZstd(payload []byte, targetDir string) error {
 
 func isImageFileName(name string) bool {
 	name = strings.ToLower(strings.TrimSpace(name))
-	return strings.HasSuffix(name, ".jpg") || strings.HasSuffix(name, ".jpeg") || strings.HasSuffix(name, ".png") || strings.HasSuffix(name, ".bmp") || strings.HasSuffix(name, ".webp")
+	return strings.HasSuffix(name, ".jpg") || strings.HasSuffix(name, ".jpeg") || strings.HasSuffix(name, ".png") || strings.HasSuffix(name, ".bmp") || strings.HasSuffix(name, ".webp") || strings.HasSuffix(name, ".jxl") || strings.HasSuffix(name, ".heic") || strings.HasSuffix(name, ".avif")
+}
+
+func normalizeCaskName(cask string) string {
+	parts := strings.Split(cask, "/")
+	return parts[len(parts)-1]
+}
+
+func detectThemeName(cask string) (string, bool) {
+	name := strings.ToLower(cask)
+	switch {
+	case strings.Contains(name, "bluefin"):
+		return "Bluefin", true
+	case strings.Contains(name, "aurora"):
+		return "Aurora", true
+	case strings.Contains(name, "bazzite"):
+		return "Bazzite", true
+	default:
+		return "", false
+	}
+}
+
+func ThemesFromWallpaperCasks(casks []string) []string {
+	seen := map[string]struct{}{}
+	themes := make([]string, 0, len(casks))
+
+	for _, cask := range casks {
+		normalized := normalizeCaskName(cask)
+		themeName, ok := detectThemeName(normalized)
+		if !ok {
+			continue
+		}
+		if _, exists := seen[themeName]; exists {
+			continue
+		}
+		seen[themeName] = struct{}{}
+		themes = append(themes, themeName)
+	}
+
+	sort.Strings(themes)
+	return themes
 }
 
 func writeFileFromReader(path string, r io.Reader) error {

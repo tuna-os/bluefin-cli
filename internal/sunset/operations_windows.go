@@ -13,12 +13,16 @@ import (
 var (
 	user32               = syscall.NewLazyDLL("user32.dll")
 	systemParametersInfo = user32.NewProc("SystemParametersInfoW")
+	sendMessageTimeout   = user32.NewProc("SendMessageTimeoutW")
 )
 
 const (
 	spiSetDesktopWallpaper = 0x0014
 	spifUpdateIniFile     = 0x01
 	spifSendChange        = 0x02
+	wmSettingChange       = 0x001A
+	hwndBroadcast         = 0xffff
+	smtoAbortIfHung       = 0x0002
 )
 
 type windowsThemeOperator struct{}
@@ -42,6 +46,18 @@ func (w *windowsThemeOperator) SetTheme(isLight bool) error {
 	if err := key.SetDWordValue("SystemUsesLightTheme", val); err != nil {
 		return fmt.Errorf("failed to set SystemUsesLightTheme: %w", err)
 	}
+
+	// Broadcast the change to refresh the UI
+	immersiveColorSet, _ := syscall.UTF16PtrFromString("ImmersiveColorSet")
+	sendMessageTimeout.Call(
+		uintptr(hwndBroadcast),
+		uintptr(wmSettingChange),
+		0,
+		uintptr(unsafe.Pointer(immersiveColorSet)),
+		uintptr(smtoAbortIfHung),
+		5000,
+		0,
+	)
 
 	return nil
 }
