@@ -1,16 +1,22 @@
 package test
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
 
-const (
-	binaryPath = "../bluefin-cli"
-)
+func getBinaryPath() string {
+	path := "../bluefin-cli"
+	if runtime.GOOS == "windows" {
+		path += ".exe"
+	}
+	return path
+}
 
 // Shell configuration for parameterized tests
 type ShellConfig struct {
@@ -49,6 +55,19 @@ var shells = []ShellConfig{
 			return touchFile(filepath.Join(dir, "config.fish"))
 		},
 	},
+	{
+		Name:         "powershell",
+		ConfigFile:   "Documents/PowerShell/Microsoft.PowerShell_profile.ps1",
+		ShellPattern: "bluefin-cli init powershell",
+		ShellScript:  "bluefin-cli init powershell",
+		InitShell: func() error {
+			dir := filepath.Join(os.Getenv("HOME"), "Documents", "PowerShell")
+			if err := os.MkdirAll(dir, 0755); err != nil {
+				return err
+			}
+			return touchFile(filepath.Join(dir, "Microsoft.PowerShell_profile.ps1"))
+		},
+	},
 }
 
 // Tool configuration for testing shell script content
@@ -70,9 +89,14 @@ var tools = []ToolConfig{
 
 func TestMain(m *testing.M) {
 	// Setup
-	if os.Getenv("HOME") == "" {
-		os.Setenv("HOME", "/root")
+	originalHome := os.Getenv("HOME")
+	tmpHome, err := os.MkdirTemp("", "bluefin-test-home-*")
+	if err != nil {
+		panic(err)
 	}
+	defer os.RemoveAll(tmpHome)
+
+	os.Setenv("HOME", tmpHome)
 	
 	// Initialize shell configs
 	for _, shell := range shells {
@@ -83,6 +107,9 @@ func TestMain(m *testing.M) {
 	
 	// Run tests
 	code := m.Run()
+	
+	// Cleanup
+	os.Setenv("HOME", originalHome)
 	os.Exit(code)
 }
 
@@ -95,7 +122,7 @@ func touchFile(path string) error {
 }
 
 func runCommand(t *testing.T, args ...string) (string, error) {
-	cmd := exec.Command(binaryPath, args...)
+	cmd := exec.Command(getBinaryPath(), args...)
 	output, err := cmd.CombinedOutput()
 	return string(output), err
 }
@@ -123,6 +150,9 @@ func TestStatusCommand(t *testing.T) {
 }
 
 func TestShellEnableForAllShells(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping shell enabling tests on native Windows")
+	}
 	for _, shell := range shells {
 		t.Run(shell.Name, func(t *testing.T) {
 			// Enable shell
@@ -142,6 +172,9 @@ func TestShellEnableForAllShells(t *testing.T) {
 }
 
 func TestShellScriptSourcing(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping shell script sourcing tests on native Windows")
+	}
 	for _, shell := range shells {
 		t.Run(shell.Name, func(t *testing.T) {
 			// Run init command and check if it outputs the script content
@@ -159,6 +192,9 @@ func TestShellScriptSourcing(t *testing.T) {
 }
 
 func TestShellSyntax(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping shell syntax tests on native Windows")
+	}
 	tests := []struct {
 		shell      string
 		configFile string
@@ -215,13 +251,37 @@ func TestMOTDSystem(t *testing.T) {
 }
 
 func TestStatusReflectsChanges(t *testing.T) {
+	targetShell := "bash"
+	if runtime.GOOS == "windows" {
+		targetShell = "powershell"
+	}
+
+	// Enable shell
+	_, err := runCommand(t, "shell", targetShell, "on")
+	if err != nil {
+		t.Fatalf("Failed to enable shell %s: %v", targetShell, err)
+	}
+
 	output, err := runCommand(t, "status")
 	if err != nil {
 		t.Fatalf("Status command failed: %v", err)
 	}
 	
-	if !strings.Contains(output, "bash: enabled") {
-		t.Error("Status doesn't show bash bling as enabled")
+	t.Logf("Status Output:\n%s", output)
+
+	found := false
+	if targetShell == "powershell" {
+		if strings.Contains(output, "powershell: enabled") || strings.Contains(output, "pwsh: enabled") {
+			found = true
+		}
+	} else {
+		if strings.Contains(output, fmt.Sprintf("%s: enabled", targetShell)) {
+			found = true
+		}
+	}
+
+	if !found {
+		t.Errorf("Status doesn't show %s as enabled", targetShell)
 	}
 	
 	if !strings.Contains(output, "Message of the Day") {
@@ -247,7 +307,7 @@ func TestInstallList(t *testing.T) {
 		t.Fatalf("Install list command failed: %v", err)
 	}
 	
-	if !strings.Contains(output, "Available Homebrew Bundles") {
+	if !strings.Contains(output, "Available Bundles") {
 		t.Error("Install list doesn't show expected content")
 	}
 }

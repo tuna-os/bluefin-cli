@@ -12,6 +12,7 @@ var (
 	runtimeGOOS = runtime.GOOS
 	getEnv      = os.Getenv
 	readFile    = os.ReadFile
+	getHomeDir  = os.UserHomeDir
 )
 
 // GetConfigDir returns the directory where configuration files should be stored.
@@ -19,7 +20,7 @@ var (
 // Otherwise, it defaults to $HOMEBREW_PREFIX/etc/bluefin-cli if HOMEBREW_PREFIX is set.
 // Finally, it falls back to ~/.config/bluefin-cli.
 func GetConfigDir() (string, error) {
-	home, err := os.UserHomeDir()
+	home, err := getHomeDir()
 	if err != nil {
 		return "", err
 	}

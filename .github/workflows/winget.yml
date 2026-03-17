@@ -72,7 +72,6 @@ jobs:
       - name: Submit update (fallback to new)
         shell: pwsh
         run: |
-          $ErrorActionPreference = 'Stop'
           $pkg = $env:PACKAGE_ID
           $ver = "${{ steps.resolve.outputs.version }}"
           $url = "${{ steps.resolve.outputs.asset_url }}"
@@ -84,11 +83,13 @@ jobs:
           # Try update first for existing package versions.
           ./wingetcreate.exe update $pkg -u $url -v $ver -t $token --submit
           if ($LASTEXITCODE -eq 0) {
+            Write-Host "Update successful."
             exit 0
           }
 
-          Write-Host "Update failed, trying first-time package submission..."
+          Write-Host "Update failed or package not found, trying first-time package submission..."
           ./wingetcreate.exe new -i $pkg -u $url -v $ver -t $token --submit
           if ($LASTEXITCODE -ne 0) {
-            throw "wingetcreate submission failed"
+            Write-Host "wingetcreate new submission failed"
+            exit 1
           }

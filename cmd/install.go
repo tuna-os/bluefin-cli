@@ -53,11 +53,7 @@ func init() {
 	installWallpapersCmd.AddCommand(installWallpapersCleanupCmd)
 
 	installWallpapersCmd.Flags().Bool("non-interactive", false, "Skip prompts and use flag values")
-	installWallpapersCmd.Flags().Bool("yes", false, "Non-interactive shortcut: apply theme + enable mode sync + enable 6 AM/6 PM switching")
-	installWallpapersCmd.Flags().Bool("apply-theme", false, "Apply a Windows theme after registration (WSL only)")
-	installWallpapersCmd.Flags().String("theme", "", "Theme name to apply in non-interactive mode (Bluefin, Aurora, Bazzite)")
-	installWallpapersCmd.Flags().Bool("enable-mode-sync", false, "Enable day/night wallpaper sync task in non-interactive mode")
-	installWallpapersCmd.Flags().Bool("enable-auto-dark-light", false, "Enable 6 AM/6 PM light/dark switching tasks (requires --enable-mode-sync)")
+	installWallpapersCmd.Flags().Bool("yes", false, "Non-interactive shortcut: run sunset setup after install")
 	installWallpapersCleanupCmd.Flags().Bool("all", false, "Also uninstall known wallpaper casks and remove local wallpaper folders")
 }
 
@@ -99,77 +95,54 @@ var installWallpapersCleanupCmd = &cobra.Command{
 }
 
 func maybeHandleWindowsThemePostInstall(cmd *cobra.Command, casks []string) error {
-	if cmd == nil {
-		return maybePromptForWindowsTheme(casks)
-	}
-
-	if !env.IsWSL() {
+	if !supportsWindowsThemePostInstall() {
 		return nil
 	}
 
-	nonInteractive, _ := cmd.Flags().GetBool("non-interactive")
-	yes, _ := cmd.Flags().GetBool("yes")
-	applyTheme, _ := cmd.Flags().GetBool("apply-theme")
-	selectedTheme, _ := cmd.Flags().GetString("theme")
-	enableModeSync, _ := cmd.Flags().GetBool("enable-mode-sync")
-	enableAutoDarkLight, _ := cmd.Flags().GetBool("enable-auto-dark-light")
+	nonInteractive := false
+	yes := false
+	if cmd != nil {
+		nonInteractive, _ = cmd.Flags().GetBool("non-interactive")
+		yes, _ = cmd.Flags().GetBool("yes")
+	}
 
 	if yes {
-		nonInteractive = true
-		applyTheme = true
-		enableModeSync = true
-		enableAutoDarkLight = true
+		return runSunsetSetup()
 	}
 
-	if enableAutoDarkLight && !enableModeSync {
-		return fmt.Errorf("--enable-auto-dark-light requires --enable-mode-sync")
-	}
-
-	flagsRequestedAutomation := cmd.Flags().Changed("enable-mode-sync") || cmd.Flags().Changed("enable-auto-dark-light")
-	flagsRequestedThemeApply := cmd.Flags().Changed("apply-theme") || cmd.Flags().Changed("theme")
-	if !nonInteractive && !flagsRequestedAutomation && !flagsRequestedThemeApply {
-		return maybePromptForWindowsTheme(casks)
-	}
-
-	themes := install.ThemesFromWallpaperCasks(casks)
-	if len(themes) == 0 {
+	if nonInteractive {
 		return nil
 	}
 
-	if applyTheme {
-		if strings.TrimSpace(selectedTheme) == "" {
-			selectedTheme = themes[0]
-		}
+	return maybePromptForSunsetSetup()
+}
 
-		if !containsTheme(themes, selectedTheme) {
-			return fmt.Errorf("theme %q not found in installed wallpaper casks (available: %s)", selectedTheme, strings.Join(themes, ", "))
-		}
+func maybePromptForSunsetSetup() error {
+	var startSetup bool
+	confirm := huh.NewConfirm().
+		Title("Would you like to configure solar-based theme and wallpaper switching now?").
+		Description("This uses the new 'sunset' feature to automatically manage your desktop experience.").
+		Value(&startSetup)
 
-		if err := install.ApplyWindowsTheme(selectedTheme); err != nil {
-			return err
+	if err := confirm.Run(); err != nil {
+		if err == huh.ErrUserAborted {
+			return nil
 		}
-
-		if err := install.SetWindowsThemePreference(selectedTheme, false); err != nil {
-			return err
-		}
-
-		fmt.Println(tui.SuccessStyle.Render("✓ Applied Windows theme: " + selectedTheme))
-		fmt.Println(tui.InfoStyle.Render("Monthly wallpaper updates are enabled for supported themes."))
+		return err
 	}
 
-	if enableModeSync {
-		if err := install.ConfigureWindowsThemeAutomation(enableAutoDarkLight); err != nil {
-			return err
-		}
-
-		if enableAutoDarkLight {
-			fmt.Println(tui.SuccessStyle.Render("✓ Enabled theme mode sync + 6 AM/6 PM auto light/dark switching"))
-		} else {
-			fmt.Println(tui.SuccessStyle.Render("✓ Enabled theme mode sync task"))
-		}
+	if startSetup {
+		return runSunsetSetup()
 	}
 
 	return nil
+}
+
+func runSunsetSetup() error {
+	// We can't easily call sunsetCmd.RunE because of how Cobra works with flags and contexts, 
+	// so we'll just run the menu-based setup directly if it's exported or similar.
+	// Actually, the easiest is to just call the function we exported in sunset.go
+	return RunSunsetSetupFlow()
 }
 
 func containsTheme(themes []string, theme string) bool {
@@ -248,10 +221,9 @@ func runBundlesMenu() error {
 				return fmt.Errorf("no Windows packages available for selected bundles")
 			}
 
-			selectedPackages := make([]string, 0, len(packages))
+			selectedPackages := []string{}
 			opts := make([]huh.Option[string], 0, len(packages))
 			for _, pkg := range packages {
-				selectedPackages = append(selectedPackages, pkg.ID)
 				label := pkg.Name
 				if strings.TrimSpace(label) == "" {
 					label = pkg.ID
@@ -266,7 +238,7 @@ func runBundlesMenu() error {
 			form := huh.NewForm(
 				huh.NewGroup(
 					huh.NewMultiSelect[string]().
-						Title("Select packages to install (preselected from bundles)").
+						Title("Select packages to install").
 						Description("Space toggles package selection. Enter to continue.").
 						Options(opts...).
 						Value(&selectedPackages),
@@ -338,7 +310,7 @@ func runBundlesMenu() error {
 			finalPath = brewfiles[0]
 		}
 
-		fmt.Println(tui.InfoStyle.Render(fmt.Sprintf("🍺 Opening apps in bbrew...")))
+		fmt.Println(tui.InfoStyle.Render("🍺 Opening apps in bbrew..."))
 		if err := install.RunBbrew(finalPath); err != nil {
 			return err
 		}
@@ -364,12 +336,15 @@ func runWallpapersMenu() error {
 	}
 
 	var selected []string
+	wallpaperSelect := huh.NewMultiSelect[string]().
+		Title("Select wallpapers to install").
+		Description("Space toggles selections. Enter confirms. If none selected, Enter installs the highlighted item.").
+		Options(opts...).
+		Value(&selected)
+
 	form := huh.NewForm(
 		huh.NewGroup(
-			huh.NewMultiSelect[string]().
-				Title("Select wallpapers to install (space to select, enter to confirm)").
-				Options(opts...).
-				Value(&selected),
+			wallpaperSelect,
 		),
 	).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap())
 	if err := form.Run(); err != nil {
@@ -378,117 +353,23 @@ func runWallpapersMenu() error {
 		}
 		return fmt.Errorf("form error: %w", err)
 	}
+
 	if len(selected) == 0 {
-		return fmt.Errorf("no wallpapers selected")
+		hovered, ok := wallpaperSelect.Hovered()
+		if !ok || strings.TrimSpace(hovered) == "" {
+			return fmt.Errorf("no wallpapers selected")
+		}
+		selected = []string{hovered}
 	}
+
 	if err := install.InstallWallpaperCasks(selected); err != nil {
 		return err
 	}
 
-	return maybePromptForWindowsTheme(selected)
+	return maybeHandleWindowsThemePostInstall(nil, selected)
 }
 
-func maybePromptForWindowsTheme(casks []string) error {
-	if !env.IsWSL() {
-		return nil
-	}
 
-	themes := install.ThemesFromWallpaperCasks(casks)
-	if len(themes) == 0 {
-		return nil
-	}
-
-	var applyNow bool
-	confirm := huh.NewConfirm().
-		Title("Set an installed Windows theme now and keep supported wallpapers updated monthly?").
-		Description("If no, themes are only registered in Windows settings.").
-		Value(&applyNow)
-
-	if err := confirm.Run(); err != nil {
-		if err == huh.ErrUserAborted {
-			return nil
-		}
-		return err
-	}
-
-	if !applyNow {
-		return maybeConfigureWindowsThemeAutomation()
-	}
-
-	selectedTheme := themes[0]
-	if len(themes) > 1 {
-		themeOptions := make([]huh.Option[string], 0, len(themes))
-		for _, theme := range themes {
-			themeOptions = append(themeOptions, huh.NewOption(theme, theme))
-		}
-
-		picker := huh.NewSelect[string]().
-			Title("Choose the Windows theme to apply").
-			Options(themeOptions...).
-			Value(&selectedTheme)
-
-		if err := huh.NewForm(huh.NewGroup(picker)).WithTheme(tui.AppTheme).Run(); err != nil {
-			if err == huh.ErrUserAborted {
-				return nil
-			}
-			return err
-		}
-	}
-
-	if err := install.ApplyWindowsTheme(selectedTheme); err != nil {
-		return err
-	}
-
-	if err := install.SetWindowsThemePreference(selectedTheme, false); err != nil {
-		return err
-	}
-
-	fmt.Println(tui.SuccessStyle.Render("✓ Applied Windows theme: " + selectedTheme))
-	fmt.Println(tui.InfoStyle.Render("Monthly wallpaper updates are enabled for supported themes."))
-
-	return maybeConfigureWindowsThemeAutomation()
-}
-
-func maybeConfigureWindowsThemeAutomation() error {
-	var enableModeSync bool
-	modeSyncConfirm := huh.NewConfirm().
-		Title("Enable wallpaper day/night sync when Windows light/dark theme changes?").
-		Description("If a day/night variant exists for the same wallpaper name, it will switch accordingly.").
-		Value(&enableModeSync)
-
-	if err := modeSyncConfirm.Run(); err != nil {
-		if err == huh.ErrUserAborted {
-			return nil
-		}
-		return err
-	}
-
-	if !enableModeSync {
-		return nil
-	}
-
-	var enableAutoDarkLight bool
-	autoConfirm := huh.NewConfirm().
-		Title("Enable automatic dark/light theme switching at 6:00 AM and 6:00 PM?").
-		Description("Registers Windows scheduled tasks to set light mode at 6 AM and dark mode at 6 PM.").
-		Value(&enableAutoDarkLight)
-
-	if err := autoConfirm.Run(); err != nil {
-		if err == huh.ErrUserAborted {
-			return nil
-		}
-		return err
-	}
-
-	if err := install.ConfigureWindowsThemeAutomation(enableAutoDarkLight); err != nil {
-		return err
-	}
-
-	if enableAutoDarkLight {
-		fmt.Println(tui.SuccessStyle.Render("✓ Enabled theme mode sync + 6 AM/6 PM auto light/dark switching"))
-	} else {
-		fmt.Println(tui.SuccessStyle.Render("✓ Enabled theme mode sync task"))
-	}
-
-	return nil
+func supportsWindowsThemePostInstall() bool {
+	return env.IsWSL() || env.IsWindows()
 }

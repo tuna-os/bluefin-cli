@@ -14,6 +14,7 @@ import (
 	"github.com/hanthor/bluefin-cli/internal/install"
 	"github.com/hanthor/bluefin-cli/internal/motd"
 	"github.com/hanthor/bluefin-cli/internal/shell"
+	"github.com/hanthor/bluefin-cli/internal/sunset"
 )
 
 const commandTimeout = 1500 * time.Millisecond
@@ -36,7 +37,24 @@ func Show() error {
 	// Shell status
 	leftCol += labelStyle.Render("Shell Experience:") + "\n"
 	shellStatus := shell.CheckStatus()
-	installedShells := shell.GetInstalledShells()
+	installed := shell.GetInstalledShells()
+
+	// Ensure we show shells that are enabled even if not "installed" (in PATH)
+	shellsToShow := installed
+	for s, enabled := range shellStatus {
+		if enabled {
+			found := false
+			for _, is := range installed {
+				if is == s {
+					found = true
+					break
+				}
+			}
+			if !found {
+				shellsToShow = append(shellsToShow, s)
+			}
+		}
+	}
 
 	// Get default shell
 	defaultShellPath := os.Getenv("SHELL")
@@ -57,11 +75,11 @@ func Show() error {
 		}
 	}
 
-	if len(installedShells) == 0 {
+	if len(shellsToShow) == 0 {
 		leftCol += "  (no compatible shells found)\n"
 	}
 
-	for _, s := range installedShells {
+	for _, s := range shellsToShow {
 		status := "disabled"
 		style := disabledStyle
 		symbol := "✗"
@@ -95,7 +113,7 @@ func Show() error {
 	// MOTD status
 	leftCol += labelStyle.Render("Message of the Day:") + "\n"
 	motdStatus := motd.CheckStatus()
-	for _, s := range installedShells {
+	for _, s := range shellsToShow {
 		status := "disabled"
 		style := disabledStyle
 		symbol := "✗"
@@ -119,7 +137,20 @@ func Show() error {
 	rightCol += labelStyle.Render("Managed Tools:") + "\n"
 	deps := shell.CheckDependencies()
 
-	for _, tool := range shell.Tools {
+	var toolsToShow []shell.Tool
+	if env.IsWindows() {
+		toolsToShow = shell.ToolsForShell("powershell")
+	} else {
+		// Heuristic: if we can't determine current shell, at least filter for platform-aware tools
+		// But ideally we use the detected currentShell if it's one of the supported ones.
+		targetShell := currentShell
+		if targetShell == "" {
+			targetShell = "bash" // default fallback for filtering
+		}
+		toolsToShow = shell.ToolsForShell(targetShell)
+	}
+
+	for _, tool := range toolsToShow {
 		status := "not installed"
 		style := disabledStyle
 		symbol := "✗"
@@ -174,54 +205,21 @@ func Show() error {
 	}
 	rightCol += "\n"
 
-	// WSL wallpaper/theme sync readiness (WSL-only)
-	if env.IsWSL() {
-		rightCol += labelStyle.Render("WSL Wallpaper Sync:") + "\n"
-		rightCol += fmt.Sprintf("  %s Runtime: %s\n",
+	// Sunset status
+	rightCol += labelStyle.Render("Sunset Automation:") + "\n"
+	if cfg, err := sunset.LoadConfig(); err == nil && cfg.Enabled {
+		rightCol += fmt.Sprintf("  %s Status: %s\n",
 			enabledStyle.Render("✓"),
-			enabledStyle.Render("WSL detected"))
-
-		if _, err := exec.LookPath("powershell.exe"); err == nil {
-			rightCol += fmt.Sprintf("  %s powershell.exe: %s\n",
-				enabledStyle.Render("✓"),
-				enabledStyle.Render("available"))
-		} else {
-			rightCol += fmt.Sprintf("  %s powershell.exe: %s\n",
-				disabledStyle.Render("✗"),
-				disabledStyle.Render("not available"))
+			enabledStyle.Render("enabled"))
+		rightCol += fmt.Sprintf("    Location: %.4f, %.4f\n", cfg.Latitude, cfg.Longitude)
+		if cfg.WallpaperTheme != "" {
+			rightCol += fmt.Sprintf("    Theme: %s\n", cfg.WallpaperTheme)
 		}
-
-		if _, err := exec.LookPath("wslpath"); err == nil {
-			rightCol += fmt.Sprintf("  %s wslpath: %s\n",
-				enabledStyle.Render("✓"),
-				enabledStyle.Render("available"))
-		} else {
-			rightCol += fmt.Sprintf("  %s wslpath: %s\n",
-				disabledStyle.Render("✗"),
-				disabledStyle.Render("not available"))
-		}
-
-		rightCol += fmt.Sprintf("  %s Startup Sync: %s\n",
-			statusSymbol(checkStartupRunEntry()),
-			statusText(checkStartupRunEntry(), "HKCU Run key", "missing"))
-
-		rightCol += fmt.Sprintf("  %s Task: %s\n",
-			statusSymbol(checkTaskExists("BluefinCLI-ThemeModeSync")),
-			statusText(checkTaskExists("BluefinCLI-ThemeModeSync"), "BluefinCLI-ThemeModeSync", "missing"))
-
-		rightCol += fmt.Sprintf("  %s Task: %s\n",
-			statusSymbol(checkTaskExists("BluefinCLI-SetLightAt6AM")),
-			statusText(checkTaskExists("BluefinCLI-SetLightAt6AM"), "BluefinCLI-SetLightAt6AM", "missing"))
-
-		rightCol += fmt.Sprintf("  %s Task: %s\n",
-			statusSymbol(checkTaskExists("BluefinCLI-SetDarkAt6PM")),
-			statusText(checkTaskExists("BluefinCLI-SetDarkAt6PM"), "BluefinCLI-SetDarkAt6PM", "missing"))
-
-		if mode, ok := windowsThemeMode(); ok {
-			rightCol += fmt.Sprintf("  %s Windows Mode: %s\n",
-				enabledStyle.Render("✓"),
-				enabledStyle.Render(mode))
-		}
+	} else {
+		rightCol += fmt.Sprintf("  %s Status: %s\n",
+			disabledStyle.Render("✗"),
+			disabledStyle.Render("disabled"))
+		rightCol += "    Run 'bluefin-cli sunset setup' to enable\n"
 	}
 
 	// Combine columns with padding
@@ -233,65 +231,4 @@ func Show() error {
 	fmt.Println(formatted)
 
 	return nil
-}
-
-func checkTaskExists(taskName string) bool {
-	if _, err := exec.LookPath("schtasks.exe"); err != nil {
-		return false
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), commandTimeout)
-	defer cancel()
-	cmd := exec.CommandContext(ctx, "schtasks.exe", "/Query", "/TN", taskName)
-	return cmd.Run() == nil
-}
-
-func checkStartupRunEntry() bool {
-	if _, err := exec.LookPath("powershell.exe"); err != nil {
-		return false
-	}
-
-	script := `$runPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"; $name = "BluefinCLIThemeModeSync"; $value = (Get-ItemProperty -Path $runPath -Name $name -ErrorAction SilentlyContinue).$name; if($value){ exit 0 } ; exit 1`
-	ctx, cancel := context.WithTimeout(context.Background(), commandTimeout)
-	defer cancel()
-	cmd := exec.CommandContext(ctx, "powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script)
-	return cmd.Run() == nil
-}
-
-func statusSymbol(ok bool) string {
-	if ok {
-		return enabledStyle.Render("✓")
-	}
-
-	return disabledStyle.Render("✗")
-}
-
-func statusText(ok bool, successText, failureText string) string {
-	if ok {
-		return enabledStyle.Render(successText)
-	}
-
-	return disabledStyle.Render(failureText)
-}
-
-func windowsThemeMode() (string, bool) {
-	if _, err := exec.LookPath("powershell.exe"); err != nil {
-		return "", false
-	}
-
-	script := `$path = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"; $value = (Get-ItemProperty -Path $path -Name AppsUseLightTheme -ErrorAction SilentlyContinue).AppsUseLightTheme; if ($null -eq $value) { exit 1 }; if ($value -eq 0) { Write-Output "🌙 Dark" } else { Write-Output "🌞 Light" }`
-	ctx, cancel := context.WithTimeout(context.Background(), commandTimeout)
-	defer cancel()
-	cmd := exec.CommandContext(ctx, "powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script)
-	out, err := cmd.Output()
-	if err != nil {
-		return "", false
-	}
-
-	mode := strings.TrimSpace(string(out))
-	if mode == "" {
-		return "", false
-	}
-
-	return mode, true
 }
