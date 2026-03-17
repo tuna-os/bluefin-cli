@@ -16,10 +16,11 @@ func TestToggle(t *testing.T) {
 }
 
 func TestInit(t *testing.T) {
-	// Create temporary home directory for config loading
 	tmpHome := t.TempDir()
 	os.Setenv("HOME", tmpHome)
+	os.Setenv("USERPROFILE", tmpHome)
 	defer os.Unsetenv("HOME")
+	defer os.Unsetenv("USERPROFILE")
 
 	tests := []struct {
 		name    string
@@ -80,7 +81,9 @@ func TestCheckStatus(t *testing.T) {
 	// Create temporary home directory
 	tmpHome := t.TempDir()
 	os.Setenv("HOME", tmpHome)
+	os.Setenv("USERPROFILE", tmpHome)
 	defer os.Unsetenv("HOME")
+	defer os.Unsetenv("USERPROFILE")
 
 	// Manually create a bashrc with the marker
 	bashrc := filepath.Join(tmpHome, ".bashrc")
