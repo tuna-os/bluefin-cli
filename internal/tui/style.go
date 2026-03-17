@@ -58,13 +58,13 @@ func MenuKeyMap() *huh.KeyMap {
 		key.WithKeys("enter", "right"),
 		key.WithHelp("enter / →", "select"),
 	)
-	
+
 	// MultiSelect
 	km.MultiSelect.Submit = key.NewBinding(
 		key.WithKeys("enter"),
 		key.WithHelp("enter", "confirm"),
 	)
-	
+
 	return km
 }
 
@@ -77,7 +77,7 @@ func ClearScreen() {
 		cmd = exec.Command("clear")
 	}
 	cmd.Stdout = os.Stdout
-	cmd.Run()
+	_ = cmd.Run()
 }
 
 // RenderHeader renders a consistent header for menus
@@ -93,5 +93,5 @@ func RenderHeader(title string, subtitle string) {
 func Pause() {
 	fmt.Println()
 	fmt.Println(lipgloss.NewStyle().Faint(true).Render("Press Enter to continue..."))
-	fmt.Scanln()
+	_, _ = fmt.Scanln()
 }

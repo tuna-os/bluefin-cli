@@ -73,8 +73,8 @@ type Config struct {
 // Deprecated: Use 'bluefin-cli init' instead
 func Toggle(target string, enable bool) error {
 	fmt.Println(tui.InfoStyle.Render("ℹ Note: shell integration is now handled via 'bluefin-cli init'"))
-	
-	// For backward compatibility cleanup, we could implemented removal here, 
+
+	// For backward compatibility cleanup, we could implemented removal here,
 	// but for now, we just inform the user.
 	return nil
 }
@@ -101,7 +101,7 @@ func Show() error {
 			tip = customTip
 		}
 	}
-	
+
 	// Fallback to default tips if no custom tip found
 	if tip == "" {
 		tip = getRandomDefaultTip()
@@ -146,7 +146,7 @@ func SetTheme(theme string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	if err := os.WriteFile(configPath, data, 0644); err != nil {
 		return err
 	}
@@ -172,18 +172,18 @@ func loadConfig() (Config, error) {
 		return DefaultConfig(), err
 	}
 	configPath := filepath.Join(configDir, "motd.json")
-	
+
 	var config Config
-	
+
 	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return DefaultConfig(), err
 	}
-	
+
 	if err := json.Unmarshal(data, &config); err != nil {
 		return DefaultConfig(), err
 	}
-	
+
 	return config, nil
 }
 

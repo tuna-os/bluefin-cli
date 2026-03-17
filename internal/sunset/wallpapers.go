@@ -28,7 +28,7 @@ func GetMonthlyWallpaper(theme string, isDay bool) (string, error) {
 
 	// BluefinCLI wallpapers are stored in ~/Pictures/BluefinCLI/<theme>
 	wallpaperDir := filepath.Join(home, "Pictures", "BluefinCLI", strings.ToLower(theme))
-	
+
 	if _, err := os.Stat(wallpaperDir); os.IsNotExist(err) {
 		return "", fmt.Errorf("wallpaper directory not found: %s", wallpaperDir)
 	}

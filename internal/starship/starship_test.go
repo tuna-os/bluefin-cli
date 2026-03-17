@@ -95,7 +95,7 @@ func TestInstall(t *testing.T) {
 				if len(arg) > 0 {
 					fullCmd += " " + strings.Join(arg, " ")
 				}
-				
+
 				// For verification in runCommand if needed, or just captured here
 				// We attach the command string to the cmd struct via specific field is hard
 				// So we capture it in the outer scope
@@ -206,13 +206,13 @@ func TestApplyTheme(t *testing.T) {
 				if capturedCmd == nil {
 					t.Fatal("Expected command execution, got none")
 				}
-				
+
 				// Verify args
 				args := capturedCmd.Args
 				if args[0] != "starship" || args[1] != "preset" || args[2] != tt.theme {
 					t.Errorf("Unexpected command args: %v", args)
 				}
-				
+
 				// Check for -o flag and config path
 				foundOutputFlag := false
 				for i, arg := range args {

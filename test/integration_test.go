@@ -94,22 +94,28 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
-	defer os.RemoveAll(tmpHome)
+	defer func() {
+		_ = os.RemoveAll(tmpHome)
+	}()
 
-	os.Setenv("HOME", tmpHome)
-	
+	if err := os.Setenv("HOME", tmpHome); err != nil {
+		fmt.Printf("Warning: failed to set mock HOME: %v\n", err)
+	}
+
 	// Initialize shell configs
 	for _, shell := range shells {
 		if err := shell.InitShell(); err != nil {
 			panic(err)
 		}
 	}
-	
+
 	// Run tests
 	code := m.Run()
-	
+
 	// Cleanup
-	os.Setenv("HOME", originalHome)
+	if err := os.Setenv("HOME", originalHome); err != nil {
+		fmt.Printf("Warning: failed to restore HOME: %v\n", err)
+	}
 	os.Exit(code)
 }
 
@@ -160,7 +166,7 @@ func TestShellEnableForAllShells(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to enable shell for %s: %v", shell.Name, err)
 			}
-			
+
 			// Verify config file contains the eval line
 			configPath := filepath.Join(os.Getenv("HOME"), shell.ConfigFile)
 			expected := "bluefin-cli init"
@@ -182,7 +188,7 @@ func TestShellScriptSourcing(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to run init: %v", err)
 			}
-			
+
 			// We check for some shell specific syntax or standard env vars
 			if !strings.Contains(output, "BLUEFIN_SHELL_ENABLE_EZA") {
 				t.Errorf("Init output doesn't seem to contain shell script logic")
@@ -204,7 +210,7 @@ func TestShellSyntax(t *testing.T) {
 		{"zsh", ".zshrc", "zsh"},
 		{"fish", ".config/fish/config.fish", "fish"},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.shell, func(t *testing.T) {
 			configPath := filepath.Join(os.Getenv("HOME"), tt.configFile)
@@ -239,9 +245,9 @@ func TestMOTDSystem(t *testing.T) {
 			t.Error("MOTD hook missing from init output")
 		}
 	})
-	
+
 	// MOTD resources check removed as it depends on external setup not controlled by CLI logic under test
-	
+
 	t.Run("MOTDShowCommand", func(t *testing.T) {
 		output, _ := runCommand(t, "motd", "show")
 		if !strings.Contains(output, "Bluefin") {
@@ -266,7 +272,7 @@ func TestStatusReflectsChanges(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Status command failed: %v", err)
 	}
-	
+
 	t.Logf("Status Output:\n%s", output)
 
 	found := false
@@ -283,7 +289,7 @@ func TestStatusReflectsChanges(t *testing.T) {
 	if !found {
 		t.Errorf("Status doesn't show %s as enabled", targetShell)
 	}
-	
+
 	if !strings.Contains(output, "Message of the Day") {
 		t.Error("Status doesn't show MOTD section")
 	}
@@ -294,7 +300,7 @@ func TestShellDisable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to disable shell: %v", err)
 	}
-	
+
 	bashrc := filepath.Join(os.Getenv("HOME"), ".bashrc")
 	if fileContains(t, bashrc, "# bluefin-cli shell-config") {
 		t.Error("Shell marker still present in bashrc after disable")
@@ -306,7 +312,7 @@ func TestInstallList(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Install list command failed: %v", err)
 	}
-	
+
 	if !strings.Contains(output, "Available Bundles") {
 		t.Error("Install list doesn't show expected content")
 	}
