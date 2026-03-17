@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
   test:
@@ -30,6 +30,7 @@ jobs:
       uses: codecov/codecov-action@v5
       with:
         files: ./coverage.txt
+        token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: false
 
   integration-test:
@@ -45,13 +46,8 @@ jobs:
       with:
         go-version: '1.26'
         
-    - name: Build binary
-      run: go build -o bluefin-cli
-      
     - name: Run integration tests
-      run: |
-        chmod +x test-integration.sh
-        ./test-integration.sh
+      run: go test -v ./test/...
 
   container-test:
     name: Container-based Tests
@@ -62,10 +58,16 @@ jobs:
       uses: actions/checkout@v6
       
     - name: Build container
-      run: podman build -t bluefin-cli-test -f Containerfile.dev .
+      run: podman build -t bluefin-cli-dev -f Containerfile.dev .
       
     - name: Run container tests
-      run: podman run --rm bluefin-cli-test
+      run: |
+        podman run --rm \
+            -v "$(pwd):/workspace:Z" \
+            -w /workspace \
+            -e HOME=/root \
+            bluefin-cli-dev \
+            go test -v ./test/...
 
   lint:
     name: Lint
