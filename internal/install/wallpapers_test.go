@@ -267,7 +267,7 @@ func TestPowerShellTriggerScript(t *testing.T) {
 		{
 			name:         "onlogon trigger",
 			scheduleArgs: []string{"/SC", "ONLOGON"},
-			contains: []string{"New-ScheduledTaskTrigger -AtLogOn"},
+			contains:     []string{"New-ScheduledTaskTrigger -AtLogOn"},
 		},
 		{
 			name:         "daily missing time",
