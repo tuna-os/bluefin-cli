@@ -67,7 +67,35 @@ jobs:
         shell: pwsh
         run: |
           Invoke-WebRequest https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
-          ./wingetcreate.exe --version
+          ./wingetcreate.exe version
+
+      - name: Wait for Release Assets
+        shell: pwsh
+        run: |
+          $url = "${{ steps.resolve.outputs.asset_url }}"
+          Write-Host "Waiting for asset to be available at: $url"
+          $maxRetries = 10
+          $retryCount = 0
+          $success = $false
+          
+          while ($retryCount -lt $maxRetries -and -not $success) {
+            try {
+              $response = Invoke-WebRequest -Uri $url -Method Head -ErrorAction Stop
+              if ($response.StatusCode -eq 200) {
+                $success = $true
+                Write-Host "Asset is available!"
+              }
+            } catch {
+              $retryCount++
+              Write-Host "Asset not ready yet (Attempt $retryCount/$maxRetries). Waiting 30s..."
+              Start-Sleep -Seconds 30
+            }
+          }
+          
+          if (-not $success) {
+            Write-Host "Error: Asset did not become available in time."
+            exit 1
+          }
 
       - name: Submit update (fallback to new)
         shell: pwsh
