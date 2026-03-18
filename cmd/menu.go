@@ -3,6 +3,7 @@ package cmd
 import (
 	"charm.land/huh/v2"
 	"github.com/hanthor/bluefin-cli/internal/env"
+	"github.com/hanthor/bluefin-cli/internal/install"
 	"github.com/hanthor/bluefin-cli/internal/shell"
 	"github.com/hanthor/bluefin-cli/internal/status"
 	"github.com/hanthor/bluefin-cli/internal/tui"
@@ -56,12 +57,30 @@ var menuCmd = &cobra.Command{
 			}
 
 			opts := []huh.Option[string]{
+				huh.NewOption("Standard Features:", "header_standard"),
 				huh.NewOption(statusLabel, "status"),
 				huh.NewOption(shellLabel, "shell"),
 				huh.NewOption(installLabel, "bundles"),
-				huh.NewOption(wallpapersLabel, "wallpapers"),
+
+				huh.NewOption("Extra Enhancements:", "header_extra"),
 				huh.NewOption(starshipLabel, "starship"),
+				huh.NewOption(wallpapersLabel, "wallpapers"),
 			}
+
+			if env.IsWSL() || env.IsWindows() {
+				sunsetLabel := "🌇 Sunset Switching ❯"
+				if env.IsWindows() {
+					sunsetLabel = "Sunset Switching >"
+				}
+				opts = append(opts, huh.NewOption(sunsetLabel, "sunset"))
+			}
+
+			fontsLabel := "🔤 Automated Fonts"
+			if env.IsWindows() {
+				fontsLabel = "Automated Fonts"
+			}
+			opts = append(opts, huh.NewOption(fontsLabel, "fonts"))
+
 			opts = append(opts, huh.NewOption("Exit", "exit"))
 
 			var choice string
@@ -80,6 +99,8 @@ var menuCmd = &cobra.Command{
 			}
 
 			switch choice {
+			case "header_standard", "header_extra":
+				continue
 			case "status":
 				if err := status.Show(); err != nil {
 					return err
@@ -89,7 +110,6 @@ var menuCmd = &cobra.Command{
 				if err := runShellMenu(); err != nil {
 					return err
 				}
-
 			case "bundles":
 				if err := runBundlesMenu(); err != nil {
 					return err
@@ -102,6 +122,15 @@ var menuCmd = &cobra.Command{
 				if err := runStarshipMenu(); err != nil {
 					return err
 				}
+			case "sunset":
+				if err := RunSunsetSetupFlow(); err != nil {
+					return err
+				}
+			case "fonts":
+				if err := install.Bundle("fonts"); err != nil {
+					return err
+				}
+				tui.Pause()
 			case "exit":
 				return nil
 			}
