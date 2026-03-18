@@ -1,3 +1,10 @@
+# [0.6.0](https://github.com/hanthor/bluefin-cli/compare/v0.5.0...v0.6.0) (2026-03-18)
+
+
+### Features
+
+* rename full build to plus and remove command groups ([bd0c7da](https://github.com/hanthor/bluefin-cli/commit/bd0c7da9366967c2e8f28bcabb2d765f9badac42))
+
 # [0.5.0](https://github.com/hanthor/bluefin-cli/compare/v0.4.0...v0.5.0) (2026-03-18)
 
 
