@@ -1,3 +1,10 @@
+# [0.4.0](https://github.com/hanthor/bluefin-cli/compare/v0.3.1...v0.4.0) (2026-03-18)
+
+
+### Features
+
+* add automated command documentation generation ([29e8ac7](https://github.com/hanthor/bluefin-cli/commit/29e8ac72eb20fbb1634726472744ed724612819f))
+
 ## [0.3.1](https://github.com/hanthor/bluefin-cli/compare/v0.3.0...v0.3.1) (2026-03-18)
 
 
