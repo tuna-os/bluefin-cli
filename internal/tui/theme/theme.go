@@ -1,45 +1,49 @@
 package theme
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"image/color"
+
+	"charm.land/lipgloss/v2"
+)
 
 // Theme defines the color palette for the application
 type Theme struct {
-	PrimaryBorder   lipgloss.AdaptiveColor
-	SecondaryBorder lipgloss.AdaptiveColor
-	FaintBorder     lipgloss.AdaptiveColor
+	PrimaryBorder   color.Color
+	SecondaryBorder color.Color
+	FaintBorder     color.Color
 
-	PrimaryText   lipgloss.AdaptiveColor
-	SecondaryText lipgloss.AdaptiveColor
-	FaintText     lipgloss.AdaptiveColor
-	InvertedText  lipgloss.AdaptiveColor
+	PrimaryText   color.Color
+	SecondaryText color.Color
+	FaintText     color.Color
+	InvertedText  color.Color
 
-	SuccessText lipgloss.AdaptiveColor
-	WarningText lipgloss.AdaptiveColor
-	ErrorText   lipgloss.AdaptiveColor
-	InfoText    lipgloss.AdaptiveColor
+	SuccessText color.Color
+	WarningText color.Color
+	ErrorText   color.Color
+	InfoText    color.Color
 
-	SelectedBackground lipgloss.AdaptiveColor
+	SelectedBackground color.Color
 }
 
 // DefaultTheme is the standard Catppuccin-like theme
 var DefaultTheme = Theme{
 	// Borders
-	PrimaryBorder:   lipgloss.AdaptiveColor{Light: "39", Dark: "39"},   // Blue
-	SecondaryBorder: lipgloss.AdaptiveColor{Light: "241", Dark: "241"}, // Gray
-	FaintBorder:     lipgloss.AdaptiveColor{Light: "238", Dark: "238"}, // Dark Gray
+	PrimaryBorder:   lipgloss.Color("39"),  // Blue
+	SecondaryBorder: lipgloss.Color("241"), // Gray
+	FaintBorder:     lipgloss.Color("238"), // Dark Gray
 
 	// Text
-	PrimaryText:   lipgloss.AdaptiveColor{Light: "15", Dark: "15"},   // White
-	SecondaryText: lipgloss.AdaptiveColor{Light: "247", Dark: "247"}, // Gray
-	FaintText:     lipgloss.AdaptiveColor{Light: "241", Dark: "241"}, // Dark Gray
-	InvertedText:  lipgloss.AdaptiveColor{Light: "0", Dark: "0"},     // Black
+	PrimaryText:   lipgloss.Color("15"),  // White
+	SecondaryText: lipgloss.Color("247"), // Gray
+	FaintText:     lipgloss.Color("241"), // Dark Gray
+	InvertedText:  lipgloss.Color("0"),   // Black
 
 	// Status
-	SuccessText: lipgloss.AdaptiveColor{Light: "10", Dark: "10"}, // Green
-	WarningText: lipgloss.AdaptiveColor{Light: "11", Dark: "11"}, // Yellow
-	ErrorText:   lipgloss.AdaptiveColor{Light: "9", Dark: "9"},   // Red
-	InfoText:    lipgloss.AdaptiveColor{Light: "12", Dark: "12"}, // Cyan
+	SuccessText: lipgloss.Color("10"), // Green
+	WarningText: lipgloss.Color("11"), // Yellow
+	ErrorText:   lipgloss.Color("9"),  // Red
+	InfoText:    lipgloss.Color("12"), // Cyan
 
 	// Backgrounds
-	SelectedBackground: lipgloss.AdaptiveColor{Light: "237", Dark: "237"}, // Dark Gray
+	SelectedBackground: lipgloss.Color("237"), // Dark Gray
 }

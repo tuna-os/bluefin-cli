@@ -6,9 +6,9 @@ import (
 	"os/exec"
 	"runtime"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/huh"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/huh/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/hanthor/bluefin-cli/internal/tui/theme"
 )
 
@@ -38,9 +38,17 @@ var (
 			BorderForeground(CurrentTheme.ErrorText).
 			Padding(1, 2).
 			Align(lipgloss.Center)
+)
 
+type appTheme struct{}
+
+func (t appTheme) Theme(isDark bool) *huh.Styles {
+	return huh.ThemeCatppuccin(isDark)
+}
+
+var (
 	// Theme
-	AppTheme = huh.ThemeCatppuccin()
+	AppTheme huh.Theme = appTheme{}
 )
 
 // MenuKeyMap returns a keymap that includes standard navigation + Left/Backspace for abort (Back)

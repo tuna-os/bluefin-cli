@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/hanthor/bluefin-cli/internal/env"
 	"github.com/hanthor/bluefin-cli/internal/install"
 	"github.com/hanthor/bluefin-cli/internal/motd"

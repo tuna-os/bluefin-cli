@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/charmbracelet/huh"
+	"charm.land/huh/v2"
 	"github.com/hanthor/bluefin-cli/internal/motd"
 	"github.com/hanthor/bluefin-cli/internal/shell"
 	"github.com/hanthor/bluefin-cli/internal/tui"

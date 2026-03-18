@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/huh"
+	"charm.land/huh/v2"
 	"github.com/hanthor/bluefin-cli/internal/env"
 	"github.com/hanthor/bluefin-cli/internal/install"
 	"github.com/hanthor/bluefin-cli/internal/tui"
@@ -123,7 +123,9 @@ func maybePromptForSunsetSetup() error {
 	confirm := huh.NewConfirm().
 		Title("Would you like to configure solar-based theme and wallpaper switching now?").
 		Description("This uses the new 'sunset' feature to automatically manage your desktop experience.").
-		Value(&startSetup)
+		Value(&startSetup).
+		WithTheme(tui.AppTheme).
+		WithKeyMap(tui.MenuKeyMap())
 
 	if err := confirm.Run(); err != nil {
 		if err == huh.ErrUserAborted {

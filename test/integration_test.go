@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"testing"
@@ -127,10 +128,16 @@ func touchFile(path string) error {
 	return f.Close()
 }
 
+var ansiRegex = regexp.MustCompile("[\u001b\u009b][\\[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]")
+
+func stripAnsi(str string) string {
+	return ansiRegex.ReplaceAllString(str, "")
+}
+
 func runCommand(t *testing.T, args ...string) (string, error) {
 	cmd := exec.Command(getBinaryPath(), args...)
 	output, err := cmd.CombinedOutput()
-	return string(output), err
+	return stripAnsi(string(output)), err
 }
 
 func fileContains(t *testing.T, filepath, pattern string) bool {

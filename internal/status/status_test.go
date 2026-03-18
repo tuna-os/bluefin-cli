@@ -4,11 +4,18 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/hanthor/bluefin-cli/internal/env"
 )
+
+var ansiRegex = regexp.MustCompile("[\u001b\u009b][\\[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]")
+
+func stripAnsi(str string) string {
+	return ansiRegex.ReplaceAllString(str, "")
+}
 
 func TestShow(t *testing.T) {
 	// Capture stdout
@@ -30,7 +37,7 @@ func TestShow(t *testing.T) {
 	_ = w.Close()
 	var buf bytes.Buffer
 	_, _ = io.Copy(&buf, r)
-	output := buf.String()
+	output := stripAnsi(buf.String())
 
 	// Verify expected sections
 	expectedStrings := []string{

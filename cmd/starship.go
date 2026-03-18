@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/charmbracelet/huh"
+	"charm.land/huh/v2"
 	"github.com/hanthor/bluefin-cli/internal/starship"
 	"github.com/hanthor/bluefin-cli/internal/tui"
 	"github.com/spf13/cobra"
