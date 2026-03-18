@@ -14,7 +14,7 @@ func addExtraMenuOptions(opts []huh.Option[string]) []huh.Option[string] {
 	fontsLabel := "🔤 Fonts"
 	starshipLabel := "🚀 Starship Theme ❯"
 
-	// Standard (Vanilla) section
+	// Standard (Standard) section
 	opts = append(opts, huh.NewOption(wallpapersLabel, "wallpapers"))
 	opts = append(opts, huh.NewOption(fontsLabel, "fonts"))
 	opts = append(opts, huh.NewOption(starshipLabel, "starship"))
@@ -32,12 +32,7 @@ func handleExtraMenuChoice(choice string) (bool, error) {
 	case "wallpapers":
 		return true, runWallpapersMenu()
 	case "fonts":
-		err := install.Bundle("fonts")
-		if err == nil {
-			err = maybeHandlePostFontInstall()
-			tui.Pause()
-		}
-		return true, err
+		return true, runFontsMenu()
 	case "starship":
 		return true, runStarshipMenu()
 	case "sunset":

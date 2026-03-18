@@ -15,7 +15,6 @@ var (
 
 var initCmd = &cobra.Command{
 	Use:     "init [bash|zsh|fish|powershell|pwsh]",
-	GroupID: "vanilla",
 	Short:   "Generate shell initialization script",
 	Long: `Generate the shell initialization script for bluefin-cli.
 Add the following to your shell configuration file:

@@ -5,12 +5,12 @@ This document outlines the split between standard core features and automated en
 ## 📦 Binary Versions
 
 You can build two versions of the CLI:
-1.  **`bluefin-cli` (Vanilla)**: The standard tool for management.
-2.  **`bluefin-cli-full` (Full)**: The enhanced version with deep automation.
+1.  **`bluefin-cli` (Standard)**: The standard tool for management.
+2.  **`bluefin-cli-plus` (Plus)**: The enhanced version with deep automation.
 
 ---
 
-## 🍦 Standard (Vanilla) Features
+## 🍦 Standard Features
 These features are included in **both** binaries. They focus on providing tools and resources while leaving final configuration to the user.
 
 | Feature | Command | Description |
@@ -26,8 +26,8 @@ These features are included in **both** binaries. They focus on providing tools 
 
 ---
 
-## ✨ Extra Enhancements
-These features are **only** included in the `bluefin-cli-full` binary (compiled with `-tags extra`). They provide deep system integration and automation.
+## ✨ Plus Enhancements
+These features are **only** included in the `bluefin-cli-plus` binary (compiled with `-tags extra`). They provide deep system integration and automation.
 
 | Feature | Command | Description |
 |---------|---------|-------------|
@@ -41,8 +41,8 @@ These features are **only** included in the `bluefin-cli-full` binary (compiled 
 
 ### Build Tags
 We use Go **build tags** to gate "Extra" logic. 
-- Files marked with `//go:build extra` are excluded from the standard vanilla build.
-- This ensures the vanilla binary remains lean and focused on core tasks.
+- Files marked with `//go:build extra` are excluded from the standard standard build.
+- This ensures the standard binary remains lean and focused on core tasks.
 
 ### Dynamic UI
 The interactive `bluefin-cli menu` automatically detects which features are compiled in and adjusts its options accordingly, hiding headers and commands that aren't available in the current binary.

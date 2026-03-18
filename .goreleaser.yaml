@@ -7,7 +7,7 @@ before:
     - go mod tidy
 
 builds:
-  - id: vanilla
+  - id: standard
     binary: bluefin-cli
     env:
       - CGO_ENABLED=0
@@ -19,8 +19,8 @@ builds:
       - amd64
       - arm64
 
-  - id: full
-    binary: bluefin-cli-full
+  - id: plus
+    binary: bluefin-cli-plus
     env:
       - CGO_ENABLED=0
     flags:

@@ -4,8 +4,6 @@ package cmd
 
 import (
 	"charm.land/huh/v2"
-	"github.com/hanthor/bluefin-cli/internal/install"
-	"github.com/hanthor/bluefin-cli/internal/tui"
 )
 
 func addExtraMenuOptions(opts []huh.Option[string]) []huh.Option[string] {
@@ -24,12 +22,7 @@ func handleExtraMenuChoice(choice string) (bool, error) {
 	case "wallpapers":
 		return true, runWallpapersMenu()
 	case "fonts":
-		err := install.Bundle("fonts")
-		if err == nil {
-			err = maybeHandlePostFontInstall()
-			tui.Pause()
-		}
-		return true, err
+		return true, runFontsMenu()
 	case "starship":
 		return true, runStarshipMenu()
 	}

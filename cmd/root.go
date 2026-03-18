@@ -16,17 +16,15 @@ var rootCmd = &cobra.Command{
 	Short: "A powerful CLI tool for managing Homebrew and shell customization",
 	Long: `Bluefin CLI brings the bluefin terminal experience to you.
 
-Standard (Vanilla) Features:
 - Homebrew & Tool Management
 - Shell Environment Configuration
 - System Status & MOTD
 - Starship Theme Management
-
-Extra Features:
 - Automated Theme & Wallpaper Switching (Sunset)
 - Automated Font Installation
 - Monthly Wallpaper Themes`,
 	Version: version,
+
 	// Fire the countme ping in the background on every invocation.
 	// This is a no-op if already counted this week, or if opted out.
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
@@ -55,13 +53,4 @@ func Execute() error {
 
 func init() {
 	rootCmd.SetVersionTemplate(fmt.Sprintf("bluefin-cli version %s\n", version))
-
-	rootCmd.AddGroup(&cobra.Group{
-		ID:    "vanilla",
-		Title: "Standard (Vanilla) Features:",
-	})
-	rootCmd.AddGroup(&cobra.Group{
-		ID:    "extra",
-		Title: "Extra Features:",
-	})
 }
