@@ -22,7 +22,10 @@ This includes:
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println(tui.InfoStyle.Render("Installing recommended development fonts..."))
 		// Reuse the fonts bundle logic but make it a top-level easy command
-		return install.Bundle("fonts")
+		if err := install.Bundle("fonts"); err != nil {
+			return err
+		}
+		return maybeHandlePostFontInstall()
 	},
 }
 

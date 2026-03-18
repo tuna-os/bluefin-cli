@@ -20,6 +20,7 @@ Standard (Vanilla) Features:
 - Homebrew & Tool Management
 - Shell Environment Configuration
 - System Status & MOTD
+- Starship Theme Management
 
 Extra Features:
 - Automated Theme & Wallpaper Switching (Sunset)
