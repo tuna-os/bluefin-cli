@@ -7,8 +7,6 @@ import (
 	"regexp"
 	"strings"
 	"testing"
-
-	"github.com/hanthor/bluefin-cli/internal/env"
 )
 
 var ansiRegex = regexp.MustCompile("[\u001b\u009b][\\[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]")
@@ -46,10 +44,6 @@ func TestShow(t *testing.T) {
 		"Message of the Day:",
 		"Managed Tools:",
 		"Package Manager:",
-	}
-
-	if env.IsWSL() {
-		expectedStrings = append(expectedStrings, "WSL Wallpaper Sync:")
 	}
 
 	for _, s := range expectedStrings {

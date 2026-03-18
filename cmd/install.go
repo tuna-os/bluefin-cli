@@ -13,7 +13,6 @@ import (
 
 var installCmd = &cobra.Command{
 	Use:     "install [bundle]",
-	GroupID: "vanilla",
 	Short:   "Install tool bundles",
 	Long: `Install predefined bundles or custom Brewfiles.
 
@@ -109,7 +108,6 @@ func runBundlesMenu() error {
 			huh.NewOption("💻 CLI Essentials", "cli"),
 			huh.NewOption("☁️ CNCF Tools", "cncf"),
 			huh.NewOption("🧪 Experimental IDE", "experimental-ide"),
-			huh.NewOption("🔤 Development Fonts", "fonts"),
 			huh.NewOption("📝 IDE Tools", "ide"),
 			huh.NewOption("☸️ Kubernetes Tools", "k8s"),
 		}
@@ -120,7 +118,6 @@ func runBundlesMenu() error {
 				huh.NewOption("CLI Essentials", "cli"),
 				huh.NewOption("CNCF Tools", "cncf"),
 				huh.NewOption("Experimental IDE", "experimental-ide"),
-				huh.NewOption("Development Fonts", "fonts"),
 				huh.NewOption("IDE Tools", "ide"),
 				huh.NewOption("Kubernetes Tools", "k8s"),
 			}

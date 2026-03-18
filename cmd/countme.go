@@ -15,7 +15,6 @@ var (
 
 var countmeCmd = &cobra.Command{
 	Use:     "countme",
-	GroupID: "vanilla",
 	Short:   "Manage anonymous usage counting",
 	Long: `bluefin-cli participates in Fedora's countme protocol to report
 anonymous install counts alongside native Bluefin Linux installs.

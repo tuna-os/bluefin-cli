@@ -220,6 +220,9 @@ func TestShellSyntax(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.shell, func(t *testing.T) {
+			if _, err := exec.LookPath(tt.validator); err != nil {
+				t.Skipf("Skipping %s syntax check: validator %q not found", tt.shell, tt.validator)
+			}
 			configPath := filepath.Join(os.Getenv("HOME"), tt.configFile)
 			cmd := exec.Command(tt.validator, "-n", configPath)
 			if err := cmd.Run(); err != nil {

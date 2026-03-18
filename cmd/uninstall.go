@@ -15,7 +15,6 @@ var (
 
 var uninstallCmd = &cobra.Command{
 	Use:     "uninstall",
-	GroupID: "vanilla",
 	Short:   "Uninstall Bluefin shell setup and managed tools",
 	Long: `Remove Bluefin shell initialization setup across powershell, bash, zsh, and fish.
 
