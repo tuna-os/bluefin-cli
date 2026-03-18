@@ -320,8 +320,8 @@ just fish   # Test in fish
 This project uses:
 
 - [Cobra](https://github.com/spf13/cobra) - CLI framework
-- [Huh](https://github.com/charmbracelet/huh) - Forms and prompts
-- [Lipgloss](https://github.com/charmbracelet/lipgloss) - Style definitions
+- [Huh](https://charm.land/huh/v2) - Forms and prompts
+- [Lipgloss](https://charm.land/lipgloss/v2) - Style definitions
 
 ## 🤝 Contributing
 
