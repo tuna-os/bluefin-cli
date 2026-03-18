@@ -1,3 +1,10 @@
+# [0.3.0](https://github.com/hanthor/bluefin-cli/compare/v0.2.0...v0.3.0) (2026-03-18)
+
+
+### Features
+
+* add automated embedded resources update workflow ([3cd3515](https://github.com/hanthor/bluefin-cli/commit/3cd35151578561360fa86c5a9834bd21acdeb69f))
+
 # [0.2.0](https://github.com/hanthor/bluefin-cli/compare/v0.1.0...v0.2.0) (2026-03-18)
 
 
