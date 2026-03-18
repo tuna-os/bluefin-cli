@@ -240,6 +240,10 @@ fmt:
     @echo "Formatting Go code..."
     go fmt ./...
 
+# Generate Markdown documentation for all commands
+gen-docs: build
+    @./bluefin-cli docs --dest ./docs/commands
+
 # Update embedded resources (Brewfiles) from upstream
 update-resources:
     #!/usr/bin/env bash
