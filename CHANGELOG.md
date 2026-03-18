@@ -1,3 +1,15 @@
+# [0.2.0](https://github.com/hanthor/bluefin-cli/compare/v0.1.0...v0.2.0) (2026-03-18)
+
+
+### Bug Fixes
+
+* resolve dependency conflicts and restore v1 paths ([8cf75ef](https://github.com/hanthor/bluefin-cli/commit/8cf75efc148c9cc285e530b2eef970a2952e54cb))
+
+
+### Features
+
+* implement provider pattern, viper config, embedded resources, and fuzzy finder ([2157583](https://github.com/hanthor/bluefin-cli/commit/2157583d8bac74c6c82397b033a9468178bcc8bd))
+
 # [0.1.0](https://github.com/hanthor/bluefin-cli/compare/v0.0.6...v0.1.0) (2026-03-18)
 
 
