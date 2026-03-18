@@ -27,6 +27,7 @@ var menuCmd = &cobra.Command{
 
 			var shellLabel string
 			statusLabel := "📊 Status"
+			doctorLabel := "🩺 Doctor"
 			installLabel := "📦 Install Apps ❯"
 
 			if hasShell {
@@ -37,6 +38,7 @@ var menuCmd = &cobra.Command{
 
 			opts := []huh.Option[string]{
 				huh.NewOption(statusLabel, "status"),
+				huh.NewOption(doctorLabel, "doctor"),
 				huh.NewOption(shellLabel, "shell"),
 				huh.NewOption(installLabel, "bundles"),
 			}
@@ -73,6 +75,11 @@ var menuCmd = &cobra.Command{
 			switch choice {
 			case "status":
 				if err := status.Show(); err != nil {
+					return err
+				}
+				tui.Pause()
+			case "doctor":
+				if err := status.Check(); err != nil {
 					return err
 				}
 				tui.Pause()
