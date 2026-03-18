@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/charmbracelet/huh"
+	"charm.land/huh/v2"
 	"github.com/hanthor/bluefin-cli/internal/env"
 	"github.com/hanthor/bluefin-cli/internal/shell"
 	"github.com/hanthor/bluefin-cli/internal/status"
@@ -72,9 +72,9 @@ var menuCmd = &cobra.Command{
 						Options(opts...).
 						Value(&choice),
 				),
-			).WithTheme(tui.AppTheme)
+			).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap())
 
-			if err := form.WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap()).Run(); err != nil {
+			if err := form.Run(); err != nil {
 				// ESC pressed on main menu - exit cleanly
 				return nil
 			}

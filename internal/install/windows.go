@@ -12,7 +12,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/charmbracelet/huh"
+	"charm.land/huh/v2"
 )
 
 type windowsManager string
