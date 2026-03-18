@@ -13,8 +13,9 @@ import (
 )
 
 var motdCmd = &cobra.Command{
-	Use:   "motd",
-	Short: "Manage Message of the Day",
+	Use:     "motd",
+	GroupID: "vanilla",
+	Short:   "Manage Message of the Day",
 	Long:  `Configure and display the Message of the Day (MOTD) with system info and tips.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runMotdMenu()

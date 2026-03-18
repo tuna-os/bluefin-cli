@@ -13,8 +13,9 @@ import (
 )
 
 var installCmd = &cobra.Command{
-	Use:   "install [bundle]",
-	Short: "Install tool bundles",
+	Use:     "install [bundle]",
+	GroupID: "vanilla",
+	Short:   "Install tool bundles",
 	Long: `Install predefined bundles or custom Brewfiles.
 
 Available bundles:
@@ -51,7 +52,7 @@ func init() {
 	rootCmd.AddCommand(installCmd)
 	installCmd.AddCommand(installListCmd)
 	installCmd.AddCommand(installWallpapersCmd)
-	installWallpapersCmd.AddCommand(installWallpapersCleanupCmd)
+	installCmd.AddCommand(installWallpapersCleanupCmd)
 
 	installWallpapersCmd.Flags().Bool("non-interactive", false, "Skip prompts and use flag values")
 	installWallpapersCmd.Flags().Bool("yes", false, "Non-interactive shortcut: run sunset setup after install")

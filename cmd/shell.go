@@ -14,8 +14,9 @@ import (
 )
 
 var shellCmd = &cobra.Command{
-	Use:   "shell [shell] [on|off]",
-	Short: "Toggle shell experience enhancements",
+	Use:     "shell [shell] [on|off]",
+	GroupID: "vanilla",
+	Short:   "Toggle shell experience enhancements",
 	Long: `Enable or disable shell experience enhancements (modern aliases and tool initialization).
 	
 The Shell Experience provides:
