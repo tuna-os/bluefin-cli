@@ -70,7 +70,7 @@ func Bundle(nameOrPath string) error {
 func GetBrewfile(nameOrPath string) (string, func(), error) {
 	if strings.Contains(nameOrPath, "/") || strings.Contains(nameOrPath, "\\") {
 		if _, err := os.Stat(nameOrPath); os.IsNotExist(err) {
-			return "", func() {}, fmt.Errorf("Brewfile not found: %s", nameOrPath)
+			return "", func() {}, fmt.Errorf("brewfile not found: %s", nameOrPath)
 		}
 		return nameOrPath, func() {}, nil
 	}

@@ -89,16 +89,7 @@ func TestInstall(t *testing.T) {
 			var capturedCmd *exec.Cmd
 			execCommand = func(name string, arg ...string) *exec.Cmd {
 				cmd := exec.Command("echo", "mock") // Dummy command
-				// Store the intended command parts for verification
-				// Reconstruct command string approx
-				fullCmd := name
-				if len(arg) > 0 {
-					fullCmd += " " + strings.Join(arg, " ")
-				}
-
 				// For verification in runCommand if needed, or just captured here
-				// We attach the command string to the cmd struct via specific field is hard
-				// So we capture it in the outer scope
 				capturedCmd = &exec.Cmd{
 					Path: name,
 					Args: append([]string{name}, arg...),
