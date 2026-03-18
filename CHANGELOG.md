@@ -1,3 +1,10 @@
+# [0.5.0](https://github.com/hanthor/bluefin-cli/compare/v0.4.0...v0.5.0) (2026-03-18)
+
+
+### Features
+
+* split vanilla from extra features and add automated fonts ([2b46eb1](https://github.com/hanthor/bluefin-cli/commit/2b46eb14c3169ed0f09724121f99995805787845))
+
 # [0.4.0](https://github.com/hanthor/bluefin-cli/compare/v0.3.1...v0.4.0) (2026-03-18)
 
 
