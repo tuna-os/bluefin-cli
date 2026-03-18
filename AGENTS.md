@@ -7,7 +7,7 @@
 The project follows a standard Go CLI structure:
 - **`cmd/`**: Contains the main entry point and Cobra commands. Each command file (e.g., `bling.go`, `install.go`) typically handles the CLI arguments and delegates logic to `internal/`.
 - **`internal/`**: Contains the core business logic, separated by domain (`bling`, `install`, `motd`, etc.).
-- **TUI**: Heavily uses [Bubble Tea](https://github.com/charmbracelet/bubbletea), [Lipgloss](https://github.com/charmbracelet/lipgloss), and [Huh](https://github.com/charmbracelet/huh) for interactive menus.
+- **TUI**: Heavily uses [Bubble Tea](https://charm.land/bubbletea/v2), [Lipgloss](https://charm.land/lipgloss/v2), and [Huh](https://charm.land/huh/v2) for interactive menus.
 
 ### Key Components
 1.  **Bling (`internal/bling`)**: Manages shell configuration files (`.bashrc`, `.zshrc`, `config.fish`). It embeds shell scripts (`resources/bling.sh`, `resources/bling.fish`) and sources them in the user's shell config.
