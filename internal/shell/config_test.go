@@ -8,8 +8,12 @@ import (
 func TestConfigData(t *testing.T) {
 	// Setup temp home
 	tmpHome := t.TempDir()
-	os.Setenv("HOMEBREW_PREFIX", tmpHome) // Mock Homebrew Prefix
-	defer os.Unsetenv("HOMEBREW_PREFIX")
+	if err := os.Setenv("HOMEBREW_PREFIX", tmpHome); err != nil {
+		t.Fatalf("Failed to set mock HOMEBREW_PREFIX: %v", err)
+	}
+	defer func() {
+		_ = os.Unsetenv("HOMEBREW_PREFIX")
+	}()
 
 	// Test Default Config
 	cfg := DefaultConfig("bash")

@@ -64,15 +64,6 @@ func togglePowerShell(enable bool) error {
 	return nil
 }
 
-func powerShellProfilePath() (string, error) {
-	paths, err := powerShellProfilePaths()
-	if err != nil {
-		return "", err
-	}
-
-	return paths[0], nil
-}
-
 func powerShellProfilePaths() ([]string, error) {
 
 	home, err := os.UserHomeDir()

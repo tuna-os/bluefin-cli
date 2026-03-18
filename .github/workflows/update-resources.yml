@@ -1,0 +1,48 @@
+name: Update Embedded Resources
+
+on:
+  schedule:
+    - cron: '0 0 * * 1' # Every Monday at 00:00 UTC
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install just
+        uses: taiki-e/install-action@just
+
+      - name: Update Brewfiles
+        run: just update-resources
+
+      - name: Check for changes
+        id: git-check
+        run: |
+          git status --porcelain
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.git-check.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(deps): update embedded Brewfiles from upstream"
+          title: "chore(deps): update embedded Brewfiles from upstream"
+          body: |
+            This is an automated PR to update the embedded Brewfiles in `internal/install/resources/brewfiles/` from the upstream `projectbluefin/common` repository.
+            
+            Manual update: `just update-resources`
+          branch: chore/update-brewfiles
+          base: master
+          delete-branch: true

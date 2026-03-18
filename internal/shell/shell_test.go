@@ -17,10 +17,16 @@ func TestToggle(t *testing.T) {
 
 func TestInit(t *testing.T) {
 	tmpHome := t.TempDir()
-	os.Setenv("HOME", tmpHome)
-	os.Setenv("USERPROFILE", tmpHome)
-	defer os.Unsetenv("HOME")
-	defer os.Unsetenv("USERPROFILE")
+	if err := os.Setenv("HOME", tmpHome); err != nil {
+		t.Fatalf("Failed to set mock HOME: %v", err)
+	}
+	if err := os.Setenv("USERPROFILE", tmpHome); err != nil {
+		t.Fatalf("Failed to set mock USERPROFILE: %v", err)
+	}
+	defer func() {
+		_ = os.Unsetenv("HOME")
+		_ = os.Unsetenv("USERPROFILE")
+	}()
 
 	tests := []struct {
 		name    string

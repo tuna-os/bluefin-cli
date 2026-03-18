@@ -195,12 +195,13 @@ func getImageInfo() ImageInfo {
 		FedoraVersion: "N/A",
 	}
 
-	if runtime.GOOS == "darwin" {
+	switch runtime.GOOS {
+	case "darwin":
 		info.ImageName = "macOS"
 		if output, err := exec.Command("sw_vers", "-productVersion").Output(); err == nil {
 			info.ImageTag = strings.TrimSpace(string(output))
 		}
-	} else if runtime.GOOS == "linux" {
+	case "linux":
 		if data, err := os.ReadFile("/etc/os-release"); err == nil {
 			lines := strings.Split(string(data), "\n")
 			for _, line := range lines {
@@ -229,8 +230,8 @@ func getRandomTipFromDir(tipsDir string) string {
 		return ""
 	}
 
-	rand.Seed(time.Now().UnixNano())
-	tipFile := files[rand.Intn(len(files))]
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	tipFile := files[r.Intn(len(files))]
 
 	content, err := os.ReadFile(tipFile)
 	if err != nil {
@@ -241,8 +242,8 @@ func getRandomTipFromDir(tipsDir string) string {
 }
 
 func getRandomDefaultTip() string {
-	rand.Seed(time.Now().UnixNano())
-	tip := defaultTips[rand.Intn(len(defaultTips))]
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	tip := defaultTips[r.Intn(len(defaultTips))]
 	return "💡 **Tip:** " + tip
 }
 

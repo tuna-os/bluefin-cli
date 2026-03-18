@@ -240,6 +240,37 @@ fmt:
     @echo "Formatting Go code..."
     go fmt ./...
 
+# Update embedded resources (Brewfiles) from upstream
+update-resources:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    BASE_URL="https://raw.githubusercontent.com/projectbluefin/common/main/system_files"
+    DEFAULT_PATH="shared/usr/share/ublue-os/homebrew"
+    BLUEFIN_PATH="bluefin/usr/share/ublue-os/homebrew"
+    
+    mkdir -p internal/install/resources/brewfiles
+    
+    FILES=(
+        "ai-tools.Brewfile"
+        "cli.Brewfile"
+        "cncf.Brewfile"
+        "experimental-ide.Brewfile"
+        "fonts.Brewfile"
+        "ide.Brewfile"
+        "k8s-tools.Brewfile"
+    )
+    
+    echo "Updating common Brewfiles..."
+    for file in "${FILES[@]}"; do
+        echo "  -> $file"
+        curl -sSfL "$BASE_URL/$DEFAULT_PATH/$file" -o "internal/install/resources/brewfiles/$file"
+    done
+    
+    echo "Updating Bluefin-specific Brewfiles..."
+    echo "  -> full-desktop.Brewfile"
+    curl -sSfL "$BASE_URL/$BLUEFIN_PATH/full-desktop.Brewfile" -o "internal/install/resources/brewfiles/full-desktop.Brewfile"
+    echo "Update complete!"
+
 # Show Go module info
 mod-info: build-container
     @echo "Go module information:"

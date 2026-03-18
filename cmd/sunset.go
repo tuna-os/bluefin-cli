@@ -89,9 +89,7 @@ func handleWSLDelegation() error {
 
 	// Reconstruct the command for the Windows side
 	args := []string{"sunset"}
-	for _, arg := range os.Args[2:] {
-		args = append(args, arg)
-	}
+	args = append(args, os.Args[2:]...)
 
 	// In WSL, running .exe works directly if it's in the Windows path or referenced by full path
 	command := exec.Command(winExe, args...)

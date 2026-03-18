@@ -190,7 +190,9 @@ func ensureHomebrew() error {
 	for _, p := range commonPaths {
 		if _, err := os.Stat(p); err == nil {
 			path := os.Getenv("PATH")
-			os.Setenv("PATH", path+string(os.PathListSeparator)+filepath.Dir(p))
+			if err := os.Setenv("PATH", path+string(os.PathListSeparator)+filepath.Dir(p)); err != nil {
+				return fmt.Errorf("failed to update PATH: %w", err)
+			}
 			return nil
 		}
 	}
@@ -222,7 +224,9 @@ func ensureHomebrew() error {
 	for _, p := range commonPaths {
 		if _, err := os.Stat(p); err == nil {
 			path := os.Getenv("PATH")
-			os.Setenv("PATH", path+string(os.PathListSeparator)+filepath.Dir(p))
+			if err := os.Setenv("PATH", path+string(os.PathListSeparator)+filepath.Dir(p)); err != nil {
+				return fmt.Errorf("failed to update PATH: %w", err)
+			}
 			fmt.Println(successStyle.Render("✓ Homebrew installed and added to PATH for this session."))
 			return nil
 		}

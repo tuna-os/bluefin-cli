@@ -72,7 +72,7 @@ brew "git"
 	if _, err := tmpFile.WriteString(content); err != nil {
 		t.Fatalf("Failed to write to temp file: %v", err)
 	}
-	tmpFile.Close()
+	_ = tmpFile.Close()
 
 	// This test will fail if brew is not installed, which is okay for unit tests
 	// The integration test will verify the full functionality
@@ -86,8 +86,10 @@ func TestDownloadFile(t *testing.T) {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
 	tmpPath := tmpFile.Name()
-	tmpFile.Close()
-	defer os.Remove(tmpPath)
+	_ = tmpFile.Close()
+	defer func() {
+		_ = os.Remove(tmpPath)
+	}()
 
 	// Try to download a small file
 	url := "https://raw.githubusercontent.com/ublue-os/bluefin/main/README.md"
@@ -112,8 +114,10 @@ func TestDownloadFileInvalidURL(t *testing.T) {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
 	tmpPath := tmpFile.Name()
-	tmpFile.Close()
-	defer os.Remove(tmpPath)
+	_ = tmpFile.Close()
+	defer func() {
+		_ = os.Remove(tmpPath)
+	}()
 
 	// Try to download from invalid URL
 	url := "https://invalid.invalid/nonexistent.txt"
@@ -204,12 +208,11 @@ func TestAvailableWindowsManagersPriority(t *testing.T) {
 func TestWindowsCandidatesFromLoader(t *testing.T) {
 	originalLoader := windowsPackageAliasesLoad
 	originalAliases := windowsPackageAliases
-	originalOnce := windowsMappingLoadOnce
 
 	defer func() {
 		windowsPackageAliasesLoad = originalLoader
 		windowsPackageAliases = originalAliases
-		windowsMappingLoadOnce = originalOnce
+		windowsMappingLoadOnce = sync.Once{}
 	}()
 
 	windowsPackageAliasesLoad = func() map[string][]string {

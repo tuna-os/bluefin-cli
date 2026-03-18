@@ -238,7 +238,9 @@ func sendPing(cliVersion string, bucket int) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 	return nil
 }
 
@@ -292,18 +294,18 @@ func StatusString(cliVersion string) string {
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("countme: enabled\n"))
-	sb.WriteString(fmt.Sprintf("  user-agent : %s\n", userAgent(cliVersion)))
-	sb.WriteString(fmt.Sprintf("  endpoint   : https://mirrors.fedoraproject.org/metalink?repo=fedora-%s&arch=%s\n",
-		fedoraRelease, baseArch()))
+	sb.WriteString("countme: enabled\n")
+	fmt.Fprintf(&sb, "  user-agent : %s\n", userAgent(cliVersion))
+	fmt.Fprintf(&sb, "  endpoint   : https://mirrors.fedoraproject.org/metalink?repo=fedora-%s&arch=%s\n",
+		fedoraRelease, baseArch())
 	if state.Epoch > 0 {
-		sb.WriteString(fmt.Sprintf("  first seen : %s\n", time.Unix(state.Epoch, 0).Format(time.DateOnly)))
-		sb.WriteString(fmt.Sprintf("  age bucket : %d\n", ageBucket(windowNumber(state.Epoch), windowNumber(time.Now().Unix()))))
+		fmt.Fprintf(&sb, "  first seen : %s\n", time.Unix(state.Epoch, 0).Format(time.DateOnly))
+		fmt.Fprintf(&sb, "  age bucket : %d\n", ageBucket(windowNumber(state.Epoch), windowNumber(time.Now().Unix())))
 	} else {
 		sb.WriteString("  first seen : not yet counted\n")
 	}
 	if state.Window > 0 {
-		sb.WriteString(fmt.Sprintf("  last ping  : %s\n", time.Unix(state.Window, 0).Format(time.DateTime)))
+		fmt.Fprintf(&sb, "  last ping  : %s\n", time.Unix(state.Window, 0).Format(time.DateTime))
 	} else {
 		sb.WriteString("  last ping  : never\n")
 	}
