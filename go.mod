@@ -6,7 +6,7 @@ require (
 	charm.land/bubbles/v2 v2.0.0
 	charm.land/huh/v2 v2.0.3
 	charm.land/lipgloss/v2 v2.0.2
-	github.com/charmbracelet/lipgloss v1.1.0
+	github.com/charmbracelet/lipgloss/v2 v2.0.2
 	github.com/klauspost/compress v1.18.4
 	github.com/ktr0731/go-fuzzyfinder v0.9.0
 	github.com/sixdouglas/suncalc v0.0.0-20250114185126-291b1938b70c
