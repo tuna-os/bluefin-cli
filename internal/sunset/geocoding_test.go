@@ -18,7 +18,7 @@ func TestGeocodeCity(t *testing.T) {
 				{Name: "New York", Latitude: 40.7128, Longitude: -74.0060},
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -38,7 +38,7 @@ func TestGeocodeCity(t *testing.T) {
 
 func TestGetMonthlyWallpaper(t *testing.T) {
 	tmpHome := t.TempDir()
-	
+
 	// Mock getHomeDir
 	originalGetHomeDir := getHomeDir
 	getHomeDir = func() (string, error) { return tmpHome, nil }

@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 
 	"github.com/charmbracelet/huh"
-	"github.com/spf13/cobra"
 	"github.com/hanthor/bluefin-cli/internal/motd"
 	"github.com/hanthor/bluefin-cli/internal/shell"
 	"github.com/hanthor/bluefin-cli/internal/tui"
+	"github.com/spf13/cobra"
 )
 
 var motdCmd = &cobra.Command{
@@ -76,12 +76,12 @@ var motdConfigCmd = &cobra.Command{
 			),
 		).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap())
 
-	if err := form.Run(); err != nil {
-		if err == huh.ErrUserAborted {
-			return nil
+		if err := form.Run(); err != nil {
+			if err == huh.ErrUserAborted {
+				return nil
+			}
+			return fmt.Errorf("form error: %w", err)
 		}
-		return fmt.Errorf("form error: %w", err)
-	}
 
 		return motd.SetTheme(selectedTheme)
 	},

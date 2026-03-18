@@ -10,7 +10,7 @@ func TestConfigData(t *testing.T) {
 	tmpHome := t.TempDir()
 	os.Setenv("HOMEBREW_PREFIX", tmpHome) // Mock Homebrew Prefix
 	defer os.Unsetenv("HOMEBREW_PREFIX")
-	
+
 	// Test Default Config
 	cfg := DefaultConfig("bash")
 	if !cfg.IsEnabled("Eza") {

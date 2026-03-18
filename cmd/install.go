@@ -139,24 +139,14 @@ func maybePromptForSunsetSetup() error {
 }
 
 func runSunsetSetup() error {
-	// We can't easily call sunsetCmd.RunE because of how Cobra works with flags and contexts, 
+	// We can't easily call sunsetCmd.RunE because of how Cobra works with flags and contexts,
 	// so we'll just run the menu-based setup directly if it's exported or similar.
 	// Actually, the easiest is to just call the function we exported in sunset.go
 	return RunSunsetSetupFlow()
 }
 
-func containsTheme(themes []string, theme string) bool {
-	for _, candidate := range themes {
-		if strings.EqualFold(candidate, theme) {
-			return true
-		}
-	}
-
-	return false
-}
-
 func runBundlesMenu() error {
-	selectedBundles := []string{}
+	var selectedBundles []string
 
 	for {
 		tui.ClearScreen()
@@ -368,7 +358,6 @@ func runWallpapersMenu() error {
 
 	return maybeHandleWindowsThemePostInstall(nil, selected)
 }
-
 
 func supportsWindowsThemePostInstall() bool {
 	return env.IsWSL() || env.IsWindows()

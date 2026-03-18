@@ -17,14 +17,14 @@ const (
 // GetSolarState calculates whether it is currently day or night at the given coordinates.
 func GetSolarState(lat, lon float64, now time.Time) SolarState {
 	times := suncalc.GetTimes(now, lat, lon)
-	
+
 	sunrise := times[suncalc.Sunrise].Value
 	sunset := times[suncalc.Sunset].Value
 
 	if now.After(sunrise) && now.Before(sunset) {
 		return StateDay
 	}
-	
+
 	return StateNight
 }
 

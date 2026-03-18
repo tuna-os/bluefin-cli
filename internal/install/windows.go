@@ -15,11 +15,6 @@ import (
 	"github.com/charmbracelet/huh"
 )
 
-type brewfilePackage struct {
-	kind string
-	name string
-}
-
 type windowsManager string
 
 const (
@@ -49,29 +44,9 @@ var (
 	brewDeclLine                 = regexp.MustCompile(`^\s*(brew|cask)\s+["']([^"']+)["']`)
 )
 
-type packageResolver interface {
-	Candidates(name string) []string
-}
-
-type packageExecutor interface {
-	AvailableManagers() []string
-	Install(manager, candidate string) error
-}
-
-type windowsResolver struct{}
-
-func (windowsResolver) Candidates(name string) []string {
-	return windowsCandidates(name)
-}
-
-type windowsExecutor struct{}
-
-func (windowsExecutor) AvailableManagers() []string {
-	return AvailableWindowsManagers()
-}
-
-func (windowsExecutor) Install(manager, candidate string) error {
-	return tryInstallWithManager(manager, candidate)
+type brewfilePackage struct {
+	kind string
+	name string
 }
 
 func BundleWindows(nameOrPath string) error {
@@ -215,27 +190,6 @@ func isWindowsManagerAvailable(manager windowsManager) bool {
 	return err == nil
 }
 
-func installWindowsPackage(availableManagers []string, pkg brewfilePackage, resolver packageResolver, executor packageExecutor) error {
-	if isUnsupportedWindowsPackage(pkg.name) {
-		return fmt.Errorf("unsupported package for Windows: %s", pkg.name)
-	}
-
-	candidates := sanitizeWindowsCandidates(resolver.Candidates(pkg.name))
-	if len(candidates) == 0 {
-		return fmt.Errorf("no viable Windows candidates for %s", pkg.name)
-	}
-
-	for _, manager := range availableManagers {
-		for _, candidate := range candidatesForManager(manager, candidates) {
-			if executor.Install(manager, candidate) == nil {
-				fmt.Println(successStyle.Render(fmt.Sprintf("✓ %s (%s)", pkg.name, manager)))
-				return nil
-			}
-		}
-	}
-	return fmt.Errorf("no package match for %s", pkg.name)
-}
-
 func tryInstallWithManager(manager, candidate string) error {
 	switch manager {
 	case string(managerWinget):
@@ -314,23 +268,6 @@ func bootstrapWindowsManager(manager windowsManager) error {
 	default:
 		return fmt.Errorf("unsupported manager: %s", manager)
 	}
-}
-
-func isUnsupportedWindowsPackage(name string) bool {
-	normalized := strings.ToLower(strings.TrimSpace(name))
-	if normalized == "" {
-		return true
-	}
-
-	if strings.Contains(normalized, "/") {
-		return true
-	}
-
-	if strings.Contains(normalized, "linux") {
-		return true
-	}
-
-	return false
 }
 
 func sanitizeWindowsCandidates(candidates []string) []string {
@@ -430,7 +367,9 @@ func parseBrewfilePackages(path string) ([]brewfilePackage, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
 	var packages []brewfilePackage
 	scanner := bufio.NewScanner(f)

@@ -13,13 +13,17 @@ func TestGetConfigDir(t *testing.T) {
 	getHomeDir = func() (string, error) { return tmpHome, nil }
 	defer func() { getHomeDir = originalGetHomeDir }()
 
-	os.Setenv("HOME", tmpHome)
-	defer os.Unsetenv("HOME")
+	if err := os.Setenv("HOME", tmpHome); err != nil {
+		t.Fatalf("Failed to set HOME: %v", err)
+	}
+	defer func() { _ = os.Unsetenv("HOME") }()
 
 	// Mock HOMEBREW_PREFIX
 	prefix := filepath.Join(tmpHome, "homebrew")
-	os.Setenv("HOMEBREW_PREFIX", prefix)
-	defer os.Unsetenv("HOMEBREW_PREFIX")
+	if err := os.Setenv("HOMEBREW_PREFIX", prefix); err != nil {
+		t.Fatalf("Failed to set HOMEBREW_PREFIX: %v", err)
+	}
+	defer func() { _ = os.Unsetenv("HOMEBREW_PREFIX") }()
 
 	homeConfig := filepath.Join(tmpHome, ".config", "bluefin-cli")
 	brewConfig := filepath.Join(prefix, "etc", "bluefin-cli")
@@ -50,7 +54,9 @@ func TestGetConfigDir(t *testing.T) {
 	}
 
 	// 3. Test Fallback: No HOMEBREW_PREFIX
-	os.Unsetenv("HOMEBREW_PREFIX")
+	if err := os.Unsetenv("HOMEBREW_PREFIX"); err != nil {
+		t.Fatalf("Failed to unset HOMEBREW_PREFIX: %v", err)
+	}
 	dir, err = GetConfigDir()
 	if err != nil {
 		t.Fatalf("GetConfigDir failed: %v", err)

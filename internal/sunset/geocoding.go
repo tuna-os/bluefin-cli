@@ -32,7 +32,9 @@ func GeocodeCity(cityName string) (*GeocodeResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to call geocoding API: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("geocoding API returned status: %d", resp.StatusCode)

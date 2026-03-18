@@ -86,7 +86,7 @@ func handleWSLDelegation() error {
 	}
 
 	fmt.Printf("Delegating sunset command to Windows CLI: %s\n", winExe)
-	
+
 	// Reconstruct the command for the Windows side
 	args := []string{"sunset"}
 	for _, arg := range os.Args[2:] {
@@ -110,7 +110,7 @@ func findWindowsCLI() string {
 	// Try common locations if not in PATH
 	localAppData := strings.TrimSpace(os.Getenv("LOCALAPPDATA"))
 	if localAppData != "" {
-		// Check for wine path style if env is not translated properly, 
+		// Check for wine path style if env is not translated properly,
 		// but usually in WSL it is if configured.
 		// However, WSL often has LOCALAPPDATA translated.
 		candidate := filepath.Join(localAppData, "Microsoft", "WinGet", "Links", "bluefin-cli.exe")
@@ -131,7 +131,7 @@ func runSunset(cfg *sunset.Config) error {
 	now := time.Now()
 	state := sunset.GetSolarState(cfg.Latitude, cfg.Longitude, now)
 	isDay := state == sunset.StateDay
-	
+
 	fmt.Printf("Current solar state: %s\n", state)
 
 	operator := sunset.NewThemeOperator()

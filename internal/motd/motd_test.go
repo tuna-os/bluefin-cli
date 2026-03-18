@@ -76,7 +76,7 @@ func TestShow(t *testing.T) {
 	}
 
 	// Read captured output
-	w.Close()
+	_ = w.Close()
 	// ReadAll from pipe
 	out, _ := io.ReadAll(r)
 	output := string(out)

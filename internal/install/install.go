@@ -73,7 +73,7 @@ func Bundle(nameOrPath string) error {
 	}
 
 	if _, err := exec.LookPath("brew"); err != nil {
-		return fmt.Errorf("Homebrew not found. Please install Homebrew first: https://brew.sh")
+		return fmt.Errorf("homebrew not found. Please install Homebrew first: https://brew.sh")
 	}
 
 	brewfilePath, cleanup, err := GetBrewfile(nameOrPath)
@@ -130,7 +130,7 @@ func GetBrewfile(nameOrPath string) (string, func(), error) {
 	}
 
 	cleanup := func() {
-		os.Remove(brewfilePath)
+		_ = os.Remove(brewfilePath)
 	}
 
 	return brewfilePath, cleanup, nil
@@ -148,7 +148,9 @@ func MergeBrewfiles(paths []string) (string, func(), error) {
 	if err != nil {
 		return "", func() {}, err
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
 	for _, p := range paths {
 		content, err := os.ReadFile(p)
@@ -164,7 +166,7 @@ func MergeBrewfiles(paths []string) (string, func(), error) {
 	}
 
 	cleanup := func() {
-		os.Remove(mergedPath)
+		_ = os.Remove(mergedPath)
 	}
 
 	return mergedPath, cleanup, nil
@@ -219,7 +221,9 @@ func downloadFile(url, filepath string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("failed to download: HTTP %d", resp.StatusCode)
@@ -229,7 +233,9 @@ func downloadFile(url, filepath string) error {
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer func() {
+		_ = out.Close()
+	}()
 
 	_, err = io.Copy(out, resp.Body)
 	return err

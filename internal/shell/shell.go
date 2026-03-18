@@ -473,7 +473,9 @@ func Toggle(shell string, enable bool) error {
 		if err != nil {
 			return err
 		}
-		defer f.Close()
+		defer func() {
+			_ = f.Close()
+		}()
 
 		prefix := "\n"
 		if len(text) == 0 || strings.HasSuffix(text, "\n") {

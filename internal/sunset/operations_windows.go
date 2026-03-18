@@ -18,11 +18,11 @@ var (
 
 const (
 	spiSetDesktopWallpaper = 0x0014
-	spifUpdateIniFile     = 0x01
-	spifSendChange        = 0x02
-	wmSettingChange       = 0x001A
-	hwndBroadcast         = 0xffff
-	smtoAbortIfHung       = 0x0002
+	spifUpdateIniFile      = 0x01
+	spifSendChange         = 0x02
+	wmSettingChange        = 0x001A
+	hwndBroadcast          = 0xffff
+	smtoAbortIfHung        = 0x0002
 )
 
 type windowsThemeOperator struct{}

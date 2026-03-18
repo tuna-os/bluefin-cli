@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/hanthor/bluefin-cli/internal/env"
 	"github.com/klauspost/compress/zstd"
 )
 
@@ -40,11 +39,6 @@ var knownWallpaperCasks = []string{
 	"aurora-wallpapers",
 	"bazzite-wallpapers",
 }
-
-var (
-	isWSL     = env.IsWSL
-	isWindows = env.IsWindows
-)
 
 func EnsureBrew() error {
 	if _, err := exec.LookPath("brew"); err != nil {
@@ -394,7 +388,9 @@ func downloadAndExtractWallpaperArchive(archiveURL, targetDir string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("download failed with HTTP %d", resp.StatusCode)
@@ -477,7 +473,9 @@ func extractImagesFromTarGz(payload []byte, targetDir string) error {
 	if err != nil {
 		return err
 	}
-	defer gz.Close()
+	defer func() {
+		_ = gz.Close()
+	}()
 
 	tr := tar.NewReader(gz)
 	return extractImagesFromTarReader(tr, targetDir)
@@ -510,7 +508,7 @@ func extractImagesFromTarReader(tr *tar.Reader, targetDir string) error {
 			return err
 		}
 
-		if (h.Typeflag != tar.TypeReg && h.Typeflag != tar.TypeRegA) || !isImageFileName(h.Name) {
+		if (h.Typeflag != tar.TypeReg) || !isImageFileName(h.Name) {
 			continue
 		}
 
@@ -578,7 +576,9 @@ func writeFileFromReader(path string, r io.Reader) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
 	_, err = io.Copy(f, r)
 	return err

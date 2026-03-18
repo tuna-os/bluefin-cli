@@ -70,7 +70,6 @@ func ApplyTheme(themeName string) error {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 
-
 	// Download and apply the preset
 	cmd := execCommand("starship", "preset", themeName, "-o", starshipConfig)
 	cmd.Stdout = os.Stdout

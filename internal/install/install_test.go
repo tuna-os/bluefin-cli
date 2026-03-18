@@ -58,8 +58,12 @@ func TestBundleWithLocalFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
-	defer os.Remove(tmpFile.Name())
-	defer tmpFile.Close()
+	defer func() {
+		_ = os.Remove(tmpFile.Name())
+	}()
+	defer func() {
+		_ = tmpFile.Close()
+	}()
 
 	// Write some content
 	content := `tap "homebrew/core"
@@ -124,7 +128,9 @@ func TestParseBrewfilePackages(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
 	}
-	defer os.Remove(tmpFile.Name())
+	defer func() {
+		_ = os.Remove(tmpFile.Name())
+	}()
 
 	content := `tap "homebrew/core"
 brew "git"
