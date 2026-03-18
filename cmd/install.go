@@ -8,7 +8,6 @@ import (
 	"github.com/hanthor/bluefin-cli/internal/env"
 	"github.com/hanthor/bluefin-cli/internal/install"
 	"github.com/hanthor/bluefin-cli/internal/tui"
-	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
 
@@ -51,8 +50,8 @@ var installListCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(installCmd)
 	installCmd.AddCommand(installListCmd)
-	installCmd.AddCommand(installWallpapersCmd)
-	installCmd.AddCommand(installWallpapersCleanupCmd)
+	rootCmd.AddCommand(installWallpapersCmd)
+	rootCmd.AddCommand(installWallpapersCleanupCmd)
 
 	installWallpapersCmd.Flags().Bool("non-interactive", false, "Skip prompts and use flag values")
 	installWallpapersCmd.Flags().Bool("yes", false, "Non-interactive shortcut: run sunset setup after install")
@@ -96,59 +95,6 @@ var installWallpapersCleanupCmd = &cobra.Command{
 	},
 }
 
-func maybeHandleWindowsThemePostInstall(cmd *cobra.Command, casks []string) error {
-	if !supportsWindowsThemePostInstall() {
-		return nil
-	}
-
-	nonInteractive := false
-	yes := false
-	if cmd != nil {
-		nonInteractive, _ = cmd.Flags().GetBool("non-interactive")
-		yes, _ = cmd.Flags().GetBool("yes")
-	}
-
-	if yes {
-		return runSunsetSetup()
-	}
-
-	if nonInteractive {
-		return nil
-	}
-
-	return maybePromptForSunsetSetup()
-}
-
-func maybePromptForSunsetSetup() error {
-	var startSetup bool
-	confirm := huh.NewConfirm().
-		Title("Would you like to configure solar-based theme and wallpaper switching now?").
-		Description("This uses the new 'sunset' feature to automatically manage your desktop experience.").
-		Value(&startSetup).
-		WithTheme(tui.AppTheme).
-		WithKeyMap(tui.MenuKeyMap())
-
-	if err := confirm.Run(); err != nil {
-		if err == huh.ErrUserAborted {
-			return nil
-		}
-		return err
-	}
-
-	if startSetup {
-		return runSunsetSetup()
-	}
-
-	return nil
-}
-
-func runSunsetSetup() error {
-	// We can't easily call sunsetCmd.RunE because of how Cobra works with flags and contexts,
-	// so we'll just run the menu-based setup directly if it's exported or similar.
-	// Actually, the easiest is to just call the function we exported in sunset.go
-	return RunSunsetSetupFlow()
-}
-
 func runBundlesMenu() error {
 	var selectedBundles []string
 
@@ -161,11 +107,11 @@ func runBundlesMenu() error {
 		opts := []huh.Option[string]{
 			huh.NewOption("🤖 AI Tools", "ai"),
 			huh.NewOption("💻 CLI Essentials", "cli"),
-			huh.NewOption("☁️  CNCF Tools", "cncf"),
+			huh.NewOption("☁️ CNCF Tools", "cncf"),
 			huh.NewOption("🧪 Experimental IDE", "experimental-ide"),
 			huh.NewOption("🔤 Development Fonts", "fonts"),
 			huh.NewOption("📝 IDE Tools", "ide"),
-			huh.NewOption("☸️  Kubernetes Tools", "k8s"),
+			huh.NewOption("☸️ Kubernetes Tools", "k8s"),
 		}
 
 		if env.IsWindows() {
@@ -184,7 +130,7 @@ func runBundlesMenu() error {
 			if env.IsWindows() {
 				opts = append(opts, huh.NewOption("Full GNOME Desktop", "full-desktop"))
 			} else {
-				opts = append(opts, huh.NewOption("🖥️  Full GNOME Desktop", "full-desktop"))
+				opts = append(opts, huh.NewOption("🖥️ Full GNOME Desktop", "full-desktop"))
 			}
 		}
 
@@ -324,20 +270,37 @@ func runWallpapersMenu() error {
 		return fmt.Errorf("no wallpaper casks found in ublue-os/tap")
 	}
 
-	idx, err := fuzzyfinder.Find(
-		casks,
-		func(i int) string {
-			return casks[i]
-		},
-	)
-	if err != nil {
-		if err == fuzzyfinder.ErrAbort {
-			return nil
-		}
-		return fmt.Errorf("fuzzy finder error: %w", err)
+	opts := make([]huh.Option[string], 0, len(casks))
+	for _, c := range casks {
+		opts = append(opts, huh.NewOption(c, c))
 	}
 
-	selected := []string{casks[idx]}
+	var selected []string
+	wallpaperSelect := huh.NewMultiSelect[string]().
+		Title("Select wallpapers to install").
+		Description("Space toggles selections. Enter confirms. If none selected, Enter installs the highlighted item.").
+		Options(opts...).
+		Value(&selected)
+
+	form := huh.NewForm(
+		huh.NewGroup(
+			wallpaperSelect,
+		),
+	).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap())
+	if err := form.Run(); err != nil {
+		if err == huh.ErrUserAborted {
+			return nil
+		}
+		return fmt.Errorf("form error: %w", err)
+	}
+
+	if len(selected) == 0 {
+		hovered, ok := wallpaperSelect.Hovered()
+		if !ok || strings.TrimSpace(hovered) == "" {
+			return fmt.Errorf("no wallpapers selected")
+		}
+		selected = []string{hovered}
+	}
 
 	if err := install.InstallWallpaperCasks(selected); err != nil {
 		return err

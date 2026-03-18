@@ -54,16 +54,24 @@ motd-test: build-container build
         go test -v ./internal/motd/...
     @echo "Motd tests completed!"
 
-# Build the binary locally
-build:
-    @echo "Building binary locally..."
+# Build the vanilla binary (Standard features only)
+build-vanilla:
+    @echo "Building vanilla binary..."
     go build -o bluefin-cli
+
+# Build the full binary (Everything)
+build-full:
+    @echo "Building full binary..."
+    go build -tags extra -o bluefin-cli-full
+
+# Build the binary locally (default to full for dev)
+build: build-full
 
 
 # Open an interactive shell in the development container
 shell: build-container build
     @echo "Opening interactive shell in development container..."
-    @echo "Binary is ready at: ./bluefin-cli"
+    @echo "Binary is ready at: ./bluefin-cli-full"
     @echo ""
     podman run --rm -it \
         -v "$(pwd):/workspace:Z" \

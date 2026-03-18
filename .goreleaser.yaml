@@ -7,9 +7,24 @@ before:
     - go mod tidy
 
 builds:
-  - binary: bluefin-cli
+  - id: vanilla
+    binary: bluefin-cli
     env:
       - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+  - id: full
+    binary: bluefin-cli-full
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -tags=extra
     goos:
       - linux
       - darwin
