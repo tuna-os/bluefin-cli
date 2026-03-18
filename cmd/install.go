@@ -8,6 +8,7 @@ import (
 	"github.com/hanthor/bluefin-cli/internal/env"
 	"github.com/hanthor/bluefin-cli/internal/install"
 	"github.com/hanthor/bluefin-cli/internal/tui"
+	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
 
@@ -320,37 +321,20 @@ func runWallpapersMenu() error {
 		return fmt.Errorf("no wallpaper casks found in ublue-os/tap")
 	}
 
-	opts := make([]huh.Option[string], 0, len(casks))
-	for _, c := range casks {
-		opts = append(opts, huh.NewOption(c, c))
-	}
-
-	var selected []string
-	wallpaperSelect := huh.NewMultiSelect[string]().
-		Title("Select wallpapers to install").
-		Description("Space toggles selections. Enter confirms. If none selected, Enter installs the highlighted item.").
-		Options(opts...).
-		Value(&selected)
-
-	form := huh.NewForm(
-		huh.NewGroup(
-			wallpaperSelect,
-		),
-	).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap())
-	if err := form.Run(); err != nil {
-		if err == huh.ErrUserAborted {
+	idx, err := fuzzyfinder.Find(
+		casks,
+		func(i int) string {
+			return casks[i]
+		},
+	)
+	if err != nil {
+		if err == fuzzyfinder.ErrAbort {
 			return nil
 		}
-		return fmt.Errorf("form error: %w", err)
+		return fmt.Errorf("fuzzy finder error: %w", err)
 	}
 
-	if len(selected) == 0 {
-		hovered, ok := wallpaperSelect.Hovered()
-		if !ok || strings.TrimSpace(hovered) == "" {
-			return fmt.Errorf("no wallpapers selected")
-		}
-		selected = []string{hovered}
-	}
+	selected := []string{casks[idx]}
 
 	if err := install.InstallWallpaperCasks(selected); err != nil {
 		return err
