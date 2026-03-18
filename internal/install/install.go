@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -20,15 +21,10 @@ var (
 	titleStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("14")).Bold(true)
 )
 
-const (
-	commonBaseURL   = "https://raw.githubusercontent.com/projectbluefin/common/main/system_files"
-	defaultBrewPath = "shared/usr/share/ublue-os/homebrew"
-)
-
 type BundleSpec struct {
 	File        string
 	Description string
-	Path        string // Optional: override defaultBrewPath
+	Path        string // Optional: override default path
 }
 
 var bundles = map[string]BundleSpec{
@@ -68,31 +64,7 @@ var bundles = map[string]BundleSpec{
 }
 
 func Bundle(nameOrPath string) error {
-	if runtime.GOOS == "windows" {
-		return BundleWindows(nameOrPath)
-	}
-
-	if _, err := exec.LookPath("brew"); err != nil {
-		return fmt.Errorf("homebrew not found. Please install Homebrew first: https://brew.sh")
-	}
-
-	brewfilePath, cleanup, err := GetBrewfile(nameOrPath)
-	if err != nil {
-		return err
-	}
-	defer cleanup()
-
-	if err := EnsureBbrew(); err != nil {
-		return err
-	}
-
-	fmt.Println(infoStyle.Render(fmt.Sprintf("🍺 Opening %s in bbrew...", brewfilePath)))
-
-	if err := RunBbrew(brewfilePath); err != nil {
-		return fmt.Errorf("bbrew failed: %w", err)
-	}
-
-	return nil
+	return GetInstaller().InstallBundle(nameOrPath)
 }
 
 func GetBrewfile(nameOrPath string) (string, func(), error) {
@@ -114,16 +86,30 @@ func GetBrewfile(nameOrPath string) (string, func(), error) {
 		}
 	}
 
-	path := defaultBrewPath
+	// Try to use embedded brewfile first
+	embeddedPath := "resources/brewfiles/" + bundle.File
+	data, err := EmbeddedBrewfiles.ReadFile(embeddedPath)
+	if err == nil {
+		tmpDir := os.TempDir()
+		brewfilePath := filepath.Join(tmpDir, bundle.File)
+		if err := os.WriteFile(brewfilePath, data, 0644); err != nil {
+			return "", func() {}, fmt.Errorf("failed to write embedded bundle to disk: %w", err)
+		}
+		fmt.Println(infoStyle.Render(fmt.Sprintf("📦 Using embedded %s bundle...", nameOrPath)))
+		return brewfilePath, func() { _ = os.Remove(brewfilePath) }, nil
+	}
+
+	// Fallback to download
+	path := viper.GetString("bundles.default_path")
 	if bundle.Path != "" {
 		path = bundle.Path
 	}
 
-	url := fmt.Sprintf("%s/%s/%s", commonBaseURL, path, bundle.File)
+	url := fmt.Sprintf("%s/%s/%s", viper.GetString("bundles.base_url"), path, bundle.File)
 	tmpDir := os.TempDir()
 	brewfilePath := filepath.Join(tmpDir, bundle.File)
 
-	fmt.Println(infoStyle.Render(fmt.Sprintf("⬇️  Downloading %s bundle...", nameOrPath)))
+	fmt.Println(infoStyle.Render(fmt.Sprintf("⬇️  Downloading %s bundle from %s...", nameOrPath, url)))
 
 	if err := downloadFile(url, brewfilePath); err != nil {
 		return "", func() {}, fmt.Errorf("failed to download bundle: %w", err)
