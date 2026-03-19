@@ -11,7 +11,7 @@ import (
 
 func addExtraMenuOptions(opts []huh.Option[string]) []huh.Option[string] {
 	wallpapersLabel := "🖼  Wallpapers ❯"
-	fontsLabel := "🔤 Fonts"
+	fontsLabel := "🔤 Fonts ❯"
 	starshipLabel := "🚀 Starship Theme ❯"
 
 	// Standard (Standard) section

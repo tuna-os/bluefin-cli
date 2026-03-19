@@ -47,6 +47,23 @@ func setDefaults() {
 	viper.SetDefault("bundles.base_url", "https://raw.githubusercontent.com/projectbluefin/common/main/system_files")
 	viper.SetDefault("bundles.default_path", "shared/usr/share/ublue-os/homebrew")
 	viper.SetDefault("theme", "catppuccin")
+	viper.SetDefault("ui.dark_mode", true)
+}
+
+// Save persists the current viper configuration to disk.
+// If no config file has been loaded yet, it creates one in the primary config dir.
+func Save() error {
+	if viper.ConfigFileUsed() != "" {
+		return viper.WriteConfig()
+	}
+	configDir, err := GetConfigDir()
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		return fmt.Errorf("failed to create config dir: %w", err)
+	}
+	return viper.WriteConfigAs(filepath.Join(configDir, "config.yaml"))
 }
 
 // GetConfigDir returns the primary configuration directory.

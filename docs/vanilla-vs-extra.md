@@ -18,7 +18,7 @@ These features are included in **both** binaries. They focus on providing tools 
 | **App Bundles** | `install` | Install tool bundles (CLI, AI, CNCF, etc.) via Homebrew. |
 | **Shell Config** | `shell` | Enable modern shell enhancements, aliases, and tool integrations. |
 | **Init System** | `init` | Standard shell initialization logic. |
-| **System Status** | `status` | Overview of enabled tools and shell status. |
+| **System Status** | `status` | Overview of enabled tools, shell status, and environment health. |
 | **MOTD** | `motd` | Manage system info and helpful tips. |
 | **Download Fonts** | `fonts` | Download recommended dev fonts (JetBrains Mono, Fira Code, etc.). |
 | **Download Wallpapers** | `wallpapers` | Download monthly wallpaper packs from `ublue-os/tap`. |

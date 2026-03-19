@@ -10,6 +10,7 @@ import (
 	"charm.land/huh/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/hanthor/bluefin-cli/internal/tui/theme"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -42,8 +43,20 @@ var (
 
 type appTheme struct{}
 
-func (t appTheme) Theme(isDark bool) *huh.Styles {
-	return huh.ThemeCatppuccin(isDark)
+func (t appTheme) Theme(_ bool) *huh.Styles {
+	isDark := viper.GetBool("ui.dark_mode")
+	s := huh.ThemeCatppuccin(isDark)
+	var unselectedHex string
+	if isDark {
+		unselectedHex = "#bac2de" // Catppuccin Mocha Subtext1
+	} else {
+		unselectedHex = "#6c6f85" // Catppuccin Latte Overlay2
+	}
+	unselected := lipgloss.Color(unselectedHex)
+	s.Focused.Option = s.Focused.Option.Foreground(unselected)
+	s.Focused.UnselectedOption = s.Focused.UnselectedOption.Foreground(unselected)
+	s.Focused.UnselectedPrefix = s.Focused.UnselectedPrefix.Foreground(unselected)
+	return s
 }
 
 var (
