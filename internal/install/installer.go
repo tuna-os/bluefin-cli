@@ -2,7 +2,7 @@ package install
 
 // Installer defines the interface for platform-specific installation operations.
 type Installer interface {
-	InstallBundle(nameOrPath string) error
+	InstallBundle(nameOrPath ...string) error
 	InstallWallpapers(casks []string) error
 	CleanupWallpapers(all bool) error
 }
