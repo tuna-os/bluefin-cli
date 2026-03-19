@@ -205,21 +205,23 @@ func Show() error {
 	}
 	rightCol += "\n"
 
-	// Sunset status
-	rightCol += labelStyle.Render("Sunset Automation:") + "\n"
-	if cfg, err := sunset.LoadConfig(); err == nil && cfg.Enabled {
-		rightCol += fmt.Sprintf("  %s Status: %s\n",
-			enabledStyle.Render("✓"),
-			enabledStyle.Render("enabled"))
-		rightCol += fmt.Sprintf("    Location: %.4f, %.4f\n", cfg.Latitude, cfg.Longitude)
-		if cfg.WallpaperTheme != "" {
-			rightCol += fmt.Sprintf("    Theme: %s\n", cfg.WallpaperTheme)
+	// Sunset status (Windows/WSL only)
+	if env.IsWindows() || env.IsWSL() {
+		rightCol += labelStyle.Render("Sunset Automation:") + "\n"
+		if cfg, err := sunset.LoadConfig(); err == nil && cfg.Enabled {
+			rightCol += fmt.Sprintf("  %s Status: %s\n",
+				enabledStyle.Render("✓"),
+				enabledStyle.Render("enabled"))
+			rightCol += fmt.Sprintf("    Location: %.4f, %.4f\n", cfg.Latitude, cfg.Longitude)
+			if cfg.WallpaperTheme != "" {
+				rightCol += fmt.Sprintf("    Theme: %s\n", cfg.WallpaperTheme)
+			}
+		} else {
+			rightCol += fmt.Sprintf("  %s Status: %s\n",
+				disabledStyle.Render("✗"),
+				disabledStyle.Render("disabled"))
+			rightCol += "    Run 'bluefin-cli sunset setup' to enable\n"
 		}
-	} else {
-		rightCol += fmt.Sprintf("  %s Status: %s\n",
-			disabledStyle.Render("✗"),
-			disabledStyle.Render("disabled"))
-		rightCol += "    Run 'bluefin-cli sunset setup' to enable\n"
 	}
 
 	// Combine columns with padding

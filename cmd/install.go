@@ -103,11 +103,11 @@ type bundleCategory struct {
 var bundleCategories = []bundleCategory{
 	{Label: "🤖 AI Tools", ID: "ai"},
 	{Label: "💻 CLI Essentials", ID: "cli"},
-	{Label: "☁️ CNCF Tools", ID: "cncf"},
+	{Label: "🌐 CNCF Tools", ID: "cncf"},
 	{Label: "🧪 Experimental IDE", ID: "experimental-ide"},
 	{Label: "📝 IDE Tools", ID: "ide"},
-	{Label: "☸️ Kubernetes Tools", ID: "k8s"},
-	{Label: "🖥️ Full GNOME Desktop", ID: "full-desktop", LinuxOnly: true},
+	{Label: "🎡 Kubernetes Tools", ID: "k8s"},
+	{Label: "🐧 Full GNOME Desktop", ID: "full-desktop", LinuxOnly: true},
 }
 
 func runBundlesMenu() error {
@@ -263,7 +263,7 @@ func runPackageMenu(bundleName string) error {
 				Title("Apply these changes?").
 				Value(&confirmed),
 		),
-	).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap())
+	).WithTheme(tui.AppTheme).WithKeyMap(tui.ConfirmKeyMap())
 
 	if err := confirm.Run(); err != nil || !confirmed {
 		return nil
