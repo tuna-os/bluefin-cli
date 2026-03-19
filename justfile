@@ -57,12 +57,12 @@ motd-test: build-container build
 # Build the standard binary (Standard features only)
 build-standard:
     @echo "Building standard binary..."
-    go build -o bluefin-cli
+    go build -ldflags "-s -w -X github.com/hanthor/bluefin-cli/cmd.version=$(git describe --tags --always --dirty)" -o bluefin-cli
 
 # Build the plus binary (Everything)
 build-plus:
     @echo "Building plus binary..."
-    go build -tags extra -o bluefin-cli-plus
+    go build -tags extra -ldflags "-s -w -X github.com/hanthor/bluefin-cli/cmd.version=$(git describe --tags --always --dirty)" -o bluefin-cli-plus
 
 # Build both binaries
 build-all: build-standard build-plus

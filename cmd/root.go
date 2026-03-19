@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	version = "0.0.3"
+	version = "dev"
 )
 
 var rootCmd = &cobra.Command{

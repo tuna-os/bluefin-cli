@@ -108,6 +108,7 @@ func runBundlesMenu() error {
 			huh.NewOption("💻 CLI Essentials", "cli"),
 			huh.NewOption("☁️ CNCF Tools", "cncf"),
 			huh.NewOption("🧪 Experimental IDE", "experimental-ide"),
+			huh.NewOption("🔤 Fonts ❯", "fonts"),
 			huh.NewOption("📝 IDE Tools", "ide"),
 			huh.NewOption("☸️ Kubernetes Tools", "k8s"),
 		}
@@ -118,6 +119,7 @@ func runBundlesMenu() error {
 				huh.NewOption("CLI Essentials", "cli"),
 				huh.NewOption("CNCF Tools", "cncf"),
 				huh.NewOption("Experimental IDE", "experimental-ide"),
+				huh.NewOption("Fonts >", "fonts"),
 				huh.NewOption("IDE Tools", "ide"),
 				huh.NewOption("Kubernetes Tools", "k8s"),
 			}
@@ -148,6 +150,14 @@ func runBundlesMenu() error {
 		}
 
 		selectedBundles = []string{selectedBundle}
+
+		// Fonts has its own per-font selection menu
+		if selectedBundle == "fonts" {
+			if err := runFontsMenu(); err != nil {
+				return err
+			}
+			continue
+		}
 
 		if env.IsWindows() {
 			packages, err := install.WindowsPackagesForBundles(selectedBundles)

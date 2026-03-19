@@ -14,7 +14,7 @@ This document outlines the potential future direction for `bluefin-cli`.
 - **Enhanced Bling**:
     - Add `fzf` integration (it's a common request).
     - Add `ranger` for terminal file management.
-- **Validation**: Add a `doctor` command to verify environment health (e.g., "Is Homebrew healthy?", "Are shell configs conflicting?").
+- **Validation**: ~~Add a `doctor` command to verify environment health~~ (covered by `status`).
 
 
 ## 🔭 Long-term Vision

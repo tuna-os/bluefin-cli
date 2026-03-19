@@ -7,10 +7,12 @@ import (
 	"strings"
 
 	"charm.land/huh/v2"
+	"github.com/hanthor/bluefin-cli/internal/config"
 	"github.com/hanthor/bluefin-cli/internal/env"
 	"github.com/hanthor/bluefin-cli/internal/shell"
 	"github.com/hanthor/bluefin-cli/internal/tui"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var shellCmd = &cobra.Command{
@@ -66,19 +68,21 @@ func runShellMenu() error {
 
 		status := shell.CheckStatus()
 		isEnabled := status[currentShell]
-		toggleLabel := fmt.Sprintf("Enable for current shell (%s)", currentShell)
+		toggleLabel := fmt.Sprintf("🔄 Enable for current shell (%s)", currentShell)
 		if isEnabled {
-			toggleLabel = fmt.Sprintf("Disable for current shell (%s)", currentShell)
+			toggleLabel = fmt.Sprintf("🔄 Disable for current shell (%s)", currentShell)
 		}
 
 		var action string
-		componentsLabel := "Configure Components ❯"
+		componentsLabel := "⚙️  Configure Components ❯"
 		motdLabel := "📰 MOTD Settings ❯"
-		shellsLabel := "Enable/Disable for other shells ❯"
+		shellsLabel := "🐚 Other Shells ❯"
+		advancedLabel := "🎨 Advanced ❯"
 		if env.IsWindows() {
-			componentsLabel = "Configure Components >"
-			motdLabel = "MOTD Settings >"
-			shellsLabel = "Enable/Disable for other shells >"
+			componentsLabel = "⚙️  Configure Components >"
+			motdLabel = "📰 MOTD Settings >"
+			shellsLabel = "🐚 Other Shells >"
+			advancedLabel = "🎨 Advanced >"
 		}
 
 		if err := huh.NewForm(
@@ -90,6 +94,7 @@ func runShellMenu() error {
 						huh.NewOption(componentsLabel, "components"),
 						huh.NewOption(motdLabel, "motd"),
 						huh.NewOption(shellsLabel, "shells"),
+						huh.NewOption(advancedLabel, "advanced"),
 						huh.NewOption("Exit to Main Menu", "exit"),
 					).
 					Value(&action),
@@ -114,6 +119,10 @@ func runShellMenu() error {
 			}
 		case "motd":
 			if err := runMotdMenu(); err != nil {
+				return err
+			}
+		case "advanced":
+			if err := runAdvancedMenu(); err != nil {
 				return err
 			}
 		case "exit":
@@ -248,6 +257,48 @@ func configureShellTools() error {
 
 	fmt.Println(tui.SuccessStyle.Render("Configuration saved! Tools installed/updated."))
 	tui.Pause()
+	return nil
+}
+
+func runAdvancedMenu() error {
+	tui.ClearScreen()
+	tui.RenderHeader("Bluefin CLI", "Main Menu > Shell > Advanced")
+
+	isDark := viper.GetBool("ui.dark_mode")
+	darkModeLabel := "🌙 Dark Mode: On"
+	if !isDark {
+		darkModeLabel = "☀️  Dark Mode: Off"
+	}
+
+	var action string
+	if err := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Advanced Settings").
+				Options(
+					huh.NewOption(darkModeLabel, "toggle_dark"),
+					huh.NewOption("Back", "exit"),
+				).
+				Value(&action),
+		),
+	).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap()).Run(); err != nil {
+		return nil
+	}
+
+	if action == "toggle_dark" {
+		viper.Set("ui.dark_mode", !isDark)
+		if err := config.Save(); err != nil {
+			fmt.Println(tui.ErrorStyle.Render("Failed to save setting: " + err.Error()))
+			tui.Pause()
+		} else {
+			state := "Dark"
+			if isDark {
+				state = "Light"
+			}
+			fmt.Println(tui.SuccessStyle.Render("✓ Switched to " + state + " mode"))
+			tui.Pause()
+		}
+	}
 	return nil
 }
 
