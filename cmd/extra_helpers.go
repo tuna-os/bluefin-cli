@@ -40,7 +40,7 @@ func maybePromptForSunsetSetup() error {
 		Description("This uses the new 'sunset' feature to automatically manage your desktop experience.").
 		Value(&startSetup).
 		WithTheme(tui.AppTheme).
-		WithKeyMap(tui.MenuKeyMap())
+		WithKeyMap(tui.ConfirmKeyMap())
 
 	if err := confirm.Run(); err != nil {
 		if err == huh.ErrUserAborted {

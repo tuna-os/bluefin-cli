@@ -5,8 +5,6 @@ package cmd
 import (
 	"charm.land/huh/v2"
 	"github.com/hanthor/bluefin-cli/internal/env"
-	"github.com/hanthor/bluefin-cli/internal/install"
-	"github.com/hanthor/bluefin-cli/internal/tui"
 )
 
 func addExtraMenuOptions(opts []huh.Option[string]) []huh.Option[string] {
