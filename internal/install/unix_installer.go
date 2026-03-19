@@ -17,29 +17,41 @@ func init() {
 	SetInstaller(&UnixInstaller{})
 }
 
-func (i *UnixInstaller) InstallBundle(nameOrPath string) error {
+func (i *UnixInstaller) InstallBundle(packages ...string) error {
 	if _, err := exec.LookPath("brew"); err != nil {
 		return fmt.Errorf("homebrew not found. Please install Homebrew first: https://brew.sh")
 	}
 
-	brewfilePath, cleanup, err := GetBrewfile(nameOrPath)
+	var brewfiles []string
+	var cleanups []func()
+	defer func() {
+		for _, c := range cleanups {
+			c()
+		}
+	}()
+
+	for _, pkg := range packages {
+		path, cleanup, err := GetBrewfile(pkg)
+		if err != nil {
+			return err
+		}
+		cleanups = append(cleanups, cleanup)
+		brewfiles = append(brewfiles, path)
+	}
+
+	merged, cleanup, err := MergeBrewfiles(brewfiles)
 	if err != nil {
 		return err
 	}
 	defer cleanup()
 
-	if err := EnsureBbrew(); err != nil {
-		return err
-	}
-
-	fmt.Println(infoStyle.Render(fmt.Sprintf("🍺 Opening %s in bbrew...", brewfilePath)))
-
-	if err := RunBbrew(brewfilePath); err != nil {
-		return fmt.Errorf("bbrew failed: %w", err)
-	}
-
-	return nil
+	cmd := exec.Command("brew", "bundle", "install", "--file="+merged)
+	cmd.Env = append(os.Environ(), "HOMEBREW_NO_ENV_HINTS=1")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
+
 
 func (i *UnixInstaller) InstallWallpapers(casks []string) error {
 	if err := ensureTap(wallpapersTap); err != nil {
