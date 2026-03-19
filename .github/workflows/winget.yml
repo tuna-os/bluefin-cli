@@ -67,7 +67,6 @@ jobs:
         shell: pwsh
         run: |
           Invoke-WebRequest https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
-          ./wingetcreate.exe --version
 
       - name: Wait for Release Assets
         shell: pwsh
