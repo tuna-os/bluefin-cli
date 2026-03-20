@@ -1,3 +1,10 @@
+## [0.6.1](https://github.com/hanthor/bluefin-cli/compare/v0.6.0...v0.6.1) (2026-03-20)
+
+
+### Bug Fixes
+
+* resolve all CI failures and lint issues ([bca3388](https://github.com/hanthor/bluefin-cli/commit/bca3388eed3614a64332466fe0dd7980cdcdf9a9))
+
 # [0.6.0](https://github.com/hanthor/bluefin-cli/compare/v0.5.0...v0.6.0) (2026-03-18)
 
 
