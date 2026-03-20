@@ -1,3 +1,10 @@
+## [0.6.3](https://github.com/hanthor/bluefin-cli/compare/v0.6.2...v0.6.3) (2026-03-20)
+
+
+### Bug Fixes
+
+* align windows-scheduled-validation workflow with actual CLI commands ([57370f3](https://github.com/hanthor/bluefin-cli/commit/57370f3adc31e6e246c58009fcf827c4d21e19e0))
+
 ## [0.6.2](https://github.com/hanthor/bluefin-cli/compare/v0.6.1...v0.6.2) (2026-03-20)
 
 
