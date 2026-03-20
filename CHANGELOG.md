@@ -1,3 +1,10 @@
+## [0.6.2](https://github.com/hanthor/bluefin-cli/compare/v0.6.1...v0.6.2) (2026-03-20)
+
+
+### Bug Fixes
+
+* implement missing fetchWallpaperArchiveURLFromTap and downloadAndExtractWallpaperArchive ([022ee6d](https://github.com/hanthor/bluefin-cli/commit/022ee6d9f9926d90e048531b6023828571f08b74))
+
 ## [0.6.1](https://github.com/hanthor/bluefin-cli/compare/v0.6.0...v0.6.1) (2026-03-20)
 
 
