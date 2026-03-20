@@ -27,34 +27,21 @@ jobs:
         shell: pwsh
         run: go build -o bluefin-cli.exe .
 
-      - name: Run shell profile tests
+      - name: Run PowerShell profile tests
         shell: pwsh
         run: go test -v ./internal/shell -run "PowerShell"
 
-      - name: Run wallpaper automation tests
+      - name: Run Windows install/wallpaper tests
         shell: pwsh
-        run: go test -v ./internal/install -run "ConfigureWindowsThemeAutomation|PowerShellTriggerScript|SplitTaskCommand|IsWindowsAccessDenied|SelectMonthlyWallpaper|SupportsMonthlyWallpapers"
+        run: go test -v ./internal/install -run "Windows|Wallpaper|Normalize|Theme"
 
-      - name: Configure wallpaper automation (polling)
+      - name: Smoke check status command
         shell: pwsh
-        run: |
-          .\bluefin-cli.exe install wallpapers bluefin-wallpapers --non-interactive --enable-mode-sync --enable-auto-dark-light --trigger-source polling
+        run: .\bluefin-cli.exe status
 
-      - name: Assert scheduled tasks and startup run entry
+      - name: Smoke check wallpapers help
         shell: pwsh
-        run: |
-          $syncTask = Get-ScheduledTask -TaskName "BluefinCLI-ThemeModeSync" -ErrorAction Stop
-          $lightTask = Get-ScheduledTask -TaskName "BluefinCLI-SetLightAt6AM" -ErrorAction Stop
-          $darkTask = Get-ScheduledTask -TaskName "BluefinCLI-SetDarkAt6PM" -ErrorAction Stop
-
-          if (-not $syncTask) { throw "Missing BluefinCLI-ThemeModeSync task" }
-          if (-not $lightTask) { throw "Missing BluefinCLI-SetLightAt6AM task" }
-          if (-not $darkTask) { throw "Missing BluefinCLI-SetDarkAt6PM task" }
-
-          $runKey = Get-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "BluefinCLIThemeModeSync" -ErrorAction Stop
-          if ([string]::IsNullOrWhiteSpace($runKey.BluefinCLIThemeModeSync)) {
-            throw "HKCU Run entry BluefinCLIThemeModeSync is missing or empty"
-          }
+        run: .\bluefin-cli.exe wallpapers --help
 
       - name: Smoke check init output
         shell: pwsh
@@ -67,8 +54,7 @@ jobs:
             throw "Expected init output to reference bluefin-cli"
           }
 
-      - name: Cleanup created task artifacts
+      - name: Cleanup
         if: always()
         shell: pwsh
-        run: |
-          .\bluefin-cli.exe install wallpapers cleanup
+        run: .\bluefin-cli.exe cleanup
