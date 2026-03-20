@@ -81,9 +81,10 @@ var menuCmd = &cobra.Command{
 					return err
 				}
 			case "bundles":
-				if err := runBundlesMenu(); err != nil {
+				if err := installCmd.RunE(installCmd, nil); err != nil {
 					return err
 				}
+				tui.Pause()
 			case "exit":
 				return nil
 			}

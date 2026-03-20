@@ -45,4 +45,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Use a PAT if you want to trigger other workflows or if you need to bypass branch protection
           # GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          WINGET_TOKEN: ${{ secrets.WINGET_CREATE_GITHUB_TOKEN }}
         run: npx semantic-release

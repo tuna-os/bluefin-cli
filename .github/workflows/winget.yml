@@ -1,8 +1,8 @@
-name: winget
+name: winget (manual fallback)
 
+# Primary winget submission is handled by GoReleaser during automated release.
+# This workflow exists as a manual fallback for re-submitting a specific version.
 on:
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
       version:
@@ -67,7 +67,6 @@ jobs:
         shell: pwsh
         run: |
           Invoke-WebRequest https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
-          ./wingetcreate.exe version
 
       - name: Wait for Release Assets
         shell: pwsh
@@ -97,7 +96,7 @@ jobs:
             exit 1
           }
 
-      - name: Submit update (fallback to new)
+      - name: Submit update
         shell: pwsh
         run: |
           $pkg = $env:PACKAGE_ID
@@ -108,16 +107,13 @@ jobs:
           Write-Host "Submitting to winget-pkgs: $pkg $ver"
           Write-Host "Installer URL: $url"
 
-          # Try update first for existing package versions.
           ./wingetcreate.exe update $pkg -u $url -v $ver -t $token --submit
           if ($LASTEXITCODE -eq 0) {
-            Write-Host "Update successful."
+            Write-Host "Update submitted successfully."
             exit 0
           }
 
-          Write-Host "Update failed or package not found, trying first-time package submission..."
-          ./wingetcreate.exe new -i $pkg -u $url -v $ver -t $token --submit
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "wingetcreate new submission failed"
-            exit 1
-          }
+          Write-Host "::error::wingetcreate update failed (exit $LASTEXITCODE)."
+          Write-Host "If this is a first-time submission, create the initial manifest manually"
+          Write-Host "or via GoReleaser: https://goreleaser.com/customization/winget/"
+          exit 1

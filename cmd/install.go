@@ -21,7 +21,6 @@ Available bundles:
   cli              - CLI essentials (gh, chezmoi, etc.)
   cncf             - Cloud Native Computing Foundation tools.
   experimental-ide - Experimental IDE tools.
-  fonts            - Development fonts (Fira Code, JetBrains Mono, etc.)
   ide              - IDE tools: VS Code, JetBrains Toolbox, etc.
   k8s              - Kubernetes tools: kubectl, k9s, kubectx, etc.
   
@@ -48,6 +47,7 @@ var installListCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(installCmd)
+	rootCmd.AddCommand(uninstallCmd)
 	installCmd.AddCommand(installListCmd)
 	rootCmd.AddCommand(installWallpapersCmd)
 	rootCmd.AddCommand(installWallpapersCleanupCmd)
@@ -94,51 +94,42 @@ var installWallpapersCleanupCmd = &cobra.Command{
 	},
 }
 
-func runBundlesMenu() error {
-	var selectedBundles []string
+type bundleCategory struct {
+	Label    string
+	ID       string
+	LinuxOnly bool
+}
 
+var bundleCategories = []bundleCategory{
+	{Label: "🤖 AI Tools", ID: "ai"},
+	{Label: "💻 CLI Essentials", ID: "cli"},
+	{Label: "🌐 CNCF Tools", ID: "cncf"},
+	{Label: "🧪 Experimental IDE", ID: "experimental-ide"},
+	{Label: "📝 IDE Tools", ID: "ide"},
+	{Label: "🎡 Kubernetes Tools", ID: "k8s"},
+	{Label: "🐧 Full GNOME Desktop", ID: "full-desktop", LinuxOnly: true},
+}
+
+func runBundlesMenu() error {
 	for {
 		tui.ClearScreen()
 		tui.RenderHeader("Bluefin CLI", "Main Menu > Install Apps")
 
-		var selectedBundle string
-
-		opts := []huh.Option[string]{
-			huh.NewOption("🤖 AI Tools", "ai"),
-			huh.NewOption("💻 CLI Essentials", "cli"),
-			huh.NewOption("☁️ CNCF Tools", "cncf"),
-			huh.NewOption("🧪 Experimental IDE", "experimental-ide"),
-			huh.NewOption("🔤 Fonts ❯", "fonts"),
-			huh.NewOption("📝 IDE Tools", "ide"),
-			huh.NewOption("☸️ Kubernetes Tools", "k8s"),
-		}
-
-		if env.IsWindows() {
-			opts = []huh.Option[string]{
-				huh.NewOption("AI Tools", "ai"),
-				huh.NewOption("CLI Essentials", "cli"),
-				huh.NewOption("CNCF Tools", "cncf"),
-				huh.NewOption("Experimental IDE", "experimental-ide"),
-				huh.NewOption("Fonts >", "fonts"),
-				huh.NewOption("IDE Tools", "ide"),
-				huh.NewOption("Kubernetes Tools", "k8s"),
+		opts := make([]huh.Option[string], 0)
+		for _, cat := range bundleCategories {
+			if cat.LinuxOnly && !(install.IsLinux() && install.IsGnome()) {
+				continue
 			}
+			opts = append(opts, huh.NewOption(cat.Label+" ❯", cat.ID))
 		}
 
-		if install.IsLinux() && install.IsGnome() {
-			if env.IsWindows() {
-				opts = append(opts, huh.NewOption("Full GNOME Desktop", "full-desktop"))
-			} else {
-				opts = append(opts, huh.NewOption("🖥️ Full GNOME Desktop", "full-desktop"))
-			}
-		}
-
+		var category string
 		form := huh.NewForm(
 			huh.NewGroup(
 				huh.NewSelect[string]().
-					Title("Select a bundle to install").
+					Title("Select a category").
 					Options(opts...).
-					Value(&selectedBundle),
+					Value(&category),
 			),
 		).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap())
 
@@ -149,120 +140,178 @@ func runBundlesMenu() error {
 			return fmt.Errorf("form error: %w", err)
 		}
 
-		selectedBundles = []string{selectedBundle}
-
-		// Fonts has its own per-font selection menu
-		if selectedBundle == "fonts" {
-			if err := runFontsMenu(); err != nil {
-				return err
+		if err := runPackageMenu(category); err != nil {
+			if err == huh.ErrUserAborted {
+				continue
 			}
-			continue
+			fmt.Println(tui.ErrorStyle.Render(fmt.Sprintf("Error: %v", err)))
+			tui.Pause()
 		}
+	}
+}
 
-		if env.IsWindows() {
-			packages, err := install.WindowsPackagesForBundles(selectedBundles)
-			if err != nil {
-				return err
-			}
-			if len(packages) == 0 {
-				return fmt.Errorf("no Windows packages available for selected bundles")
-			}
+// runPackageMenu shows a per-category multi-select with installed packages pre-checked,
+// then diffs and applies installs/uninstalls with confirmation. Works on both Unix (brew)
+// and Windows (winget).
+func runPackageMenu(bundleName string) error {
+	tui.ClearScreen()
 
-			selectedPackages := []string{}
-			opts := make([]huh.Option[string], 0, len(packages))
-			for _, pkg := range packages {
-				label := pkg.Name
-				if strings.TrimSpace(label) == "" {
-					label = pkg.ID
-				}
-				desc := strings.TrimSpace(pkg.Description)
-				if desc == "" {
-					desc = pkg.ID
-				}
-				opts = append(opts, huh.NewOption(fmt.Sprintf("%s - %s", label, desc), pkg.ID))
-			}
-
-			form := huh.NewForm(
-				huh.NewGroup(
-					huh.NewMultiSelect[string]().
-						Title("Select packages to install").
-						Description("Space toggles package selection. Enter to continue.").
-						Options(opts...).
-						Value(&selectedPackages),
-				),
-			).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap())
-
-			if err := form.Run(); err != nil {
-				if err == huh.ErrUserAborted {
-					continue
-				}
-				return fmt.Errorf("form error: %w", err)
-			}
-
-			if len(selectedPackages) == 0 {
-				return fmt.Errorf("no packages selected")
-			}
-
-			selectedSet := make(map[string]bool, len(selectedPackages))
-			for _, id := range selectedPackages {
-				selectedSet[id] = true
-			}
-
-			finalPackages := make([]install.WindowsPackage, 0, len(selectedPackages))
-			for _, pkg := range packages {
-				if selectedSet[pkg.ID] {
-					finalPackages = append(finalPackages, pkg)
-				}
-			}
-
-			return install.InstallWindowsPackages(finalPackages)
+	var categoryLabel string
+	for _, cat := range bundleCategories {
+		if cat.ID == bundleName {
+			categoryLabel = cat.Label
+			break
 		}
+	}
+	tui.RenderHeader("Bluefin CLI", "Install Apps > "+categoryLabel)
 
-		break
+	fmt.Println(tui.InfoStyle.Render("Loading packages..."))
+	pkgs, err := install.GetBundlePackages(bundleName)
+	if err != nil {
+		return fmt.Errorf("could not load bundle: %w", err)
 	}
 
-	var brewfiles []string
-	var cleanups []func()
+	pkgs = install.MarkInstalled(pkgs)
 
-	defer func() {
-		for _, c := range cleanups {
-			c()
-		}
-	}()
-
-	for _, bundle := range selectedBundles {
-		path, cleanup, err := install.GetBrewfile(bundle)
-		if err != nil {
-			return err
-		}
-		brewfiles = append(brewfiles, path)
-		cleanups = append(cleanups, cleanup)
-	}
-
-	if len(brewfiles) > 0 {
-		if err := install.EnsureBbrew(); err != nil {
-			return err
-		}
-
-		var finalPath string
-		if len(brewfiles) > 1 {
-			mergedPath, cleanup, err := install.MergeBrewfiles(brewfiles)
-			if err != nil {
-				return err
-			}
-			cleanups = append(cleanups, cleanup)
-			finalPath = mergedPath
-			fmt.Println(tui.InfoStyle.Render("🍺 Merged Brewfiles into single view..."))
-		} else {
-			finalPath = brewfiles[0]
-		}
-
-		fmt.Println(tui.InfoStyle.Render("🍺 Opening apps in bbrew..."))
-		if err := install.RunBbrew(finalPath); err != nil {
-			return err
+	// Pre-populate selection with currently installed packages
+	preSelected := make([]string, 0)
+	for _, p := range pkgs {
+		if p.Installed {
+			preSelected = append(preSelected, p.ID)
 		}
 	}
 
+	opts := make([]huh.Option[string], 0, len(pkgs))
+	for _, p := range pkgs {
+		label := p.Name
+		if p.Installed {
+			label += " ✓"
+		}
+		opts = append(opts, huh.NewOption(label, p.ID))
+	}
+
+	selected := make([]string, len(preSelected))
+	copy(selected, preSelected)
+
+	tui.ClearScreen()
+	tui.RenderHeader("Bluefin CLI", "Install Apps > "+categoryLabel)
+
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewMultiSelect[string]().
+				Title("Select packages (✓ = installed)").
+				Description("Space toggles. Enter confirms.").
+				Options(opts...).
+				Value(&selected),
+		),
+	).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap())
+
+	if err := form.Run(); err != nil {
+		return err
+	}
+
+	// Diff: what changed vs pre-installed state
+	preSet := make(map[string]bool, len(preSelected))
+	for _, id := range preSelected {
+		preSet[id] = true
+	}
+	newSet := make(map[string]bool, len(selected))
+	for _, id := range selected {
+		newSet[id] = true
+	}
+
+	var toInstall, toRemove []install.Package
+	for _, p := range pkgs {
+		wasInstalled := preSet[p.ID]
+		isSelected := newSet[p.ID]
+		switch {
+		case isSelected && !wasInstalled:
+			toInstall = append(toInstall, p)
+		case !isSelected && wasInstalled:
+			toRemove = append(toRemove, p)
+		}
+	}
+
+	if len(toInstall) == 0 && len(toRemove) == 0 {
+		fmt.Println(tui.InfoStyle.Render("No changes selected."))
+		tui.Pause()
+		return nil
+	}
+
+	// Confirmation
+	tui.ClearScreen()
+	tui.RenderHeader("Bluefin CLI", "Install Apps > "+categoryLabel+" > Confirm")
+
+	if len(toInstall) > 0 {
+		fmt.Println(tui.SuccessStyle.Render("Will install:"))
+		for _, p := range toInstall {
+			fmt.Printf("  + %s\n", p.Name)
+		}
+	}
+	if len(toRemove) > 0 {
+		fmt.Println(tui.ErrorStyle.Render("Will uninstall:"))
+		for _, p := range toRemove {
+			fmt.Printf("  - %s\n", p.Name)
+		}
+	}
+	fmt.Println()
+
+	var confirmed bool
+	confirm := huh.NewForm(
+		huh.NewGroup(
+			huh.NewConfirm().
+				Title("Apply these changes?").
+				Value(&confirmed),
+		),
+	).WithTheme(tui.AppTheme).WithKeyMap(tui.ConfirmKeyMap())
+
+	if err := confirm.Run(); err != nil || !confirmed {
+		return nil
+	}
+
+	// Execute
+	tui.ClearScreen()
+	tui.RenderHeader("Bluefin CLI", "Install Apps > "+categoryLabel+" > Installing")
+
+	if env.IsWindows() {
+		if len(toInstall) > 0 {
+			var winPkgs []install.WindowsPackage
+			for _, p := range toInstall {
+				winPkgs = append(winPkgs, install.WindowsPackage{ID: p.ID, Name: p.Name})
+			}
+			if err := install.InstallWindowsPackages(winPkgs); err != nil {
+				fmt.Println(tui.ErrorStyle.Render(fmt.Sprintf("Install error: %v", err)))
+			}
+		}
+		if len(toRemove) > 0 {
+			ids := make([]string, 0, len(toRemove))
+			for _, p := range toRemove {
+				ids = append(ids, p.ID)
+			}
+			if err := install.UninstallWingetPackages(ids); err != nil {
+				fmt.Println(tui.ErrorStyle.Render(fmt.Sprintf("Uninstall error: %v", err)))
+			}
+		}
+	} else {
+		if len(toInstall) > 0 {
+			if err := install.InstallBrewPackages(toInstall); err != nil {
+				fmt.Println(tui.ErrorStyle.Render(fmt.Sprintf("Install error: %v", err)))
+			}
+		}
+		if len(toRemove) > 0 {
+			ids := make([]string, 0, len(toRemove))
+			for _, p := range toRemove {
+				ids = append(ids, p.Name)
+			}
+			if err := install.UninstallBrewPackages(ids); err != nil {
+				fmt.Println(tui.ErrorStyle.Render(fmt.Sprintf("Uninstall error: %v", err)))
+			}
+		}
+	}
+
+	fmt.Println()
+	fmt.Println(tui.SuccessStyle.Render("✓ Done!"))
+	tui.Pause()
 	return nil
 }
 

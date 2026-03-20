@@ -233,14 +233,13 @@ func RunSunsetSetupFlow() error {
 				Title("Use these coordinates?").
 				Value(&confirm),
 		),
-	).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap())
+	).WithTheme(tui.AppTheme).WithKeyMap(tui.ConfirmKeyMap())
 
 	if err := confForm.Run(); err != nil {
 		return err
 	}
 
 	if !confirm {
-		fmt.Println("Setup cancelled.")
 		return nil
 	}
 

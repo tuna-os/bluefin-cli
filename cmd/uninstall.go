@@ -46,3 +46,4 @@ func init() {
 	uninstallCmd.Flags().BoolVar(&uninstallRemoveModules, "modules", true, "Uninstall PowerShell modules managed by Bluefin CLI")
 	uninstallCmd.Flags().BoolVar(&uninstallKeepConfig, "keep-config", false, "Keep Bluefin shell preferences JSON")
 }
+

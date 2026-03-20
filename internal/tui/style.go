@@ -89,6 +89,33 @@ func MenuKeyMap() *huh.KeyMap {
 	return km
 }
 
+// ConfirmKeyMap returns a keymap for confirmation dialogs — only Enter/Y/N, no left/back.
+func ConfirmKeyMap() *huh.KeyMap {
+	km := huh.NewDefaultKeyMap()
+
+	km.Quit = key.NewBinding(
+		key.WithKeys("ctrl+c"),
+		key.WithHelp("ctrl+c", "quit"),
+	)
+
+	km.Confirm.Submit = key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("enter", "confirm"),
+	)
+
+	km.Confirm.Accept = key.NewBinding(
+		key.WithKeys("y", "Y"),
+		key.WithHelp("y", "yes"),
+	)
+
+	km.Confirm.Reject = key.NewBinding(
+		key.WithKeys("n", "N"),
+		key.WithHelp("n", "no"),
+	)
+
+	return km
+}
+
 // ClearScreen clears the terminal screen
 func ClearScreen() {
 	var cmd *exec.Cmd

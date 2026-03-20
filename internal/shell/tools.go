@@ -62,7 +62,7 @@ var Tools = []Tool{
 	{Name: "Atuin", Description: "Magical shell history", Binary: "atuin", Pkg: "atuin", Default: false, ShellDefaults: map[string]bool{"zsh": true, "fish": true}},
 	{Name: "Starship", Description: "The minimal, blazing-fast, and infinitely customizable prompt", Binary: "starship", Pkg: "Starship.Starship", BrewPkg: "starship", Default: true},
 	{Name: "Zoxide", Description: "A smarter cd command", Binary: "zoxide", Pkg: "ajeetdsouza.zoxide", BrewPkg: "zoxide", Default: true},
-	{Name: "UutilsCoreutils", Description: "Rust rewrite of GNU coreutils", Binary: "hashsum", Pkg: "uutils-coreutils", Default: true, UnsupportedShells: map[string]bool{"powershell": true}},
+	{Name: "UutilsCoreutils", Description: "Rust rewrite of GNU coreutils", Binary: "ucat", Pkg: "uutils-coreutils", Default: true, UnsupportedShells: map[string]bool{"powershell": true}},
 	{Name: "UutilsFindutils", Description: "Rust rewrite of GNU findutils", Binary: "ufind", Pkg: "uutils-findutils", Default: true, UnsupportedShells: map[string]bool{"powershell": true}},
 	{Name: "UutilsDiffutils", Description: "Rust rewrite of GNU diffutils", Binary: "udiffutils", Pkg: "uutils-diffutils", Default: true, UnsupportedShells: map[string]bool{"powershell": true}},
 	{Name: "Carapace", Description: "Multi-shell multi-command argument completer", Binary: "carapace", Pkg: "rsteube.carapace", BrewPkg: "carapace", Default: false},
