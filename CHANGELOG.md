@@ -1,3 +1,10 @@
+# [0.7.0](https://github.com/hanthor/bluefin-cli/compare/v0.6.4...v0.7.0) (2026-03-20)
+
+
+### Features
+
+* per-category install menu, GoReleaser winget automation, drop bbrew ([#49](https://github.com/hanthor/bluefin-cli/issues/49)) ([38dcdd3](https://github.com/hanthor/bluefin-cli/commit/38dcdd330f3b1198bf6b0ff432198da967f60623))
+
 ## [0.6.4](https://github.com/hanthor/bluefin-cli/compare/v0.6.3...v0.6.4) (2026-03-20)
 
 
