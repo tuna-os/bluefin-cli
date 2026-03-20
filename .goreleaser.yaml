@@ -38,11 +38,11 @@ builds:
       - arm64
 
 archives:
-  - format: tar.gz
+  - formats: [tar.gz]
     # use zip for windows archives
     format_overrides:
       - goos: windows
-        format: zip
+        formats: [zip]
     name_template: >-
       {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}
 
@@ -50,7 +50,7 @@ checksum:
   name_template: 'checksums.txt'
 
 snapshot:
-  name_template: "{{ .Version }}-snapshot"
+  version_template: "{{ .Version }}-snapshot"
 
 changelog:
   sort: asc
@@ -66,3 +66,31 @@ release:
   draft: false
   prerelease: auto
   name_template: "{{.Tag}}"
+
+winget:
+  - name: BluefinCLI
+    publisher: Hanthor
+    publisher_url: "https://github.com/hanthor"
+    publisher_support_url: "https://github.com/hanthor/bluefin-cli/issues"
+    package_identifier: Hanthor.BluefinCLI
+    license: Apache-2.0
+    license_url: "https://github.com/hanthor/bluefin-cli/blob/master/LICENSE"
+    copyright: "Copyright 2025 Hanthor"
+    short_description: "Modern CLI for managing shell config and dev environment customization on Universal Blue."
+    homepage: "https://github.com/hanthor/bluefin-cli"
+    tags:
+      - cli
+      - shell
+      - bluefin
+      - universal-blue
+    ids:
+      - standard
+    skip_upload: auto
+    repository:
+      owner: microsoft
+      name: winget-pkgs
+      branch: "bluefin-cli-{{.Version}}"
+      token: "{{ .Env.WINGET_TOKEN }}"
+      pull_request:
+        enabled: true
+        draft: false

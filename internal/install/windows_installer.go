@@ -18,8 +18,11 @@ func init() {
 	SetInstaller(&WindowsInstaller{})
 }
 
-func (i *WindowsInstaller) InstallBundle(nameOrPath string) error {
-	return BundleWindows(nameOrPath)
+func (i *WindowsInstaller) InstallBundle(packages ...string) error {
+	if len(packages) == 0 {
+		return nil
+	}
+	return BundleWindows(packages[0])
 }
 
 func (i *WindowsInstaller) InstallWallpapers(casks []string) error {
