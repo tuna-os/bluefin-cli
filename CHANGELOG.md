@@ -1,3 +1,10 @@
+## [0.6.4](https://github.com/hanthor/bluefin-cli/compare/v0.6.3...v0.6.4) (2026-03-20)
+
+
+### Bug Fixes
+
+* replace ambiguous ⚙️ emoji, drop Windows unicode fallback, and propagate Ctrl+C to exit ([d2a2aad](https://github.com/hanthor/bluefin-cli/commit/d2a2aad2c337e76c58e12bd902196c32a1bedd98))
+
 ## [0.6.3](https://github.com/hanthor/bluefin-cli/compare/v0.6.2...v0.6.3) (2026-03-20)
 
 
