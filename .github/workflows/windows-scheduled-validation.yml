@@ -23,6 +23,10 @@ jobs:
         shell: pwsh
         run: go mod download
 
+      - name: Build Windows binary
+        shell: pwsh
+        run: go build -o bluefin-cli.exe .
+
       - name: Run shell profile tests
         shell: pwsh
         run: go test -v ./internal/shell -run "PowerShell"
@@ -30,10 +34,6 @@ jobs:
       - name: Run wallpaper automation tests
         shell: pwsh
         run: go test -v ./internal/install -run "ConfigureWindowsThemeAutomation|PowerShellTriggerScript|SplitTaskCommand|IsWindowsAccessDenied|SelectMonthlyWallpaper|SupportsMonthlyWallpapers"
-
-      - name: Build Windows binary
-        shell: pwsh
-        run: go build -o bluefin-cli.exe .
 
       - name: Configure wallpaper automation (polling)
         shell: pwsh

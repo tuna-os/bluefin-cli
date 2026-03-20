@@ -35,8 +35,7 @@ func TestGetImageInfo(t *testing.T) {
 func TestCheckStatus(t *testing.T) {
 	// Create temporary home directory
 	tmpHome := t.TempDir()
-	os.Setenv("HOME", tmpHome)
-	defer os.Unsetenv("HOME")
+	t.Setenv("HOME", tmpHome)
 
 	// Manually inject legacy marker
 	bashrc := filepath.Join(tmpHome, ".bashrc")
@@ -57,8 +56,7 @@ func TestCheckStatus(t *testing.T) {
 func TestShow(t *testing.T) {
 	// Create temporary home directory
 	tmpHome := t.TempDir()
-	os.Setenv("HOME", tmpHome)
-	defer os.Unsetenv("HOME")
+	t.Setenv("HOME", tmpHome)
 
 	// Capture stdout
 	oldStdout := os.Stdout

@@ -316,6 +316,4 @@ func runWallpapersMenu() error {
 	return maybeHandleWindowsThemePostInstall(nil, selected)
 }
 
-func supportsWindowsThemePostInstall() bool {
-	return env.IsWSL() || env.IsWindows()
-}
+

@@ -145,7 +145,9 @@ cask "visual-studio-code"
 	if _, err := tmpFile.WriteString(content); err != nil {
 		t.Fatalf("failed to write temp Brewfile: %v", err)
 	}
-	tmpFile.Close()
+	if err := tmpFile.Close(); err != nil {
+		t.Fatalf("failed to close temp Brewfile: %v", err)
+	}
 
 	pkgs, err := parseBrewfilePackages(tmpFile.Name())
 	if err != nil {

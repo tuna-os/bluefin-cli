@@ -312,7 +312,7 @@ func init() {
 	var sb strings.Builder
 	sb.WriteString("Enable or disable shell experience enhancements (modern aliases and tool initialization).\n\nThe Shell Experience provides:\n")
 	for _, tool := range describedTools {
-		sb.WriteString(fmt.Sprintf("  - %s: %s\n", tool.Name, tool.Description))
+		fmt.Fprintf(&sb, "  - %s: %s\n", tool.Name, tool.Description)
 	}
 	shellCmd.Long = sb.String()
 

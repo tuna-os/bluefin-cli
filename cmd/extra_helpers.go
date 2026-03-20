@@ -6,9 +6,14 @@ import (
 	"fmt"
 
 	"charm.land/huh/v2"
+	"github.com/hanthor/bluefin-cli/internal/env"
 	"github.com/hanthor/bluefin-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
+
+func supportsWindowsThemePostInstall() bool {
+	return env.IsWSL() || env.IsWindows()
+}
 
 func maybeHandleWindowsThemePostInstall(cmd *cobra.Command, casks []string) error {
 	if !supportsWindowsThemePostInstall() {

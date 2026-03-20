@@ -86,10 +86,8 @@ func TestInit(t *testing.T) {
 func TestCheckStatus(t *testing.T) {
 	// Create temporary home directory
 	tmpHome := t.TempDir()
-	os.Setenv("HOME", tmpHome)
-	os.Setenv("USERPROFILE", tmpHome)
-	defer os.Unsetenv("HOME")
-	defer os.Unsetenv("USERPROFILE")
+	t.Setenv("HOME", tmpHome)
+	t.Setenv("USERPROFILE", tmpHome)
 
 	// Manually create a bashrc with the marker
 	bashrc := filepath.Join(tmpHome, ".bashrc")
