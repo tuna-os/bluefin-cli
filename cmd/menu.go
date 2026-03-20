@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"errors"
+
 	"charm.land/huh/v2"
 	"github.com/hanthor/bluefin-cli/internal/shell"
 	"github.com/hanthor/bluefin-cli/internal/status"
@@ -57,13 +59,16 @@ var menuCmd = &cobra.Command{
 			).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap())
 
 			if err := form.Run(); err != nil {
-				// ESC pressed on main menu - exit cleanly
+				// ESC/Ctrl+C on main menu - exit cleanly
 				return nil
 			}
 
 			// Handle extra choices if compiled in
 			handled, err := handleExtraMenuChoice(choice)
 			if err != nil {
+				if errors.Is(err, huh.ErrUserAborted) {
+					return nil
+				}
 				return err
 			}
 			if handled {
@@ -78,10 +83,16 @@ var menuCmd = &cobra.Command{
 				tui.Pause()
 			case "shell":
 				if err := runShellMenu(); err != nil {
+					if errors.Is(err, huh.ErrUserAborted) {
+						return nil
+					}
 					return err
 				}
 			case "bundles":
 				if err := runBundlesMenu(); err != nil {
+					if errors.Is(err, huh.ErrUserAborted) {
+						return nil
+					}
 					return err
 				}
 			case "exit":

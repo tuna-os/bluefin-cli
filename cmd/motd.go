@@ -132,7 +132,7 @@ func runMotdMenu() error {
 					Value(&action),
 			),
 		).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap()).Run(); err != nil {
-			return nil
+			return huh.ErrUserAborted
 		}
 
 		switch action {

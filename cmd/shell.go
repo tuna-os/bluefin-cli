@@ -74,16 +74,10 @@ func runShellMenu() error {
 		}
 
 		var action string
-		componentsLabel := "⚙️  Configure Components ❯"
+		componentsLabel := "🔧 Configure Components ❯"
 		motdLabel := "📰 MOTD Settings ❯"
 		shellsLabel := "🐚 Other Shells ❯"
 		advancedLabel := "🎨 Advanced ❯"
-		if env.IsWindows() {
-			componentsLabel = "⚙️  Configure Components >"
-			motdLabel = "📰 MOTD Settings >"
-			shellsLabel = "🐚 Other Shells >"
-			advancedLabel = "🎨 Advanced >"
-		}
 
 		if err := huh.NewForm(
 			huh.NewGroup(
@@ -100,7 +94,7 @@ func runShellMenu() error {
 					Value(&action),
 			),
 		).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap()).Run(); err != nil {
-			return nil
+			return huh.ErrUserAborted
 		}
 
 		switch action {
@@ -165,7 +159,7 @@ func shellShellsMenu() error {
 				Value(&selected),
 		),
 	).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap()).Run(); err != nil {
-		return nil // Interrupted - go back to main menu
+		return huh.ErrUserAborted
 	}
 
 	finalSelected := make(map[string]bool)
@@ -233,7 +227,7 @@ func configureShellTools() error {
 
 	if err := form.Run(); err != nil {
 		if err == huh.ErrUserAborted {
-			return nil
+			return huh.ErrUserAborted
 		}
 		return fmt.Errorf("form error: %w", err)
 	}
@@ -282,7 +276,7 @@ func runAdvancedMenu() error {
 				Value(&action),
 		),
 	).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap()).Run(); err != nil {
-		return nil
+		return huh.ErrUserAborted
 	}
 
 	if action == "toggle_dark" {
