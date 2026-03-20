@@ -1,3 +1,19 @@
+# [0.7.0](https://github.com/hanthor/bluefin-cli/compare/v0.6.0...v0.7.0) (2026-03-20)
+
+
+### Bug Fixes
+
+* remove unused imports in menu_extra.go and fix sunset.go syntax error ([4ce0a8c](https://github.com/hanthor/bluefin-cli/commit/4ce0a8c411f5724bb73e8df7f283fb21d4f8bf8d))
+* remove wingetcreate version check (always exits 1) ([62e5bda](https://github.com/hanthor/bluefin-cli/commit/62e5bda9597f5ff682d91061a62e2bbc79fdf945))
+* use --version flag for wingetcreate verification ([1031b0f](https://github.com/hanthor/bluefin-cli/commit/1031b0fe9be8084a246f739ad631c3a43c200ced))
+
+
+### Features
+
+* automate winget submissions via GoReleaser ([c3ebb0d](https://github.com/hanthor/bluefin-cli/commit/c3ebb0d1989d4f3afac02e5a479fd7271037d4ec))
+* per-category package install/uninstall menu with winget support ([b48c953](https://github.com/hanthor/bluefin-cli/commit/b48c95353e422e7c3c3f3ab70b88b86a7d304cd7))
+* winget automation and build fixes ([abd81c8](https://github.com/hanthor/bluefin-cli/commit/abd81c86e7305bd9b78d5057665fe52d4ab7c89b))
+
 # [0.6.0](https://github.com/hanthor/bluefin-cli/compare/v0.5.0...v0.6.0) (2026-03-18)
 
 
