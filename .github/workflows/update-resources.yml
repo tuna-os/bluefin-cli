@@ -44,5 +44,5 @@ jobs:
             
             Manual update: `just update-resources`
           branch: chore/update-brewfiles
-          base: master
+          base: main
           delete-branch: true
