@@ -5,6 +5,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"compress/gzip"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -54,44 +55,11 @@ func ensureTap(tap string) error {
 }
 
 func GetWallpaperCasks() ([]string, error) {
-	if runtime.GOOS == "windows" {
-		casks := append([]string{}, knownWallpaperCasks...)
-		sort.Strings(casks)
-		return casks, nil
-	}
-
-	if err := ensureTap(wallpapersTap); err != nil {
-		return nil, err
-	}
-
-	cmd := exec.Command("brew", "--repository", wallpapersTap)
-	out, err := cmd.Output()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get tap repository path: %w", err)
-	}
-
-	tapPath := strings.TrimSpace(string(out))
-	casksDir := filepath.Join(tapPath, "Casks")
-
-	entries, err := os.ReadDir(casksDir)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read casks directory at %s: %w", casksDir, err)
-	}
-
 	var casks []string
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-		name := entry.Name()
-		if strings.HasSuffix(name, ".rb") {
-			caskName := strings.TrimSuffix(name, ".rb")
-			if strings.Contains(strings.ToLower(caskName), "wallpaper") {
-				casks = append(casks, caskName)
-			}
-		}
+	if err := json.Unmarshal(embeddedWallpaperCasks, &casks); err != nil {
+		return nil, fmt.Errorf("failed to read embedded wallpaper cask list: %w", err)
 	}
-
+	sort.Strings(casks)
 	return casks, nil
 }
 

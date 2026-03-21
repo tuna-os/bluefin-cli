@@ -37,11 +37,13 @@ jobs:
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore(deps): update embedded Brewfiles from upstream"
-          title: "chore(deps): update embedded Brewfiles from upstream"
+          commit-message: "chore(deps): update embedded Brewfiles and wallpaper cask list"
+          title: "chore(deps): update embedded Brewfiles and wallpaper cask list"
           body: |
-            This is an automated PR to update the embedded Brewfiles in `internal/install/resources/brewfiles/` from the upstream `projectbluefin/common` repository.
-            
+            This is an automated PR to update embedded resources:
+            - Brewfiles in `internal/install/resources/brewfiles/` from `projectbluefin/common`
+            - Wallpaper cask list in `internal/install/resources/wallpaper-casks.json` from `ublue-os/homebrew-tap`
+
             Manual update: `just update-resources`
           branch: chore/update-brewfiles
           base: main
