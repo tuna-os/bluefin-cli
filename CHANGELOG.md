@@ -1,3 +1,11 @@
+# [0.7.0](https://github.com/hanthor/bluefin-cli/compare/v0.6.4...v0.7.0) (2026-03-21)
+
+
+### Features
+
+* embed wallpaper cask list instead of fetching via brew at runtime ([5ef4462](https://github.com/hanthor/bluefin-cli/commit/5ef4462684db07f34b79b29e7a29c8dacb131c57))
+* per-category install menu, GoReleaser winget automation, drop bbrew ([#49](https://github.com/hanthor/bluefin-cli/issues/49)) ([38dcdd3](https://github.com/hanthor/bluefin-cli/commit/38dcdd330f3b1198bf6b0ff432198da967f60623))
+
 # [0.7.0](https://github.com/hanthor/bluefin-cli/compare/v0.6.4...v0.7.0) (2026-03-20)
 
 
