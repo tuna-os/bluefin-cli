@@ -117,7 +117,7 @@ func runBundlesMenu() error {
 
 		opts := make([]huh.Option[string], 0)
 		for _, cat := range bundleCategories {
-			if cat.LinuxOnly && !(install.IsLinux() && install.IsGnome()) {
+			if cat.LinuxOnly && (!install.IsLinux() || !install.IsGnome()) {
 				continue
 			}
 			opts = append(opts, huh.NewOption(cat.Label+" ❯", cat.ID))
