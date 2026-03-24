@@ -20,15 +20,30 @@ function bluefin_init {
             }
         }
 
-        $wingetPackagesRoot = "$env:LOCALAPPDATA\Microsoft\WinGet\Packages"
-        if (Test-Path $wingetPackagesRoot) {
-            $resolved = Get-ChildItem -Path $wingetPackagesRoot -Filter "$Name.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($resolved) {
-                return $resolved.FullName
-            }
+        return $null
+    }
+
+    # Cache the output of `<tool> init powershell` to avoid spawning a process on every startup.
+    # The cache is keyed by the executable's last-write time, so it auto-refreshes on upgrade.
+    function Invoke-CachedInit {
+        param([string]$Exe)
+
+        $cacheDir = "$env:LOCALAPPDATA\bluefin-cli\shell-cache"
+        if (-not (Test-Path $cacheDir)) {
+            $null = New-Item -ItemType Directory -Path $cacheDir -Force
         }
 
-        return $null
+        $exeName = [System.IO.Path]::GetFileNameWithoutExtension($Exe)
+        $exeMtime = (Get-Item $Exe).LastWriteTimeUtc.Ticks
+        $cacheFile = "$cacheDir\$exeName-$exeMtime.ps1"
+
+        if (-not (Test-Path $cacheFile)) {
+            # Remove stale cache files for this executable before writing the new one
+            Get-ChildItem "$cacheDir\$exeName-*.ps1" -ErrorAction SilentlyContinue | Remove-Item -Force
+            & $Exe init powershell | Out-File $cacheFile -Encoding utf8
+        }
+
+        . $cacheFile
     }
 
     $wingetLinksPath = "$env:LOCALAPPDATA\Microsoft\WinGet\Links"
@@ -48,12 +63,11 @@ function bluefin_init {
         }
     }
 
-    if (Get-Module -ListAvailable -Name PSReadLine -ErrorAction SilentlyContinue) {
+    if (-not (Get-Module -Name PSReadLine)) {
         Import-Module PSReadLine -ErrorAction SilentlyContinue
     }
-
-    if (Get-Module -ListAvailable -Name Terminal-Icons -ErrorAction SilentlyContinue) {
-        Import-Module Terminal-Icons -ErrorAction SilentlyContinue
+    if (-not (Get-Module -Name PSFileIcons)) {
+        Import-Module PSFileIcons -ErrorAction SilentlyContinue
     }
 
     $fzfExe = Get-BluefinExecutable "fzf"
@@ -64,30 +78,26 @@ function bluefin_init {
         }
     }
 
-    if ((Get-Module -ListAvailable -Name PSFzf -ErrorAction SilentlyContinue) -and $fzfExe) {
-        Import-Module PSFzf -ErrorAction SilentlyContinue
-    }
-
     $zoxideExe = Get-BluefinExecutable "zoxide"
     if ($zoxideExe) {
-        Invoke-Expression (& { (& $zoxideExe init powershell | Out-String) })
+        Invoke-CachedInit $zoxideExe
     }
 
     $atuinExe = Get-BluefinExecutable "atuin"
     if ($atuinExe) {
-        Invoke-Expression (& { (& $atuinExe init powershell | Out-String) })
+        Invoke-CachedInit $atuinExe
     }
 
     $starshipExe = Get-BluefinExecutable "starship"
     if ($starshipExe) {
-        Invoke-Expression (& { (& $starshipExe init powershell | Out-String) })
+        Invoke-CachedInit $starshipExe
     }
 
     $ezaExe = Get-BluefinExecutable "eza"
     if ($env:BLUEFIN_SHELL_ENABLE_EZA -eq "1") {
         if ($ezaExe) {
-            function ll { & $script:ezaExe -al --group-directories-first }
-            function ls { & $script:ezaExe --group-directories-first }
+            function ll { & $script:ezaExe -al --icons=auto --group-directories-first }
+            function ls { & $script:ezaExe --icons=auto --group-directories-first }
         }
     }
 
