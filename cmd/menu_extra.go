@@ -8,20 +8,15 @@ import (
 )
 
 func addExtraMenuOptions(opts []huh.Option[string]) []huh.Option[string] {
-	wallpapersLabel := "🖼  Wallpapers ❯"
-	fontsLabel := "🔤 Fonts ❯"
-	starshipLabel := "🚀 Starship Theme ❯"
-
-	// Standard (Standard) section
-	opts = append(opts, huh.NewOption(wallpapersLabel, "wallpapers"))
-	opts = append(opts, huh.NewOption(fontsLabel, "fonts"))
-	opts = append(opts, huh.NewOption(starshipLabel, "starship"))
+	opts = append(opts, huh.NewOption("🖼  Wallpapers ❯", "wallpapers"))
+	opts = append(opts, huh.NewOption("🔤 Fonts ❯", "fonts"))
+	opts = append(opts, huh.NewOption("🖥️  Configure Terminals ❯", "configure"))
+	opts = append(opts, huh.NewOption("🚀 Starship Theme ❯", "starship"))
 
 	if env.IsWSL() || env.IsWindows() {
-		sunsetLabel := "🌇 Sunset Switching ❯"
-		opts = append(opts, huh.NewOption(sunsetLabel, "sunset"))
+		opts = append(opts, huh.NewOption("🌇 Sunset Switching ❯", "sunset"))
 	}
-	
+
 	return opts
 }
 
@@ -31,6 +26,8 @@ func handleExtraMenuChoice(choice string) (bool, error) {
 		return true, runWallpapersMenu()
 	case "fonts":
 		return true, runFontsMenu()
+	case "configure":
+		return true, runConfigureMenu()
 	case "starship":
 		return true, runStarshipMenu()
 	case "sunset":
