@@ -174,9 +174,14 @@ func TestShellEnableForAllShells(t *testing.T) {
 				t.Fatalf("Failed to enable shell for %s: %v", shell.Name, err)
 			}
 
-			// Verify config file contains the eval line
+			// Verify config file contains the managed init line.
+			// PowerShell uses a caching profile that doesn't include "bluefin-cli init"
+			// literally; check for the shell-config marker instead.
 			configPath := filepath.Join(os.Getenv("HOME"), shell.ConfigFile)
 			expected := "bluefin-cli init"
+			if shell.Name == "powershell" {
+				expected = "# bluefin-cli shell-config"
+			}
 			if !fileContains(t, configPath, expected) {
 				t.Errorf("Config file %s doesn't contain init command %s", configPath, expected)
 			}
