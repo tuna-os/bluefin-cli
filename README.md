@@ -14,22 +14,17 @@ A powerful, modern CLI tool for managing shell configuration and development env
 
 ## 🚀 Installation
 
-### Windows (PowerShell) - Recommended
+### Windows (PowerShell) - One-liner
 
-Build and install from source:
+Install the **plus** edition (full-featured) directly from the latest release — no Go required:
 
 ```powershell
-git clone https://github.com/hanthor/bluefin-cli.git
-cd bluefin-cli
-go build -o bluefin-cli.exe .
-
-# Optional: move to a permanent location on PATH
-New-Item -ItemType Directory -Force "$HOME\\bin" | Out-Null
-Move-Item .\\bluefin-cli.exe "$HOME\\bin\\bluefin-cli.exe" -Force
-$env:PATH = "$HOME\\bin;$env:PATH"
+irm https://raw.githubusercontent.com/hanthor/bluefin-cli/main/install.ps1 | iex
 ```
 
-Enable shell integration for both `pwsh` and Windows PowerShell profiles:
+This installs to `%LOCALAPPDATA%\Programs\bluefin-cli\` and adds it to your user PATH. No admin rights needed.
+
+Then enable shell integration:
 
 ```powershell
 bluefin-cli shell powershell on
