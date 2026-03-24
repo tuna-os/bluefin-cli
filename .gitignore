@@ -5,6 +5,9 @@
 *.so
 *.dylib
 
+# Embedded resource DLLs (bundled into the Go binary via go:embed)
+!internal/shell/resources/psfileicons/*.dll
+
 # Test binary, built with `go test -c`
 *.test
 

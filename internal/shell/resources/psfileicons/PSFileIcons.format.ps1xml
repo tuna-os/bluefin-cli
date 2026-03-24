@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  PSFileIcons.format.ps1xml
+  Overrides the built-in "children" view to prepend Nerd Font icons.
+  Icon lookups are delegated to Format-PSFileIcon which calls into
+  the compiled C# dictionary — no file I/O at runtime.
+-->
+<Configuration>
+
+  <SelectionSets>
+    <SelectionSet>
+      <Name>FileSystemTypes</Name>
+      <Types>
+        <TypeName>System.IO.DirectoryInfo</TypeName>
+        <TypeName>System.IO.FileInfo</TypeName>
+      </Types>
+    </SelectionSet>
+  </SelectionSets>
+
+  <Controls>
+    <Control>
+      <Name>FileSystemTypes-GroupingFormat</Name>
+      <CustomControl>
+        <CustomEntries>
+          <CustomEntry>
+            <CustomItem>
+              <Frame>
+                <LeftIndent>4</LeftIndent>
+                <CustomItem>
+                  <Text AssemblyName="System.Management.Automation"
+                        BaseName="FileSystemProviderStrings"
+                        ResourceId="DirectoryDisplayGrouping"/>
+                  <ExpressionBinding>
+                    <ScriptBlock>
+                      $_.PSParentPath.Replace("Microsoft.PowerShell.Core\FileSystem::", "")
+                    </ScriptBlock>
+                  </ExpressionBinding>
+                  <NewLine/>
+                </CustomItem>
+              </Frame>
+            </CustomItem>
+          </CustomEntry>
+        </CustomEntries>
+      </CustomControl>
+    </Control>
+  </Controls>
+
+  <ViewDefinitions>
+
+    <!-- ══ Table (default Get-ChildItem output) ══ -->
+    <View>
+      <Name>children</Name>
+      <ViewSelectedBy>
+        <SelectionSetName>FileSystemTypes</SelectionSetName>
+      </ViewSelectedBy>
+      <GroupBy>
+        <PropertyName>PSParentPath</PropertyName>
+        <CustomControlName>FileSystemTypes-GroupingFormat</CustomControlName>
+      </GroupBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader>
+            <Label>Mode</Label>
+            <Width>7</Width>
+            <Alignment>left</Alignment>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>LastWriteTime</Label>
+            <Width>25</Width>
+            <Alignment>right</Alignment>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>Length</Label>
+            <Width>14</Width>
+            <Alignment>right</Alignment>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>Name</Label>
+          </TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <Wrap/>
+            <TableColumnItems>
+              <TableColumnItem>
+                <PropertyName>Mode</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <ScriptBlock>
+                  [String]::Format('{0,10}  {1,8}', $_.LastWriteTime.ToString('d'), $_.LastWriteTime.ToString('t'))
+                </ScriptBlock>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>Length</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <ScriptBlock>PSFileIcons\Format-PSFileIcon $_</ScriptBlock>
+              </TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+
+    <!-- ══ Wide (Format-Wide) ══ -->
+    <View>
+      <Name>children</Name>
+      <ViewSelectedBy>
+        <SelectionSetName>FileSystemTypes</SelectionSetName>
+      </ViewSelectedBy>
+      <GroupBy>
+        <PropertyName>PSParentPath</PropertyName>
+        <CustomControlName>FileSystemTypes-GroupingFormat</CustomControlName>
+      </GroupBy>
+      <WideControl>
+        <AutoSize/>
+        <WideEntries>
+          <WideEntry>
+            <WideItem>
+              <ScriptBlock>PSFileIcons\Format-PSFileIcon $_</ScriptBlock>
+            </WideItem>
+          </WideEntry>
+        </WideEntries>
+      </WideControl>
+    </View>
+
+  </ViewDefinitions>
+</Configuration>

@@ -7,6 +7,31 @@ import (
 	"strings"
 )
 
+// buildPowerShellRcLine returns a single-line PS profile entry that caches the
+// output of `bluefin-cli init powershell` so subsequent shell starts are fast.
+// The cache is keyed by the binary's mtime; it is rebuilt whenever the binary
+// or the shell config file changes.
+func buildPowerShellRcLine(execPath, execDir string) string {
+	// Locate the binary — prefer explicit path, fallback to PATH lookup.
+	var exeExpr string
+	if strings.TrimSpace(execPath) != "" {
+		escaped := strings.ReplaceAll(execPath, "'", "''")
+		exeExpr = fmt.Sprintf(`$_bfExe = if (Test-Path '%s') { '%s' } else { (Get-Command bluefin-cli -ErrorAction SilentlyContinue)?.Source }`, escaped, escaped)
+	} else if strings.TrimSpace(execDir) != "" {
+		escaped := strings.ReplaceAll(execDir, "'", "''")
+		exeExpr = fmt.Sprintf(`if ('%s' -and ($env:PATH -notlike '*%s*')) { $env:PATH = '%s;' + $env:PATH }; $_bfExe = (Get-Command bluefin-cli -ErrorAction SilentlyContinue)?.Source`, escaped, escaped, escaped)
+	} else {
+		exeExpr = `$_bfExe = (Get-Command bluefin-cli -ErrorAction SilentlyContinue)?.Source`
+	}
+
+	cacheSetup := `$_bfCache = "$env:LOCALAPPDATA\bluefin-cli\shell-cache\init.ps1"; $_bfCfg = "$env:USERPROFILE\.config\bluefin-cli\shell.json"`
+	stale := `(-not (Test-Path $_bfCache)) -or ((Get-Item $_bfExe -ErrorAction SilentlyContinue)?.LastWriteTimeUtc -gt (Get-Item $_bfCache).LastWriteTimeUtc) -or ((Test-Path $_bfCfg) -and (Get-Item $_bfCfg).LastWriteTimeUtc -gt (Get-Item $_bfCache).LastWriteTimeUtc)`
+	rebuild := `$null = New-Item -ItemType Directory -Path (Split-Path $_bfCache) -Force -ErrorAction SilentlyContinue; & $_bfExe init powershell | Out-File $_bfCache -Encoding utf8`
+
+	return fmt.Sprintf(`%s; %s; if ($_bfExe) { %s; if (%s) { %s }; . $_bfCache } %s`,
+		exeExpr, cacheSetup, cacheSetup, stale, rebuild, shellMaker)
+}
+
 func isPowerShellShell(name string) bool {
 	normalized := strings.ToLower(strings.TrimSpace(name))
 	return normalized == "powershell" || normalized == "pwsh"
@@ -21,13 +46,11 @@ func togglePowerShell(enable bool) error {
 	execPath := preferredInitExecutablePath()
 	execDir := preferredInitExecutableDir(execPath)
 
-	rcLine := fmt.Sprintf(`if (Get-Command bluefin-cli -ErrorAction SilentlyContinue) { Invoke-Expression ((& bluefin-cli init powershell | Out-String)) } %s`, shellMaker)
+	rcLine := buildPowerShellRcLine("", "")
 	if strings.TrimSpace(execPath) != "" {
-		escapedExecPath := strings.ReplaceAll(execPath, "'", "''")
-		rcLine = fmt.Sprintf(`if (Test-Path '%s') { Invoke-Expression ((& '%s' init powershell | Out-String)) } elseif (Get-Command bluefin-cli -ErrorAction SilentlyContinue) { Invoke-Expression ((& bluefin-cli init powershell | Out-String)) } %s`, escapedExecPath, escapedExecPath, shellMaker)
+		rcLine = buildPowerShellRcLine(execPath, "")
 	} else if strings.TrimSpace(execDir) != "" {
-		escapedExecDir := strings.ReplaceAll(execDir, "'", "''")
-		rcLine = fmt.Sprintf(`$bluefinCliDir = '%s'; if (Test-Path "$bluefinCliDir\bluefin-cli.exe" -and ($env:PATH -notlike "*$bluefinCliDir*")) { $env:PATH = "$bluefinCliDir;$env:PATH" }; if (Get-Command bluefin-cli -ErrorAction SilentlyContinue) { Invoke-Expression ((& bluefin-cli init powershell | Out-String)) } %s`, escapedExecDir, shellMaker)
+		rcLine = buildPowerShellRcLine("", execDir)
 	}
 
 	changedAny := false
@@ -185,6 +208,11 @@ func isManagedPowerShellProfileLine(line string) bool {
 	}
 
 	if strings.Contains(normalized, "test-path") && strings.Contains(normalized, "bluefin-cli.exe") {
+		return true
+	}
+
+	// Cache-based profile line
+	if strings.Contains(normalized, "_bfexe") || strings.Contains(normalized, "_bfcache") {
 		return true
 	}
 

@@ -122,13 +122,17 @@ func installToolsWindows(cfg *Config) {
 }
 
 func ensurePowerShellModules() error {
-	modules := []string{"PSReadLine", "Terminal-Icons", "PSFzf"}
+	modules := []string{"PSReadLine"}
 
 	var failures []string
 	for _, moduleName := range modules {
 		if err := ensurePowerShellModule(moduleName); err != nil {
 			failures = append(failures, fmt.Sprintf("%s (%v)", moduleName, err))
 		}
+	}
+
+	if err := ensurePSFileIcons(); err != nil {
+		failures = append(failures, fmt.Sprintf("PSFileIcons (%v)", err))
 	}
 
 	if len(failures) > 0 {
@@ -405,6 +409,62 @@ var shellFishScript string
 
 //go:embed resources/shell.ps1
 var shellPowerShellScript string
+
+//go:embed resources/psfileicons/PSFileIcons.dll
+var psFileIconsDLL []byte
+
+//go:embed resources/psfileicons/PSFileIcons.psm1
+var psFileIconsPsm1 string
+
+//go:embed resources/psfileicons/PSFileIcons.psd1
+var psFileIconsPsd1 string
+
+//go:embed resources/psfileicons/PSFileIcons.format.ps1xml
+var psFileIconsFormatXml string
+
+// ensurePSFileIcons extracts the bundled PSFileIcons module to the user's
+// PowerShell module directory. Files are skipped if they are already up-to-date
+// (matched by size), so re-running this is cheap.
+func ensurePSFileIcons() error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	moduleDir := filepath.Join(home, "Documents", "PowerShell", "Modules", "PSFileIcons")
+	if err := os.MkdirAll(moduleDir, 0755); err != nil {
+		return err
+	}
+
+	type fileEntry struct {
+		name    string
+		content []byte
+	}
+
+	files := []fileEntry{
+		{"PSFileIcons.dll", psFileIconsDLL},
+		{"PSFileIcons.psm1", []byte(psFileIconsPsm1)},
+		{"PSFileIcons.psd1", []byte(psFileIconsPsd1)},
+		{"PSFileIcons.format.ps1xml", []byte(psFileIconsFormatXml)},
+	}
+
+	updated := false
+	for _, f := range files {
+		dest := filepath.Join(moduleDir, f.name)
+		if info, err := os.Stat(dest); err == nil && info.Size() == int64(len(f.content)) {
+			continue // already current
+		}
+		if err := os.WriteFile(dest, f.content, 0644); err != nil {
+			return fmt.Errorf("writing %s: %w", f.name, err)
+		}
+		updated = true
+	}
+
+	if updated {
+		fmt.Println(successStyle.Render("✓ PSFileIcons module installed"))
+	}
+	return nil
+}
 
 var (
 	successStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Bold(true)
