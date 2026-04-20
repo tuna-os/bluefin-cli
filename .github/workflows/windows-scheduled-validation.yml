@@ -47,10 +47,10 @@ jobs:
         shell: pwsh
         run: |
           $out = .\bluefin-cli.exe init powershell
-          if ([string]::IsNullOrWhiteSpace($out)) {
+          if (-not $out) {
             throw "Expected init powershell to output shell init script"
           }
-          if ($out -notmatch "bluefin-cli") {
+          if (-not ($out -match "bluefin-cli")) {
             throw "Expected init output to reference bluefin-cli"
           }
 
