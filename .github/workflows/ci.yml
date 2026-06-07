@@ -30,7 +30,7 @@ jobs:
       run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
       
     - name: Upload coverage
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v7
       with:
         files: ./coverage.txt
         token: ${{ secrets.CODECOV_TOKEN }}
