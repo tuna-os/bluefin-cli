@@ -1,24 +1,28 @@
-# 🗺️ Roadmap
+# bluefin-cli Roadmap
 
-This document outlines the potential future direction for `bluefin-cli`.
+**Last updated**: 2026-06-13
 
-## 🚨 Immediate Priorities
-- **Fix Homebrew Installation**: The README notes "NOT WORKING YET Via Homebrew". Need to investigate and fix the tap formula or CI process publishing it.
-- **CI/CD Pipeline**: Ensure automated builds and releases are working correctly for cross-platform (if applicable) or at least Linux/AMD64.
+Part of the [TunaOS](https://tunaos.org) ecosystem.
 
-## 🌟 Short-term Improvements
-- **Use bold-brew fo
-- **Expanded Bundles**:
-    - Add `devops` bundle (Terraform, Ansible, etc.).
-    - Add `gaming` bundle (Lutris, Steam tools, etc.) Flatpaks are now available in Brewfiles on Linux ans Casks on macOS for Steam
-- **Enhanced Bling**:
-    - Add `fzf` integration (it's a common request).
-    - Add `ranger` for terminal file management.
-- **Validation**: ~~Add a `doctor` command to verify environment health~~ (covered by `status`).
+## Done
 
+- ✅ Homebrew installation fixed — formula updated for tuna-os org transfer
+- ✅ CI/CD pipeline publishing releases
+- ✅ `status` command for environment health checks
 
-## 🔭 Long-term Vision
-- **Configurability**:
-- Move hardcoded bundle URLs and definitions to a config file (YAML/JSON) or fetch them dynamically from a remote manifest.
-- Allow users to define custom bundles.
-- **GUI Integration**: Potentially expose some of these features via a small GUI (using Fyne or similar) for non-terminal users, or integrate with GNOME Settings if possible.
+## Short-term
+
+- **Expanded bundles**: devops (Terraform, Ansible), gaming (Lutris, Steam)
+- **fzf integration**: fuzzy finder for bundle/package selection
+- **ranger integration**: terminal file management
+- **Configurability**: move bundle definitions to YAML/JSON config, allow custom bundles
+
+## Long-term
+
+- **Remote manifests**: fetch bundle definitions dynamically
+- **GUI**: expose features via a graphical interface (Fyne or GNOME Settings integration)
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Issues and PRs welcome.
+
