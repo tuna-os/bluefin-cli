@@ -9,7 +9,7 @@ require (
 	github.com/sixdouglas/suncalc v0.0.0-20250114185126-291b1938b70c
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
-	golang.org/x/sys v0.42.0
+	golang.org/x/sys v0.46.0
 )
 
 require (
