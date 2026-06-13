@@ -348,3 +348,7 @@ This project is licensed under the Apache License 2.0 - see the LICENSE file for
 - [ublue-os/packages](https://github.com/ublue-os/packages) - Original package implementations
 - [Starship](https://starship.rs/) - Cross-shell prompt
 - [Homebrew](https://brew.sh/) - Package manager for macOS and Linux
+
+---
+
+Part of the [TunaOS](https://tunaos.org) ecosystem. [Docs](https://tunaos.org) · [Contributing](CONTRIBUTING.md)
