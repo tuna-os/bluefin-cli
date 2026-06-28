@@ -9,7 +9,7 @@ import (
 	"charm.land/bubbles/v2/key"
 	"charm.land/huh/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/hanthor/bluefin-cli/internal/tui/theme"
+	"github.com/tuna-os/bluefin-cli/internal/tui/theme"
 	"github.com/spf13/viper"
 )
 

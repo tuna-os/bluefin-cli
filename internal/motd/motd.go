@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hanthor/bluefin-cli/internal/env"
-	"github.com/hanthor/bluefin-cli/internal/tui"
+	"github.com/tuna-os/bluefin-cli/internal/env"
+	"github.com/tuna-os/bluefin-cli/internal/tui"
 )
 
 const motdMarker = "# bluefin-cli motd"
@@ -48,8 +48,8 @@ var defaultTemplate = `# 󱍢 Welcome to Bluefin CLI
 
 %s
 
-- **󰊤** [GitHub Issues](https://github.com/hanthor/bluefin-cli/issues)
-- **󰈙** [Documentation](https://github.com/hanthor/bluefin-cli)
+- **󰊤** [GitHub Issues](https://github.com/tuna-os/bluefin-cli/issues)
+- **󰈙** [Documentation](https://github.com/tuna-os/bluefin-cli)
 `
 
 type ImageInfo struct {

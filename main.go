@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/hanthor/bluefin-cli/cmd"
-	"github.com/hanthor/bluefin-cli/internal/config"
+	"github.com/tuna-os/bluefin-cli/cmd"
+	"github.com/tuna-os/bluefin-cli/internal/config"
 )
 
 func main() {

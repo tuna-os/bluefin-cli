@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/hanthor/bluefin-cli/internal/countme"
+	"github.com/tuna-os/bluefin-cli/internal/countme"
 	"github.com/spf13/cobra"
 )
 

@@ -1,4 +1,4 @@
-module github.com/hanthor/bluefin-cli
+module github.com/tuna-os/bluefin-cli
 
 go 1.25.8
 
