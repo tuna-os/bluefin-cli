@@ -134,21 +134,21 @@ func TestHelpOutput(t *testing.T) {
 func TestSubcommandHelpOutput(t *testing.T) {
 	tests := []struct {
 		name   string
-		args   []string
+		args   string
 		expect string
 	}{
-		{"install", "install"},
-		{"motd", "motd"},
-		{"shell", "shell"},
-		{"starship", "starship"},
-		{"status", "status"},
-		{"countme", "countme"},
-		{"fonts", "fonts"},
-		{"docs", "docs"},
-		{"cleanup", "cleanup"},
-		{"uninstall", "uninstall"},
-		{"menu", "menu"},
-		{"init", "init"},
+		{"install", "install", "install"},
+		{"motd", "motd", "motd"},
+		{"shell", "shell", "shell"},
+		{"starship", "starship", "starship"},
+		{"status", "status", "status"},
+		{"countme", "countme", "countme"},
+		{"fonts", "fonts", "fonts"},
+		{"docs", "docs", "docs"},
+		{"cleanup", "cleanup", "cleanup"},
+		{"uninstall", "uninstall", "uninstall"},
+		{"menu", "menu", "menu"},
+		{"init", "init", "init"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
