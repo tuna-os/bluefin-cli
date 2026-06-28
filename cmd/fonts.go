@@ -5,7 +5,7 @@ import (
 	"os/exec"
 
 	"charm.land/huh/v2"
-	"github.com/hanthor/bluefin-cli/internal/tui"
+	"github.com/tuna-os/bluefin-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
 

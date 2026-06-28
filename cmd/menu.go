@@ -4,9 +4,9 @@ import (
 	"errors"
 
 	"charm.land/huh/v2"
-	"github.com/hanthor/bluefin-cli/internal/shell"
-	"github.com/hanthor/bluefin-cli/internal/status"
-	"github.com/hanthor/bluefin-cli/internal/tui"
+	"github.com/tuna-os/bluefin-cli/internal/shell"
+	"github.com/tuna-os/bluefin-cli/internal/status"
+	"github.com/tuna-os/bluefin-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
 

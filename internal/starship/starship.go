@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/hanthor/bluefin-cli/internal/tui"
+	"github.com/tuna-os/bluefin-cli/internal/tui"
 )
 
 var (
