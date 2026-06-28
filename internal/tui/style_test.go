@@ -141,7 +141,7 @@ func TestRenderHeader(t *testing.T) {
 
 	RenderHeader("Test Title", "Test Subtitle")
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer
@@ -163,7 +163,7 @@ func TestRenderHeader_NoSubtitle(t *testing.T) {
 
 	RenderHeader("Only Title", "")
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer
