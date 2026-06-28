@@ -33,12 +33,17 @@ jobs:
 
       - name: Resolve version and installer URL
         id: resolve
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_ASSET_URL: ${{ inputs.asset_url }}
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         shell: pwsh
         run: |
-          if ("${{ github.event_name }}" -eq "release") {
-            $tag = "${{ github.event.release.tag_name }}"
+          if ("$env:EVENT_NAME" -eq "release") {
+            $tag = "$env:RELEASE_TAG"
           } else {
-            $tag = "${{ inputs.version }}"
+            $tag = "$env:INPUT_VERSION"
           }
 
           if ([string]::IsNullOrWhiteSpace($tag)) {
@@ -52,7 +57,7 @@ jobs:
 
           $repo = "${{ github.repository }}"
 
-          $manualUrl = "${{ inputs.asset_url }}"
+          $manualUrl = "$env:INPUT_ASSET_URL"
           if (-not [string]::IsNullOrWhiteSpace($manualUrl)) {
             $assetUrl = $manualUrl
           } else {
