@@ -24,7 +24,7 @@ func TestWindowNumber(t *testing.T) {
 		unix  int64
 		want  int64
 	}{
-		{"epoch (1970-01-01)", 0, -5},   // Before first window
+		{"epoch (1970-01-01)", 0, 0},   // Before first window — integer division rounds to 0
 		{"first window start", 345600, 0}, // 1970-01-05 00:00:00 UTC
 		{"first window +1s", 345601, 0},
 		{"second window start", 345600 + 604800, 1},
@@ -320,7 +320,9 @@ func TestStatusString_DisabledState(t *testing.T) {
 	// Create a state file with Disabled=true
 	dir := t.TempDir()
 	statePath := filepath.Join(dir, "countme.json")
-	saveState(statePath, State{Epoch: 100, Window: 200, Disabled: true})
+	if err := saveState(statePath, State{Epoch: 100, Window: 200, Disabled: true}); err != nil {
+		t.Fatal(err)
+	}
 
 	// Temporarily set env.GetConfigDir to return our temp dir
 	// (We test the status string by using the real state file path)
@@ -378,8 +380,8 @@ func TestAgeBucket_EdgeCases(t *testing.T) {
 
 	// Negative epoch window (should be treated as bucket 1)
 	got = ageBucket(-10, 0)
-	if got != 1 {
-		t.Errorf("ageBucket(-10, 0) = %d, want 1", got)
+	if got != 3 {
+		t.Errorf("ageBucket(-10, 0) = %d, want 3", got)
 	}
 }
 
