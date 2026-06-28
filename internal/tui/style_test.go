@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"charm.land/bubbles/v2/key"
 )
 
 // ── Style presence tests ─────────────────────────────────────────────────────
@@ -201,12 +200,10 @@ func TestAppTheme(t *testing.T) {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-func hasKey(keys []key.Binding, expected string) bool {
+func hasKey(keys []string, expected string) bool {
 	for _, k := range keys {
-		for _, actual := range k.Keys() {
-			if actual == expected {
-				return true
-			}
+		if k == expected {
+			return true
 		}
 	}
 	return false
