@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/hanthor/bluefin-cli/internal/status"
+	"github.com/tuna-os/bluefin-cli/internal/status"
 	"github.com/spf13/cobra"
 )
 

@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"charm.land/huh/v2"
-	"github.com/hanthor/bluefin-cli/internal/env"
-	"github.com/hanthor/bluefin-cli/internal/sunset"
-	"github.com/hanthor/bluefin-cli/internal/tui"
+	"github.com/tuna-os/bluefin-cli/internal/env"
+	"github.com/tuna-os/bluefin-cli/internal/sunset"
+	"github.com/tuna-os/bluefin-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
 

@@ -7,10 +7,10 @@ import (
 	"strings"
 
 	"charm.land/huh/v2"
-	"github.com/hanthor/bluefin-cli/internal/config"
-	"github.com/hanthor/bluefin-cli/internal/env"
-	"github.com/hanthor/bluefin-cli/internal/shell"
-	"github.com/hanthor/bluefin-cli/internal/tui"
+	"github.com/tuna-os/bluefin-cli/internal/config"
+	"github.com/tuna-os/bluefin-cli/internal/env"
+	"github.com/tuna-os/bluefin-cli/internal/shell"
+	"github.com/tuna-os/bluefin-cli/internal/tui"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

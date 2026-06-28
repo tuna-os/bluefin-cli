@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"charm.land/lipgloss/v2"
-	"github.com/hanthor/bluefin-cli/internal/env"
-	"github.com/hanthor/bluefin-cli/internal/install"
-	"github.com/hanthor/bluefin-cli/internal/motd"
-	"github.com/hanthor/bluefin-cli/internal/shell"
-	"github.com/hanthor/bluefin-cli/internal/sunset"
+	"github.com/tuna-os/bluefin-cli/internal/env"
+	"github.com/tuna-os/bluefin-cli/internal/install"
+	"github.com/tuna-os/bluefin-cli/internal/motd"
+	"github.com/tuna-os/bluefin-cli/internal/shell"
+	"github.com/tuna-os/bluefin-cli/internal/sunset"
 )
 
 const commandTimeout = 1500 * time.Millisecond

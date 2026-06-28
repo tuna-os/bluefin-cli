@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/hanthor/bluefin-cli/internal/env"
+	"github.com/tuna-os/bluefin-cli/internal/env"
 )
 
 // Config represents sunset/theme/wallpaper settings.
