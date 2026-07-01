@@ -21,7 +21,7 @@ vendor/
 go.work
 
 # Built binary
-bluefin-cli
+bluefin-cli*
 
 # IDE
 .vscode/
