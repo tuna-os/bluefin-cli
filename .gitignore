@@ -13,6 +13,7 @@
 
 # Output of the go coverage tool
 *.out
+coverage
 
 # Dependency directories
 vendor/
