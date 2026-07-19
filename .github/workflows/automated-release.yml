@@ -4,6 +4,14 @@ on:
   push:
     branches: [ main ]
 
+# Serialize releases on main: overlapping runs (two pushes in quick
+# succession) race to compute/tag the same next version, and the loser
+# fails with "tag vX.Y.Z already exists" (tuna-os/bluefin-cli#78).
+# Queue instead of cancelling so every push still gets released.
+concurrency:
+  group: automated-release-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
   issues: write
