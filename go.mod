@@ -5,7 +5,7 @@ go 1.25.8
 require (
 	charm.land/bubbles/v2 v2.1.1
 	charm.land/huh/v2 v2.0.3
-	charm.land/lipgloss/v2 v2.0.4
+	charm.land/lipgloss/v2 v2.0.5
 	github.com/sixdouglas/suncalc v0.0.0-20250114185126-291b1938b70c
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
