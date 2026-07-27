@@ -40,6 +40,8 @@ github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20260720091843-3eef36eaaa28 h1:
 github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20260720091843-3eef36eaaa28/go.mod h1:aRoQwQWmN9LBG2xi3sVByMFt2fdkPCagd0GAJ1qwOfw=
 github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20260726004341-482a56510f1b h1:1urMNq13rvfY2tT54Gs5MdKT8J9UqiTR2luux2CyA4Q=
 github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20260726004341-482a56510f1b/go.mod h1:aRoQwQWmN9LBG2xi3sVByMFt2fdkPCagd0GAJ1qwOfw=
+github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20260727090823-41c9e6be3365 h1:vOtX6NI4ywSlCBNMxC8zlJxOr/MB4F1JCjsi9iUdEg8=
+github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20260727090823-41c9e6be3365/go.mod h1:aRoQwQWmN9LBG2xi3sVByMFt2fdkPCagd0GAJ1qwOfw=
 github.com/charmbracelet/x/term v0.2.2 h1:xVRT/S2ZcKdhhOuSP4t5cLi5o+JxklsoEObBSgfgZRk=
 github.com/charmbracelet/x/term v0.2.2/go.mod h1:kF8CY5RddLWrsgVwpw4kAa6TESp6EB5y3uxGLeCqzAI=
 github.com/charmbracelet/x/termios v0.1.1 h1:o3Q2bT8eqzGnGPOYheoYS8eEleT5ZVNYNy8JawjaNZY=
