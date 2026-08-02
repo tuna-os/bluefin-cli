@@ -11,7 +11,7 @@ require (
 	github.com/charmbracelet/fang v1.0.0
 	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20260730164118-7e2d3e6c5238
 	github.com/charmbracelet/x/term v0.2.2
-	github.com/lucasb-eyer/go-colorful v1.4.0
+	github.com/lucasb-eyer/go-colorful v1.4.1
 	github.com/minio/selfupdate v0.6.0
 	github.com/sixdouglas/suncalc v0.0.0-20250114185126-291b1938b70c
 	github.com/spf13/cobra v1.10.2
