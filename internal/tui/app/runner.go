@@ -15,7 +15,7 @@ import (
 // RunnerScreen executes a task natively inside the shell, capturing anything
 // it prints to stdout/stderr into a scrolling log view — no terminal
 // handover. While the task runs, back/quit keys are held; when it finishes,
-// esc returns.
+// esc returns (or fires onDone if set).
 //
 // Capture works by swapping the os.Stdout/os.Stderr variables to a pipe for
 // the duration of the task: the bubbletea renderer holds its own reference
@@ -24,6 +24,7 @@ import (
 type RunnerScreen struct {
 	title   string
 	run     func() error
+	onDone  func() tea.Cmd
 	ch      chan runnerEvent
 	lines   []string
 	done    bool
@@ -57,10 +58,19 @@ func NewRunner(title string, run func() error) *RunnerScreen {
 	return &RunnerScreen{title: title, run: run}
 }
 
+// NewRunnerWithPost is like NewRunner but fires onDone when the user
+// dismisses the finished runner view (esc). While onDone is set the runner
+// keeps capturing input even after the task completes so it can intercept
+// the dismiss key and chain into the next screen.
+func NewRunnerWithPost(title string, run func() error, onDone func() tea.Cmd) *RunnerScreen {
+	return &RunnerScreen{title: title, run: run, onDone: onDone}
+}
+
 func (s *RunnerScreen) Title() string { return s.title }
 
-// CapturingInput blocks navigation while the task is still running.
-func (s *RunnerScreen) CapturingInput() bool { return !s.done }
+// CapturingInput blocks navigation while the task is still running, and
+// also while onDone is set (so the runner can intercept esc and chain).
+func (s *RunnerScreen) CapturingInput() bool { return !s.done || s.onDone != nil }
 
 func (s *RunnerScreen) Init() tea.Cmd {
 	s.ch = make(chan runnerEvent, 64)
@@ -115,6 +125,10 @@ func (s *RunnerScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 			s.scroll = 0
 		case "G", "end":
 			s.scroll = 1 << 30
+		case "esc":
+			if s.onDone != nil {
+				return s, tea.Sequence(s.onDone(), Pop())
+			}
 		}
 		return s, nil
 	}

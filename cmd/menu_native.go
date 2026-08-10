@@ -13,6 +13,7 @@ import (
 	"charm.land/huh/v2"
 	"github.com/spf13/viper"
 	"github.com/tuna-os/bluefin-cli/internal/config"
+	"github.com/tuna-os/bluefin-cli/internal/env"
 	"github.com/tuna-os/bluefin-cli/internal/install"
 	"github.com/tuna-os/bluefin-cli/internal/motd"
 	"github.com/tuna-os/bluefin-cli/internal/shell"
@@ -217,9 +218,39 @@ func wallpapersFormScreen(casks []string, installed map[string]bool) app.Screen 
 			return nil
 		}
 		picks := append([]string(nil), selected...)
-		return app.Push(app.NewRunner("Installing wallpapers", func() error {
+		run := app.NewRunner("Installing wallpapers", func() error {
 			return install.InstallWallpaperCasks(picks)
-		}))
+		})
+		if env.IsWSL() || env.IsWindows() {
+			run = app.NewRunnerWithPost("Installing wallpapers", func() error {
+				return install.InstallWallpaperCasks(picks)
+			}, func() tea.Cmd {
+				return app.Push(wallpaperSunsetPostInstallScreen())
+			})
+		}
+		return app.Push(run)
+	})
+}
+
+// wallpaperSunsetPostInstallScreen returns a confirm FormScreen that offers
+// to run the sunset (solar theme/wallpaper switching) setup after wallpaper
+// casks have been installed on Windows.
+func wallpaperSunsetPostInstallScreen() app.Screen {
+	var startSetup bool
+	build := func() *huh.Form {
+		startSetup = false
+		return huh.NewForm(huh.NewGroup(
+			huh.NewConfirm().
+				Title("Would you like to configure solar-based theme and wallpaper switching now?").
+				Description("This uses the new 'sunset' feature to automatically manage your desktop experience.").
+				Value(&startSetup),
+		)).WithTheme(tui.AppTheme).WithKeyMap(tui.ConfirmKeyMap())
+	}
+	return app.NewForm("Sunset Setup", build, func(aborted bool) tea.Cmd {
+		if aborted || !startSetup {
+			return nil
+		}
+		return app.RunExternal(RunSunsetSetupFlow)
 	})
 }
 

@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	tea "charm.land/bubbletea/v2"
 )
 
 // --- RunnerScreen -------------------------------------------------------
@@ -61,6 +63,38 @@ func TestRunnerBlocksNavigationWhileRunning(t *testing.T) {
 	}
 	close(release)
 	driveRunner(t, r)
+}
+
+func TestRunnerWithPostCapturesInputWhenDone(t *testing.T) {
+	release := make(chan struct{})
+	r := NewRunnerWithPost("test", func() error { <-release; return nil }, func() tea.Cmd { return nil })
+	r.Init()
+	close(release)
+	driveRunner(t, r)
+	if !r.CapturingInput() {
+		t.Error("runner with onDone must keep capturing input after done to intercept esc")
+	}
+}
+
+func TestRunnerWithPostInterceptsEsc(t *testing.T) {
+	called := false
+	r := NewRunnerWithPost("test", func() error { return nil }, func() tea.Cmd {
+		called = true
+		return nil
+	})
+	r.Init()
+	driveRunner(t, r)
+	if !r.done {
+		t.Fatal("runner did not finish")
+	}
+	// Simulate pressing esc on the finished runner.
+	_, cmd := r.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
+	if cmd == nil {
+		t.Fatal("esc on runner with onDone should return a command")
+	}
+	if !called {
+		t.Error("esc on finished runner with onDone did not call the callback")
+	}
 }
 
 // --- TextScreen ---------------------------------------------------------
