@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/tuna-os/bluefin-cli/internal/env"
 )
 
 type UnixInstaller struct{}
@@ -18,6 +20,13 @@ func init() {
 }
 
 func (i *UnixInstaller) InstallBundle(packages ...string) error {
+	// On Alpine-family systems, Homebrew cannot bootstrap (musl libc).
+	// Route to the Alpine-specific installer, which maps brew formulae
+	// to apk packages where possible and degrades gracefully otherwise.
+	if env.IsAlpine() {
+		return installBundleAlpine(packages...)
+	}
+
 	if _, err := exec.LookPath("brew"); err != nil {
 		return fmt.Errorf("homebrew not found. Please install Homebrew first: https://brew.sh")
 	}
