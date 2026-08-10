@@ -41,7 +41,10 @@ func installBundleAlpine(packages ...string) error {
 	}
 	defer cleanup()
 
-	pkgs := GetBrewfilePackages(merged)
+	pkgs, err := GetBrewfilePackages(merged)
+	if err != nil {
+		return err
+	}
 	if len(pkgs) == 0 {
 		return fmt.Errorf("no installable packages found in the bundle")
 	}
