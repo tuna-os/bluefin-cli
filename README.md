@@ -51,6 +51,11 @@ brew tap tuna-os/tap
 brew install bluefin-cli
 ```
 
+> **Status (2026-08-11):** the tuna-os tap currently ships only `corral-vm.rb` —
+> the `bluefin-cli` formula has not been published by the release pipeline yet
+> (see [#141](https://github.com/tuna-os/bluefin-cli/issues/141)). Until it
+> appears, use `ublue-os/homebrew-experimental-tap` below.
+
 It is also available from `ublue-os/homebrew-experimental-tap`, synced from the
 source-build formula in [`contrib/homebrew/bluefin-cli.rb`](contrib/homebrew/bluefin-cli.rb):
 
@@ -78,10 +83,16 @@ scoop bucket add tuna-os https://github.com/tuna-os/scoop-bucket
 scoop install bluefin-cli
 ```
 
+> **Status (2026-08-11):** `tuna-os/scoop-bucket` has no manifests yet — the
+> manifest is published by the release pipeline and is currently pending
+> ([#141](https://github.com/tuna-os/bluefin-cli/issues/141)).
+
 ### deb / rpm (Debian, Ubuntu, Fedora, openSUSE…)
 
-Every release ships native packages — grab the one for your distro from the
-[latest release](https://github.com/tuna-os/bluefin-cli/releases/latest):
+Releases are configured to ship native packages (`nfpm`) — grab the one for
+your distro from the
+[latest release](https://github.com/tuna-os/bluefin-cli/releases/latest)
+when it is present:
 
 ```bash
 # Debian/Ubuntu
