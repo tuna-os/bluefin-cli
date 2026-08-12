@@ -8,5 +8,10 @@
       "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
       "automerge": true
     }
-  ]
+  ],
+  "postUpgradeTasks": {
+    "commands": ["go mod tidy"],
+    "fileFilters": ["go.mod", "go.sum"],
+    "executionMode": "update"
+  }
 }
