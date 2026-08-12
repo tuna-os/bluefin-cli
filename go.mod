@@ -16,7 +16,7 @@ require (
 	github.com/sixdouglas/suncalc v0.0.0-20250114185126-291b1938b70c
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
-	golang.org/x/image v0.44.0
+	golang.org/x/image v0.45.0
 	golang.org/x/mod v0.39.0
 	golang.org/x/sys v0.47.0
 )
@@ -62,5 +62,5 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.54.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
-	golang.org/x/text v0.40.0 // indirect
+	golang.org/x/text v0.41.0 // indirect
 )
