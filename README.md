@@ -1,6 +1,6 @@
 # Bluefin CLI
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/tuna-os/bluefin-cli/blob/main/LICENSE)
 
 A powerful, modern CLI tool for managing shell configuration and development environment customization. Built with beautiful TUIs using [Charm](https://charm.sh/) libraries.
 
