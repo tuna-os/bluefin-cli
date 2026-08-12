@@ -8,10 +8,47 @@ import (
 )
 
 func TestToggle(t *testing.T) {
-	// Toggle is now a no-op that prints to stdout, so we just check it doesn't error
-	err := Toggle("bash", true)
+	// Toggle rewrites the shell rc file under $HOME. Use a temp home so the
+	// test never touches the real user's dotfiles (and fails cleanly when
+	// that home is not writable).
+	tmpHome := t.TempDir()
+	t.Setenv("HOME", tmpHome)
+	t.Setenv("USERPROFILE", tmpHome)
+
+	// Enable creates ~/.bashrc with the init line.
+	if err := Toggle("bash", true); err != nil {
+		t.Fatalf("Toggle(bash, true) error: %v", err)
+	}
+	bashrc := filepath.Join(tmpHome, ".bashrc")
+	data, err := os.ReadFile(bashrc)
 	if err != nil {
-		t.Errorf("Toggle() returned error: %v", err)
+		t.Fatalf("read %s: %v", bashrc, err)
+	}
+	if !strings.Contains(string(data), "bluefin-cli init bash") {
+		t.Errorf("enabled .bashrc missing init line: %q", data)
+	}
+
+	// Enabling again is idempotent and must not duplicate the line.
+	if err := Toggle("bash", true); err != nil {
+		t.Errorf("Toggle(bash, true) second call error: %v", err)
+	}
+	data, _ = os.ReadFile(bashrc)
+	if strings.Count(string(data), "bluefin-cli init bash") != 1 {
+		t.Errorf("enabling twice duplicated the init line: %q", data)
+	}
+
+	// Disable removes the marker.
+	if err := Toggle("bash", false); err != nil {
+		t.Fatalf("Toggle(bash, false) error: %v", err)
+	}
+	data, _ = os.ReadFile(bashrc)
+	if strings.Contains(string(data), "bluefin-cli init bash") {
+		t.Errorf("disabled .bashrc still contains init line: %q", data)
+	}
+
+	// Disabling when already disabled is a no-op success.
+	if err := Toggle("bash", false); err != nil {
+		t.Errorf("Toggle(bash, false) second call error: %v", err)
 	}
 }
 
