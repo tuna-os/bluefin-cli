@@ -9,7 +9,7 @@ require (
 	charm.land/huh/v2 v2.0.3
 	charm.land/lipgloss/v2 v2.0.6
 	github.com/catppuccin/go v0.3.0
-	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20260811151704-00c6608f106b
+	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20260812204851-3e0d13df57b2
 	github.com/charmbracelet/x/term v0.2.2
 	github.com/lucasb-eyer/go-colorful v1.4.1
 	github.com/minio/selfupdate v0.6.0
