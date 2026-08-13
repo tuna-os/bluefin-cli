@@ -7,6 +7,13 @@
     {
       "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
       "automerge": true
+    },
+    {
+      "description": "fedora base image major bumps are manually reviewed: the fedora:46/rawhide image's dnf repos serve fc45-built packages with a keyring mismatch ('Import of the key didn't help, wrong key?'), breaking Container-based Tests (tuna-os/bluefin-cli#167; same defect as wootc#135, protota#226, tacklebox#205). Revert this rule once the upstream image is consistent.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["registry.fedoraproject.org/fedora", "quay.io/fedora/fedora", "quay.io/fedora/fedora-bootc"],
+      "matchUpdateTypes": ["major"],
+      "automerge": false
     }
   ],
   "postUpgradeTasks": {
