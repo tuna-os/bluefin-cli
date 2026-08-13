@@ -22,11 +22,21 @@ A powerful, modern CLI tool for managing shell configuration and development env
 
 ## 🚀 Installation
 
+> **Status (2026-08-13):** releases currently ship **no binary assets**, so the
+> one-liner scripts and the package-manager paths marked *pending* below are not
+> available yet ([#141](https://github.com/tuna-os/bluefin-cli/issues/141)). The
+> install methods that work today are **Go Install** and **Build from Source**,
+> plus the `ublue-os/homebrew-experimental-tap` Homebrew tap below.
+
 ### One-liner (Linux / macOS)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/tuna-os/bluefin-cli/main/install.sh | sh
 ```
+
+> **Status (2026-08-13):** the script downloads the binary from GitHub release
+> assets, which are not published yet — **not available until release
+> publishing is fixed** ([#141](https://github.com/tuna-os/bluefin-cli/issues/141)).
 
 ### One-liner (Windows PowerShell)
 
@@ -39,6 +49,10 @@ Then enable shell integration:
 ```powershell
 bluefin-cli shell powershell on
 ```
+
+> **Status (2026-08-13):** same as the Linux/macOS one-liner — the script
+> downloads from GitHub release assets, which are not published yet — **not
+> available** ([#141](https://github.com/tuna-os/bluefin-cli/issues/141)).
 
 ### Homebrew (Linux / macOS)
 
@@ -70,11 +84,19 @@ brew install bluefin-cli
 winget install --id Hanthor.BluefinCLI --exact
 ```
 
+> **Status (2026-08-13):** no `Hanthor.BluefinCLI` package has been published to
+> the winget repository yet — **not available**
+> ([#141](https://github.com/tuna-os/bluefin-cli/issues/141)).
+
 ### Chocolatey (Windows)
 
 ```powershell
 choco install bluefin-cli
 ```
+
+> **Status (2026-08-13):** no `bluefin-cli` package has been published to the
+> Chocolatey community repository yet — **not available**
+> ([#141](https://github.com/tuna-os/bluefin-cli/issues/141)).
 
 ### Scoop (Windows)
 
@@ -89,10 +111,11 @@ scoop install bluefin-cli
 
 ### deb / rpm (Debian, Ubuntu, Fedora, openSUSE…)
 
-Releases are configured to ship native packages (`nfpm`) — grab the one for
-your distro from the
-[latest release](https://github.com/tuna-os/bluefin-cli/releases/latest)
-when it is present:
+Releases are configured to ship native packages (`nfpm`), but none have been
+published yet — **not available** until release publishing is fixed
+([#141](https://github.com/tuna-os/bluefin-cli/issues/141)). When present, grab
+the one for your distro from the
+[latest release](https://github.com/tuna-os/bluefin-cli/releases/latest):
 
 ```bash
 # Debian/Ubuntu
@@ -106,6 +129,9 @@ sudo rpm -i bluefin-cli_<version>_linux_amd64.rpm
 ```bash
 yay -S bluefin-cli-bin
 ```
+
+> **Status (2026-08-13):** no `bluefin-cli-bin` package exists in the AUR yet —
+> **not available** ([#141](https://github.com/tuna-os/bluefin-cli/issues/141)).
 
 ### Go Install
 
