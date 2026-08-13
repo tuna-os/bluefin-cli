@@ -2,7 +2,11 @@
 # Using Fedora as base since bluefin-cli is designed for Fedora-based systems
 
 # Builder stage - install Go and dependencies first (cached)
-FROM registry.fedoraproject.org/fedora:46 AS builder
+# Pin fedora:45 — the fedora:46 image's rawhide repo serves fc45-built
+# packages whose signatures no longer match the image keyring, breaking
+# `dnf install` (tuna-os/bluefin-cli#167; same defect as wootc#135,
+# protota#226). Re-bump once the upstream image is fixed.
+FROM registry.fedoraproject.org/fedora:45 AS builder
 
 # Install Go and build dependencies (this layer is cached unless Fedora updates)
 RUN dnf install -y golang git && dnf clean all
