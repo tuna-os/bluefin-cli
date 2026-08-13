@@ -1,8 +1,13 @@
 # Containerfile.dev - Development environment for bluefin-cli
 # This image contains all build dependencies but no source code
 # Source code is mounted at runtime for fast iteration
-
-FROM registry.fedoraproject.org/fedora:rawhide
+#
+# Pin a released Fedora (not rawhide): the rawhide image's dnf repos serve
+# fc45-built packages whose signatures no longer match the image keyring,
+# breaking `dnf install` in Container-based Tests (tuna-os/bluefin-cli#167;
+# same defect as wootc#135, protota#226, tacklebox#205). Revisit once the
+# rawhide/fedora:46 image keyring is consistent.
+FROM registry.fedoraproject.org/fedora:45
 
 # Install all dependencies in one layer
 RUN dnf install -y \
