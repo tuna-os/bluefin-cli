@@ -154,6 +154,14 @@ aurs:
       name: tunabot
       email: noreply@github.com
 
+# Temporarily skipped at invocation (--skip=winget in .releaserc.json's
+# publishCmd, not here): WINGET_CREATE_GITHUB_TOKEN is present but 403s
+# against microsoft/winget-pkgs (expired or wrong scope) as of #181,
+# failing the whole Automated Release job even though the GitHub release
+# itself succeeds. .github/workflows/winget.yml (workflow_dispatch) can
+# re-submit any specific version manually once the token is fixed. Remove
+# --skip=winget from .releaserc.json once WINGET_CREATE_GITHUB_TOKEN is
+# verified working again — this config block is otherwise unchanged.
 winget:
   - name: BluefinCLI
     publisher: Hanthor

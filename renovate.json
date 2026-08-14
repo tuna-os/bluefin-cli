@@ -29,7 +29,7 @@
         "major"
       ],
       "automerge": false,
-      "ignore": true
+      "enabled": false
     }
   ],
   "postUpgradeTasks": {
