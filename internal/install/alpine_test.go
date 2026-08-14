@@ -1,3 +1,5 @@
+//go:build !windows
+
 package install
 
 // Tests for the Alpine/musl code path (internal/install/alpine.go), which
