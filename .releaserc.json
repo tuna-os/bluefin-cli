@@ -17,7 +17,7 @@
       "@semantic-release/exec",
       {
         "prepareCmd": "go mod tidy -diff",
-        "publishCmd": "goreleaser release --clean --skip=chocolatey"
+        "publishCmd": "goreleaser release --clean --skip=chocolatey --skip=winget"
       }
     ]
   ]
