@@ -22,11 +22,10 @@ A powerful, modern CLI tool for managing shell configuration and development env
 
 ## 🚀 Installation
 
-> **Status (2026-08-13):** releases currently ship **no binary assets**, so the
-> one-liner scripts and the package-manager paths marked *pending* below are not
-> available yet ([#141](https://github.com/tuna-os/bluefin-cli/issues/141)). The
-> install methods that work today are **Go Install** and **Build from Source**,
-> plus the `ublue-os/homebrew-experimental-tap` Homebrew tap below.
+> **Status (2026-08-14):** releases ship prebuilt binary assets (v0.10.6+
+> publishes tarballs for Linux/macOS/Windows + native deb/rpm packages), so
+> the one-liner scripts below work. The package-manager paths that are still
+> pending are marked individually below.
 
 ### One-liner (Linux / macOS)
 
@@ -34,9 +33,8 @@ A powerful, modern CLI tool for managing shell configuration and development env
 curl -fsSL https://raw.githubusercontent.com/tuna-os/bluefin-cli/main/install.sh | sh
 ```
 
-> **Status (2026-08-13):** the script downloads the binary from GitHub release
-> assets, which are not published yet — **not available until release
-> publishing is fixed** ([#141](https://github.com/tuna-os/bluefin-cli/issues/141)).
+> **Status (2026-08-14):** the script downloads the binary from GitHub release
+> assets, which are published since v0.10.6 ([#141](https://github.com/tuna-os/bluefin-cli/issues/141), closed).
 
 ### One-liner (Windows PowerShell)
 
@@ -50,9 +48,9 @@ Then enable shell integration:
 bluefin-cli shell powershell on
 ```
 
-> **Status (2026-08-13):** same as the Linux/macOS one-liner — the script
-> downloads from GitHub release assets, which are not published yet — **not
-> available** ([#141](https://github.com/tuna-os/bluefin-cli/issues/141)).
+> **Status (2026-08-14):** same as the Linux/macOS one-liner — the script
+> downloads from GitHub release assets, which are published since v0.10.6
+> ([#141](https://github.com/tuna-os/bluefin-cli/issues/141), closed).
 
 ### Homebrew (Linux / macOS)
 
@@ -65,8 +63,8 @@ brew tap tuna-os/tap
 brew install bluefin-cli
 ```
 
-> **Status (2026-08-11):** the tuna-os tap currently ships only `corral-vm.rb` —
-> the `bluefin-cli` formula has not been published by the release pipeline yet
+> **Status (2026-08-14):** the `bluefin-cli` formula has not been published by
+> the release pipeline yet — only `corral-vm.rb` ships in the tuna-os tap
 > (see [#141](https://github.com/tuna-os/bluefin-cli/issues/141)). Until it
 > appears, use `ublue-os/homebrew-experimental-tap` below.
 
@@ -84,9 +82,10 @@ brew install bluefin-cli
 winget install --id Hanthor.BluefinCLI --exact
 ```
 
-> **Status (2026-08-13):** no `Hanthor.BluefinCLI` package has been published to
+> **Status (2026-08-14):** no `Hanthor.BluefinCLI` package has been published to
 > the winget repository yet — **not available**
-> ([#141](https://github.com/tuna-os/bluefin-cli/issues/141)).
+> ([#141](https://github.com/tuna-os/bluefin-cli/issues/141), closed — release
+> publishing now works, the winget manifest is still pending).
 
 ### Chocolatey (Windows)
 
@@ -94,9 +93,10 @@ winget install --id Hanthor.BluefinCLI --exact
 choco install bluefin-cli
 ```
 
-> **Status (2026-08-13):** no `bluefin-cli` package has been published to the
+> **Status (2026-08-14):** no `bluefin-cli` package has been published to the
 > Chocolatey community repository yet — **not available**
-> ([#141](https://github.com/tuna-os/bluefin-cli/issues/141)).
+> ([#141](https://github.com/tuna-os/bluefin-cli/issues/141), closed — release
+> publishing now works, the Choco manifest is still pending).
 
 ### Scoop (Windows)
 
@@ -105,17 +105,15 @@ scoop bucket add tuna-os https://github.com/tuna-os/scoop-bucket
 scoop install bluefin-cli
 ```
 
-> **Status (2026-08-11):** `tuna-os/scoop-bucket` has no manifests yet — the
+> **Status (2026-08-14):** `tuna-os/scoop-bucket` has no manifests yet — the
 > manifest is published by the release pipeline and is currently pending
-> ([#141](https://github.com/tuna-os/bluefin-cli/issues/141)).
+> ([#141](https://github.com/tuna-os/bluefin-cli/issues/141), closed — release
+> publishing now works, the Scoop manifest is still pending).
 
 ### deb / rpm (Debian, Ubuntu, Fedora, openSUSE…)
 
-Releases are configured to ship native packages (`nfpm`), but none have been
-published yet — **not available** until release publishing is fixed
-([#141](https://github.com/tuna-os/bluefin-cli/issues/141)). When present, grab
-the one for your distro from the
-[latest release](https://github.com/tuna-os/bluefin-cli/releases/latest):
+Releases ship native packages (`nfpm`) since v0.10.6 — grab the one for your
+> distro from the [latest release](https://github.com/tuna-os/bluefin-cli/releases/latest):
 
 ```bash
 # Debian/Ubuntu
@@ -130,8 +128,8 @@ sudo rpm -i bluefin-cli_<version>_linux_amd64.rpm
 yay -S bluefin-cli-bin
 ```
 
-> **Status (2026-08-13):** no `bluefin-cli-bin` package exists in the AUR yet —
-> **not available** ([#141](https://github.com/tuna-os/bluefin-cli/issues/141)).
+> **Status (2026-08-14):** no `bluefin-cli-bin` package exists in the AUR yet —
+> **not available** ([#141](https://github.com/tuna-os/bluefin-cli/issues/141), closed).
 
 ### Go Install
 
