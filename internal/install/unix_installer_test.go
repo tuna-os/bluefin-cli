@@ -1,3 +1,5 @@
+//go:build !windows
+
 package install
 
 // Tests for the Unix (non-Windows) installer path (internal/install/
