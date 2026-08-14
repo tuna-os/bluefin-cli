@@ -7,6 +7,7 @@ package install
 
 import (
 	"os"
+	"runtime"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -16,7 +17,7 @@ import (
 
 func TestIsLinux(t *testing.T) {
 	got := IsLinux()
-	if got != (os.PathSeparator == '/' || os.Getenv("GOOS") == "linux") {
+	if got != (runtime.GOOS == "linux") {
 		t.Errorf("IsLinux() = %v", got)
 	}
 }

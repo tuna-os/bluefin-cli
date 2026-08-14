@@ -24,8 +24,7 @@ func installFakeBrew(t *testing.T) string {
 		t.Fatal(err)
 	}
 	orig := os.Getenv("PATH")
-	t.Cleanup(func() { os.Setenv("PATH", orig) })
-	os.Setenv("PATH", binDir+":"+orig)
+	t.Setenv("PATH", binDir+":"+orig)
 	return binDir
 }
 
@@ -56,9 +55,7 @@ func writeLocalBrewfile(t *testing.T, content string) string {
 // ── InstallBundle ──────────────────────────────────────────────────────────
 
 func TestUnixInstaller_InstallBundle_NoBrew(t *testing.T) {
-	orig := os.Getenv("PATH")
-	t.Cleanup(func() { os.Setenv("PATH", orig) })
-	os.Setenv("PATH", "/nonexistent-dir")
+	t.Setenv("PATH", "/nonexistent-dir")
 
 	i := &UnixInstaller{}
 	err := i.InstallBundle(writeLocalBrewfile(t, "brew \"git\"\n"))
