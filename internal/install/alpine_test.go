@@ -43,8 +43,7 @@ func installFakeAlpineTools(t *testing.T, failPkgs ...string) string {
 	}
 
 	orig := os.Getenv("PATH")
-	t.Cleanup(func() { os.Setenv("PATH", orig) })
-	os.Setenv("PATH", binDir+":"+orig)
+	t.Setenv("PATH", binDir+":"+orig)
 	return binDir
 }
 
@@ -76,8 +75,7 @@ func writeBrewfile(t *testing.T, content string) string {
 
 func TestAlpinePackageManager_NoneAvailable(t *testing.T) {
 	orig := os.Getenv("PATH")
-	t.Cleanup(func() { os.Setenv("PATH", orig) })
-	os.Setenv("PATH", "/nonexistent-dir")
+	t.Setenv("PATH", "/nonexistent-dir")
 
 	if got := alpinePackageManager(); got != "" {
 		t.Errorf("alpinePackageManager with empty PATH = %q, want \"\"", got)
@@ -92,8 +90,7 @@ func TestAlpinePackageManager_PrefersColdbrew(t *testing.T) {
 		}
 	}
 	orig := os.Getenv("PATH")
-	t.Cleanup(func() { os.Setenv("PATH", orig) })
-	os.Setenv("PATH", binDir)
+	t.Setenv("PATH", binDir)
 
 	if got := alpinePackageManager(); got != "coldbrew" {
 		t.Errorf("alpinePackageManager = %q, want coldbrew (preferred over apk)", got)
@@ -106,8 +103,7 @@ func TestAlpinePackageManager_FallsBackToApk(t *testing.T) {
 		t.Fatal(err)
 	}
 	orig := os.Getenv("PATH")
-	t.Cleanup(func() { os.Setenv("PATH", orig) })
-	os.Setenv("PATH", binDir)
+	t.Setenv("PATH", binDir)
 
 	if got := alpinePackageManager(); got != "apk" {
 		t.Errorf("alpinePackageManager = %q, want apk fallback", got)
@@ -163,8 +159,7 @@ func TestInstallAlpinePkg_FailedInstallPropagates(t *testing.T) {
 		t.Fatal(err)
 	}
 	orig := os.Getenv("PATH")
-	t.Cleanup(func() { os.Setenv("PATH", orig) })
-	os.Setenv("PATH", binDir+":"+orig)
+	t.Setenv("PATH", binDir+":"+orig)
 
 	err := installAlpinePkg("coldbrew", "git")
 	if err == nil {
@@ -176,8 +171,7 @@ func TestInstallAlpinePkg_FailedInstallPropagates(t *testing.T) {
 
 func TestInstallBundleAlpine_NoManager(t *testing.T) {
 	orig := os.Getenv("PATH")
-	t.Cleanup(func() { os.Setenv("PATH", orig) })
-	os.Setenv("PATH", "/nonexistent-dir")
+	t.Setenv("PATH", "/nonexistent-dir")
 
 	path := writeBrewfile(t, "brew \"git\"\n")
 	err := installBundleAlpine(path)

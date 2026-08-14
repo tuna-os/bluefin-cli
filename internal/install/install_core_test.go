@@ -22,25 +22,22 @@ func TestIsLinux(t *testing.T) {
 }
 
 func TestIsGnome_EnvBased(t *testing.T) {
-	orig := os.Getenv("XDG_CURRENT_DESKTOP")
-	t.Cleanup(func() { os.Setenv("XDG_CURRENT_DESKTOP", orig) })
-
-	os.Setenv("XDG_CURRENT_DESKTOP", "GNOME")
+	t.Setenv("XDG_CURRENT_DESKTOP", "GNOME")
 	if !IsGnome() {
 		t.Error("IsGnome() = false with XDG_CURRENT_DESKTOP=GNOME")
 	}
 
-	os.Setenv("XDG_CURRENT_DESKTOP", "gnome")
+	t.Setenv("XDG_CURRENT_DESKTOP", "gnome")
 	if !IsGnome() {
 		t.Error("IsGnome() = false with lowercase gnome")
 	}
 
-	os.Setenv("XDG_CURRENT_DESKTOP", "KDE")
+	t.Setenv("XDG_CURRENT_DESKTOP", "KDE")
 	if IsGnome() {
 		t.Error("IsGnome() = true with XDG_CURRENT_DESKTOP=KDE")
 	}
 
-	os.Setenv("XDG_CURRENT_DESKTOP", "")
+	t.Setenv("XDG_CURRENT_DESKTOP", "")
 	if IsGnome() {
 		t.Error("IsGnome() = true with empty XDG_CURRENT_DESKTOP")
 	}
@@ -54,8 +51,7 @@ func TestCheckFlatpak_Present(t *testing.T) {
 		t.Fatal(err)
 	}
 	orig := os.Getenv("PATH")
-	t.Cleanup(func() { os.Setenv("PATH", orig) })
-	os.Setenv("PATH", binDir)
+	t.Setenv("PATH", binDir)
 
 	if err := CheckFlatpak(); err != nil {
 		t.Errorf("CheckFlatpak with flatpak in PATH: %v", err)
@@ -64,8 +60,7 @@ func TestCheckFlatpak_Present(t *testing.T) {
 
 func TestCheckFlatpak_Missing(t *testing.T) {
 	orig := os.Getenv("PATH")
-	t.Cleanup(func() { os.Setenv("PATH", orig) })
-	os.Setenv("PATH", "/nonexistent-dir")
+	t.Setenv("PATH", "/nonexistent-dir")
 
 	if err := CheckFlatpak(); err == nil {
 		t.Error("CheckFlatpak without flatpak: expected error")
@@ -74,8 +69,7 @@ func TestCheckFlatpak_Missing(t *testing.T) {
 
 func TestEnsureFlathub_MissingFlatpak(t *testing.T) {
 	orig := os.Getenv("PATH")
-	t.Cleanup(func() { os.Setenv("PATH", orig) })
-	os.Setenv("PATH", "/nonexistent-dir")
+	t.Setenv("PATH", "/nonexistent-dir")
 
 	err := EnsureFlathub()
 	if err == nil {
@@ -94,8 +88,7 @@ func TestEnsureFlathub_AlreadyPresent(t *testing.T) {
 		t.Fatal(err)
 	}
 	orig := os.Getenv("PATH")
-	t.Cleanup(func() { os.Setenv("PATH", orig) })
-	os.Setenv("PATH", binDir)
+	t.Setenv("PATH", binDir)
 
 	if err := EnsureFlathub(); err != nil {
 		t.Fatalf("EnsureFlathub with flathub present: %v", err)
@@ -111,8 +104,7 @@ func TestEnsureFlathub_AddsRemote(t *testing.T) {
 		t.Fatal(err)
 	}
 	orig := os.Getenv("PATH")
-	t.Cleanup(func() { os.Setenv("PATH", orig) })
-	os.Setenv("PATH", binDir)
+	t.Setenv("PATH", binDir)
 
 	if err := EnsureFlathub(); err != nil {
 		t.Fatalf("EnsureFlathub: %v", err)
@@ -133,8 +125,7 @@ func TestCheckBbrew_Present(t *testing.T) {
 		t.Fatal(err)
 	}
 	orig := os.Getenv("PATH")
-	t.Cleanup(func() { os.Setenv("PATH", orig) })
-	os.Setenv("PATH", binDir)
+	t.Setenv("PATH", binDir)
 
 	if err := CheckBbrew(); err != nil {
 		t.Errorf("CheckBbrew with bbrew in PATH: %v", err)
@@ -147,8 +138,7 @@ func TestEnsureBbrew_AlreadyInstalled(t *testing.T) {
 		t.Fatal(err)
 	}
 	orig := os.Getenv("PATH")
-	t.Cleanup(func() { os.Setenv("PATH", orig) })
-	os.Setenv("PATH", binDir)
+	t.Setenv("PATH", binDir)
 
 	if err := EnsureBbrew(); err != nil {
 		t.Fatalf("EnsureBbrew with bbrew present: %v", err)
@@ -163,8 +153,7 @@ func TestRunBbrew(t *testing.T) {
 		t.Fatal(err)
 	}
 	orig := os.Getenv("PATH")
-	t.Cleanup(func() { os.Setenv("PATH", orig) })
-	os.Setenv("PATH", binDir)
+	t.Setenv("PATH", binDir)
 
 	if err := RunBbrew("/tmp/test.Brewfile"); err != nil {
 		t.Fatalf("RunBbrew: %v", err)
@@ -186,11 +175,10 @@ func TestBundle_UnknownName(t *testing.T) {
 
 func TestCustomBundles_NoCustomDir(t *testing.T) {
 	orig := os.Getenv("HOME")
-	t.Cleanup(func() { os.Setenv("HOME", orig) })
-	os.Setenv("HOME", filepath.Join(t.TempDir(), "missing"))
+	t.Setenv("HOME", filepath.Join(t.TempDir(), "missing"))
 
 	// Missing dir → nil (callers treat nil/empty the same).
-	if got := CustomBundles(); got != nil && len(got) != 0 {
+	if got := CustomBundles(); len(got) != 0 {
 		t.Errorf("CustomBundles() with missing dir = %v, want nil or empty", got)
 	}
 }
@@ -207,8 +195,7 @@ func TestCustomBundles_FindsBrewfiles(t *testing.T) {
 		}
 	}
 	orig := os.Getenv("HOME")
-	t.Cleanup(func() { os.Setenv("HOME", orig) })
-	os.Setenv("HOME", home)
+	t.Setenv("HOME", home)
 
 	got := CustomBundles()
 	if len(got) != 2 {
