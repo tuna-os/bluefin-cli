@@ -50,7 +50,6 @@ func TestCheckFlatpak_Present(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(binDir, "flatpak"), []byte("#!/bin/sh\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	orig := os.Getenv("PATH")
 	t.Setenv("PATH", binDir)
 
 	if err := CheckFlatpak(); err != nil {
@@ -59,7 +58,6 @@ func TestCheckFlatpak_Present(t *testing.T) {
 }
 
 func TestCheckFlatpak_Missing(t *testing.T) {
-	orig := os.Getenv("PATH")
 	t.Setenv("PATH", "/nonexistent-dir")
 
 	if err := CheckFlatpak(); err == nil {
@@ -68,7 +66,6 @@ func TestCheckFlatpak_Missing(t *testing.T) {
 }
 
 func TestEnsureFlathub_MissingFlatpak(t *testing.T) {
-	orig := os.Getenv("PATH")
 	t.Setenv("PATH", "/nonexistent-dir")
 
 	err := EnsureFlathub()
@@ -87,7 +84,6 @@ func TestEnsureFlathub_AlreadyPresent(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(binDir, "flatpak"), []byte(script), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	orig := os.Getenv("PATH")
 	t.Setenv("PATH", binDir)
 
 	if err := EnsureFlathub(); err != nil {
@@ -103,7 +99,6 @@ func TestEnsureFlathub_AddsRemote(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(binDir, "flatpak"), []byte(script), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	orig := os.Getenv("PATH")
 	t.Setenv("PATH", binDir)
 
 	if err := EnsureFlathub(); err != nil {
@@ -124,7 +119,6 @@ func TestCheckBbrew_Present(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(binDir, "bbrew"), []byte("#!/bin/sh\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	orig := os.Getenv("PATH")
 	t.Setenv("PATH", binDir)
 
 	if err := CheckBbrew(); err != nil {
@@ -137,7 +131,6 @@ func TestEnsureBbrew_AlreadyInstalled(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(binDir, "bbrew"), []byte("#!/bin/sh\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	orig := os.Getenv("PATH")
 	t.Setenv("PATH", binDir)
 
 	if err := EnsureBbrew(); err != nil {
@@ -152,7 +145,6 @@ func TestRunBbrew(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(binDir, "bbrew"), []byte(script), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	orig := os.Getenv("PATH")
 	t.Setenv("PATH", binDir)
 
 	if err := RunBbrew("/tmp/test.Brewfile"); err != nil {
@@ -174,7 +166,6 @@ func TestBundle_UnknownName(t *testing.T) {
 }
 
 func TestCustomBundles_NoCustomDir(t *testing.T) {
-	orig := os.Getenv("HOME")
 	t.Setenv("HOME", filepath.Join(t.TempDir(), "missing"))
 
 	// Missing dir → nil (callers treat nil/empty the same).
@@ -194,7 +185,6 @@ func TestCustomBundles_FindsBrewfiles(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	orig := os.Getenv("HOME")
 	t.Setenv("HOME", home)
 
 	got := CustomBundles()

@@ -74,7 +74,6 @@ func writeBrewfile(t *testing.T, content string) string {
 // ── alpinePackageManager ───────────────────────────────────────────────────
 
 func TestAlpinePackageManager_NoneAvailable(t *testing.T) {
-	orig := os.Getenv("PATH")
 	t.Setenv("PATH", "/nonexistent-dir")
 
 	if got := alpinePackageManager(); got != "" {
@@ -89,7 +88,6 @@ func TestAlpinePackageManager_PrefersColdbrew(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	orig := os.Getenv("PATH")
 	t.Setenv("PATH", binDir)
 
 	if got := alpinePackageManager(); got != "coldbrew" {
@@ -102,7 +100,6 @@ func TestAlpinePackageManager_FallsBackToApk(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(binDir, "apk"), []byte("#!/bin/sh\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	orig := os.Getenv("PATH")
 	t.Setenv("PATH", binDir)
 
 	if got := alpinePackageManager(); got != "apk" {
@@ -170,7 +167,6 @@ func TestInstallAlpinePkg_FailedInstallPropagates(t *testing.T) {
 // ── installBundleAlpine ────────────────────────────────────────────────────
 
 func TestInstallBundleAlpine_NoManager(t *testing.T) {
-	orig := os.Getenv("PATH")
 	t.Setenv("PATH", "/nonexistent-dir")
 
 	path := writeBrewfile(t, "brew \"git\"\n")
