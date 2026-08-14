@@ -1,3 +1,5 @@
+//go:build !windows
+
 package install
 
 // Tests for the install.go core helpers that had zero coverage:
