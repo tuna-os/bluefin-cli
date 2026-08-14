@@ -82,10 +82,11 @@ brew install bluefin-cli
 winget install --id Hanthor.BluefinCLI --exact
 ```
 
-> **Status (2026-08-14):** no `Hanthor.BluefinCLI` package has been published to
-> the winget repository yet — **not available**
+> **Status (2026-08-14):** `Hanthor.BluefinCLI` **v0.8.1 is published** in the
+> winget repository (microsoft/winget-pkgs#407090, merged 08-14) but predates
+> the current v0.10.6 release line — **installable, though not yet current**
 > ([#141](https://github.com/tuna-os/bluefin-cli/issues/141), closed — release
-> publishing now works, the winget manifest is still pending).
+> publishing works; a newer manifest submission is pending).
 
 ### Chocolatey (Windows)
 
