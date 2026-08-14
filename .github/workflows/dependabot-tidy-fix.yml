@@ -1,0 +1,80 @@
+name: Dependabot go.sum auto-tidy
+
+# tuna-os/bluefin-cli#162: `go mod tidy -diff` in ci.yml's go-mod-tidy job
+# runs on `pull_request`, where GitHub hard-restricts GITHUB_TOKEN to
+# read-only whenever the PR is authored by dependabot[bot] -- regardless of
+# any `permissions:` block declared there. That job can therefore detect
+# staleness on a Dependabot PR but can never push the fix itself. #156
+# already covers the Renovate-authored path (postUpgradeTasks runs `go mod
+# tidy` there), so this workflow only needs to handle Dependabot.
+#
+# `workflow_run` sidesteps the restriction: it runs in the base repo's
+# context with this workflow's own `permissions:` block honored in full,
+# regardless of who authored the PR that triggered the upstream CI run.
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  fix-tidy:
+    # Only chase this for a failed CI run that actually came from a PR (not
+    # push/schedule) authored by dependabot[bot] -- narrowest possible
+    # trigger before spending a checkout+push on it. `go mod tidy -diff`
+    # failing is not distinguished from other CI failures here (the
+    # workflow_run event doesn't expose per-job conclusions); the tidy step
+    # below is itself the real gate -- it only commits/pushes if there is
+    # an actual diff, so a false trigger (CI red for an unrelated reason)
+    # is a harmless no-op.
+    if: >
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.actor.login == 'dependabot[bot]'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Resolve the triggering PR's head ref
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          head_ref=$(gh api "repos/${{ github.repository }}/pulls" \
+            --jq '.[] | select(.head.sha == "${{ github.event.workflow_run.head_sha }}") | .head.ref' | head -1)
+          if [ -z "$head_ref" ]; then
+            echo "::error::could not resolve a PR head ref for SHA ${{ github.event.workflow_run.head_sha }} -- not a same-repo PR, or it already closed"
+            exit 1
+          fi
+          echo "head_ref=${head_ref}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout the Dependabot branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.pr.outputs.head_ref }}
+          # Dependabot PRs are same-repo branches (not forks), so the
+          # default token can push here once given contents: write above.
+          persist-credentials: true
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.26'
+
+      - name: Tidy and push only if it actually changes anything
+        run: |
+          set -euo pipefail
+          go mod tidy
+          if git diff --quiet -- go.mod go.sum; then
+            echo "go.mod/go.sum already tidy -- CI must have failed for a different reason; nothing to push."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add go.mod go.sum
+          git commit -m "chore: go mod tidy (auto-fix for Dependabot PR)"
+          git push origin "HEAD:${{ steps.pr.outputs.head_ref }}"
