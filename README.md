@@ -371,7 +371,7 @@ grep    # ugrep (if installed)
 
 - [Interactive Menu Structure](docs/menus.md): A visual guide to the application's menu hierarchy and options.
 - [Available Tools](docs/tools.md): A comprehensive list of all tools and bundles available.
-- [Winget Publishing Guide](docs/winget.md): Steps to publish and maintain the Windows package.
+- [Winget Publishing Workflow](.github/workflows/winget.yml): manual fallback for re-submitting the Windows package to winget-pkgs (publishing is automated by GoReleaser on release).
 
 ## 🏗️ Project Structure
 
