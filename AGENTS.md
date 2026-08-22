@@ -1,36 +1,60 @@
 # AGENTS.md
 
-## 🤖 Project Overview
-**Bluefin CLI** is a Go-based command-line tool designed for the Bluefin OS (and other Universal Blue derivatives). It serves as a unified interface for system customization, "bling" (shell enhancements), and software installation via Homebrew bundles.
+## Project overview
 
-## 🏗 Architecture
-The project follows a standard Go CLI structure:
-- **`cmd/`**: Contains the main entry point and Cobra commands. Each command file (e.g., `bling.go`, `install.go`) typically handles the CLI arguments and delegates logic to `internal/`.
-- **`internal/`**: Contains the core business logic, separated by domain (`bling`, `install`, `motd`, etc.).
-- **TUI**: Heavily uses [Bubble Tea](https://charm.land/bubbletea/v2), [Lipgloss](https://charm.land/lipgloss/v2), and [Huh](https://charm.land/huh/v2) for interactive menus.
+Bluefin CLI is a Go command-line application for shell configuration, package
+installation, and desktop customization. Cobra provides the command tree. The
+interactive interface is a persistent Bubble Tea v2 application.
 
-### Key Components
-1.  **Bling (`internal/bling`)**: Manages shell configuration files (`.bashrc`, `.zshrc`, `config.fish`). It embeds shell scripts (`resources/bling.sh`, `resources/bling.fish`) and sources them in the user's shell config.
-2.  **Bundles (`internal/install`)**: Defines a hardcoded list of "bundles" (e.g., ai, k8s) mapping to remote Brewfiles hosted on GitHub. It downloads these Brewfiles and runs `brew bundle install`.
+The repository produces two binaries from the same source:
 
-## 🛠 Development
-The project uses `just` as a task runner.
+- `bluefin-cli`, the standard build;
+- `bluefin-cli-plus`, built with `-tags extra` to include wallpapers, fonts,
+  sunset automation, and the complete interactive menu.
 
-### Common Commands
-- **`just build`**: Builds the binary locally.
-- **`just test`**: Runs integration tests inside a container.
-- **`just unit-test`**: Runs all Go unit tests inside a container.
-- **`just shell-with-bling`**: Spawns a container with the CLI pre-installed and "bling" enabled for manual testing.
-- **`just inspect-bling`**: Verifies that shell configuration files are correctly modified.
+## Architecture
 
-### Testing Guidelines
-- **Unit Tests**: Add unit tests for new logic in the respective `internal/` package. Run them locally with `go test ./internal/...` or via `just unit-test`.
-- **Integration Tests**: Integration tests are located in `test/integration_test.go`. Run them via `just test`.
-- **Manual Verification**: Use `just shell-with-bling` to verify UI and shell configuration changes in an isolated environment.
+- `cmd/` defines Cobra commands and assembles TUI destinations. Keep argument
+  parsing and command wiring here; place reusable behavior under `internal/`.
+- `internal/shell/` manages the shell experience for Bash, Zsh, Fish, and
+  PowerShell. The user-facing command is wired in `cmd/shell.go`.
+- `internal/install/` handles packages, bundles, and wallpaper collections.
+  Brewfiles and wallpaper metadata are embedded from
+  `internal/install/resources/`; update them with `just update-resources`.
+- `internal/tui/app/` implements the persistent screen stack, shared header and
+  footer, command palette, and runners for external or streaming operations.
+  Menus and actions are registered from `cmd/menu.go` and related `cmd/menu_*`
+  files.
+- `internal/config/`, `internal/profile/`, and `internal/update/` own persisted
+  configuration, portable profiles, and checksum-verified self-update.
+- `docs/commands/` is generated command reference. Regenerate it with
+  `just gen-docs` after changing commands or flags.
 
-### Guidelines for Agents
-- **Changing Bundles**: Update `internal/install/install.go` to add/remove bundles or change the source URL.
-- **Modifying Bling**:
-    - If changing the shell script logic, edit `internal/bling/resources/bling.sh` or `.fish`.
-    - If changing how it hooks into shells, edit `internal/bling/bling.go`.
-- **UI Changes**: The interactive menu is a persistent Bubble Tea v2 shell in `internal/tui/app` (screen stack + breadcrumb header + contextual footer + ctrl+p palette + the header dino). Menus are `app.MenuScreen`s built in `cmd/menu.go`; every destination is also registered as an `app.Action` for the palette. Legacy flows (huh forms with their own `Run()`, brew/winget installs that stream to stdout) run through `app.RunLegacy`, which releases the terminal and resumes the shell — migrate these to native screens over time rather than adding new `tui.ClearScreen()`-style flows. Colors come from semantic tokens in `internal/tui/theme` (Catppuccin Latte/Mocha, auto light/dark from the terminal background) — never hardcode hex/ANSI colors in views.
+## Development workflow
+
+The module requires Go 1.25.8 or later. CI currently runs Go 1.27.
+
+```bash
+just build                    # build standard and plus binaries
+go test ./...                 # run the local test suite
+go test -tags extra -race ./... # exercise the CI build tag with race checks
+just test                     # run the containerized integration suite
+just gen-docs                 # regenerate docs/commands
+```
+
+Use `just --list` for the complete recipe list. Podman is required by the
+container-based recipes.
+
+## Change guidelines
+
+- Put shared behavior in the relevant `internal/` package and keep Cobra
+  command functions small.
+- Test both the standard and `extra` build-tag paths when changing conditional
+  features. Stubs for the standard build live in `cmd/extra_stubs.go`.
+- Add TUI destinations as `app.Screen` implementations or registered
+  `app.Action` values. Use the existing runner/external-process bridge for
+  commands that must temporarily own the terminal.
+- Do not edit generated command pages by hand. Change the Cobra definition and
+  run `just gen-docs`.
+- Update embedded package data with `just update-resources`; do not add runtime
+  downloads for resources that are intended to ship with the binary.
