@@ -10,7 +10,7 @@ A powerful, modern CLI tool for managing shell configuration and development env
 - **✨ Bling**: Toggle modern shell enhancements (eza, bat, ugrep, zoxide, atuin, starship)
 - **📰 MOTD**: Beautiful Message of the Day with system info and random tips
 - **📦 Bundle Installer**: Install curated tool bundles (ai, cli, fonts, k8s) from Universal Blue
-- **�️ Wallpapers**: Install desktop wallpaper collections from ublue-os/tap
+- **🖼️ Wallpapers**: Install desktop wallpaper collections from ublue-os/tap
 - **🎨 Starship Themes**: Browse and apply Starship prompt themes
 - **📊 Status Command**: View configuration and installed tools at a glance
 - **🩺 Doctor**: `bluefin-cli doctor` diagnoses setup problems with fix hints
@@ -329,7 +329,8 @@ Non-interactive wallpaper flags:
 - In Auto Dark Mode, point light/dark custom script hooks to those two scripts.
 
 #### Starship Themes
-you can change your prompy lookks
+
+You can change the appearance of your prompt.
 Browse and apply Starship preset themes:
 
 ```bash
@@ -377,22 +378,18 @@ grep    # ugrep (if installed)
 
 ```
 bluefin-cli/
-├── main.go              # Application entry point
-├── cmd/                 # Cobra commands
-│   ├── root.go         # Root command & menu default
-│   ├── menu.go         # Interactive TUI menu
-│   ├── bling.go        # Bling command
-│   ├── motd.go         # MOTD command
-│   ├── install.go      # Install bundles/wallpapers
-│   ├── starship.go     # Starship theme management
-│   └── status.go       # Status display
-├── internal/            # Internal packages
-│   ├── bling/          # Bling logic & embedded scripts
-│   ├── motd/           # MOTD generation
-│   ├── install/        # Bundle & wallpaper installation
-│   ├── starship/       # Starship integration
-│   └── status/         # Status checking
-└── test/                # Integration tests
+├── main.go                       # Application entry point
+├── cmd/                          # Cobra commands and TUI destinations
+├── internal/
+│   ├── install/                  # Packages, bundles, and wallpaper installation
+│   │   └── resources/            # Embedded Brewfiles and wallpaper metadata
+│   ├── shell/                    # Shell-experience configuration
+│   ├── tui/app/                  # Persistent Bubble Tea screen stack
+│   └── update/                   # Checksum-verified self-update
+├── docs/commands/                # Generated command reference
+├── scripts/                      # Smoke and state validation scripts
+├── test/                         # Integration tests
+└── justfile                      # Development task recipes
 ```
 
 ## 📚 Inspiration
@@ -407,7 +404,7 @@ This project consolidates and modernizes functionality from:
 
 ### Prerequisites
 
-- Go 1.21+
+- Go 1.25.8 or later (the CI jobs currently validate with Go 1.27)
 - Podman (for containerized testing)
 - just (for running recipes)
 
@@ -417,16 +414,26 @@ This project consolidates and modernizes functionality from:
 just build
 ```
 
+`just build` creates both variants:
+
+- `bluefin-cli`: the standard CLI
+- `bluefin-cli-plus`: the standard CLI plus features selected by the `extra`
+  build tag, including wallpapers, fonts, and sunset automation
+
 ### Testing
 
 ```bash
-# Run tests in container
+# Run the integration suite in a container
 
 just test
 
-# Run tests locally
+# Run the complete Go test suite locally
 
 go test ./...
+
+# Run the same race-enabled suite used by CI
+
+go test -tags extra -race ./...
 ```
 
 ### Interactive Development
