@@ -1,8 +1,8 @@
 # Release publishing credentials
 
 GoReleaser publishes the Homebrew formula to
-[`tuna-os/homebrew-tap`](https://github.com/tuna-os/homebrew-tap). The release
-The semantic-release workflow passes the repository secret
+[`tuna-os/homebrew-tap`](https://github.com/tuna-os/homebrew-tap). The
+semantic-release workflow passes the repository secret
 `HOMEBREW_TAP_TOKEN` to GoReleaser, and
 `.goreleaser.yaml` skips the formula upload when that variable is empty.
 
@@ -38,8 +38,8 @@ organization credential.
 ## Scoop
 
 GoReleaser publishes the Windows Scoop manifest to
-[`tuna-os/scoop-bucket`](https://github.com/tuna-os/scoop-bucket). The release
-The semantic-release workflow passes the repository secret
+[`tuna-os/scoop-bucket`](https://github.com/tuna-os/scoop-bucket). The
+semantic-release workflow passes the repository secret
 `SCOOP_BUCKET_TOKEN` to GoReleaser, and
 `.goreleaser.yaml` skips the Scoop upload when that variable is empty.
 
