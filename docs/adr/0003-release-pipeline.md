@@ -23,3 +23,6 @@ archives that don't match the release's checksums.txt.
 ## Consequences
 Adding a channel = config + secret; releases are all-or-nothing green.
 `brews` deprecation is accepted until a Linux-capable replacement exists.
+The `Automated Release` workflow is the sole GoReleaser owner. Tags created by
+semantic-release are release outputs, not a second workflow trigger; manual
+recovery paths must have an explicitly non-overlapping publishing scope.

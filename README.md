@@ -151,15 +151,19 @@ go build -o bluefin-cli .
 
 On Windows, use `go build -o bluefin-cli.exe .`.
 
-Maintainers: package publishing (Homebrew tap, Winget, Scoop) is automated by GoReleaser on release; `.github/workflows/winget.yml` is a manual fallback for re-submitting a Winget version.
+Maintainers: qualifying merges to `main` are versioned by semantic-release,
+which invokes GoReleaser to publish release assets and package channels.
+`.github/workflows/winget.yml` is a manual fallback for re-submitting a Winget
+version.
 
 Scoop publishing requires the `SCOOP_BUCKET_TOKEN` repository secret (a fine-grained PAT with write access to `tuna-os/scoop-bucket`), without which the Scoop manifest upload step is safely skipped during release workflows. See [docs/release-publishing.md](docs/release-publishing.md) for details.
 
 Homebrew tap publishing requires the `HOMEBREW_TAP_TOKEN` repository secret (a fine-grained PAT with write access to `tuna-os/homebrew-tap`), without which the formula upload step is safely skipped during release workflows. See [docs/release-publishing.md](docs/release-publishing.md) for details.
 
-Homebrew release process: on every tagged release GoReleaser publishes the
-binary formula to `tuna-os/homebrew-tap` (requires the `HOMEBREW_TAP_TOKEN`
-secret). External taps that build from source, such as
+Homebrew release process: when semantic-release determines that a merge to
+`main` warrants a release, it invokes GoReleaser, which publishes the binary
+formula to `tuna-os/homebrew-tap` (requires the `HOMEBREW_TAP_TOKEN` secret).
+External taps that build from source, such as
 `ublue-os/homebrew-experimental-tap`, must be synced manually — bump `url` and
 `sha256` in [`contrib/homebrew/bluefin-cli.rb`](contrib/homebrew/bluefin-cli.rb)
 and open a PR in that tap.
