@@ -214,3 +214,13 @@ func TestCommandTreeSize(t *testing.T) {
 		t.Errorf("command tree seems too small: %d commands total", total)
 	}
 }
+
+func TestReportedVersion(t *testing.T) {
+	// Under `go test` the module version is "(devel)", so the fallback
+	// must keep returning the stamped/default value rather than "" or
+	// "(devel)".
+	got := reportedVersion()
+	if got == "" || got == "(devel)" {
+		t.Errorf("reportedVersion() = %q, want a usable version string", got)
+	}
+}
