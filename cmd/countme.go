@@ -42,7 +42,7 @@ Opt out at any time:
 			}
 			fmt.Println("countme enabled.")
 		default:
-			fmt.Println(countme.StatusString(version))
+			fmt.Println(countme.StatusString(reportedVersion()))
 		}
 		return nil
 	},
