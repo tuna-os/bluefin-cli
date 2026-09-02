@@ -4,9 +4,15 @@ name: Bot PRs go.sum auto-tidy
 # runs on `pull_request`, where GitHub hard-restricts GITHUB_TOKEN to
 # read-only whenever the PR is authored by dependabot[bot] or bot agents -- regardless of
 # any `permissions:` block declared there. That job can therefore detect
-# staleness on a bot PR but can never push the fix itself. #156
-# already covers the Renovate-authored path (postUpgradeTasks runs `go mod
-# tidy` there), so this workflow handles Dependabot and hive agent PRs.
+# staleness on a bot PR but can never push the fix itself.
+#
+# Renovate is covered here too (#219). #156 assumed renovate.json's
+# postUpgradeTasks would tidy those branches, but `postUpgradeTasks` is
+# only executed by self-hosted Renovate with the command allowlisted via
+# `allowedPostUpgradeCommands`; the hosted app ignores the block silently,
+# so the config looks correct while never running. #216 is the proof: it
+# merged on 2026-09-01 with `go.mod tidy` red, leaving the stale
+# checksums that then failed main CI and aborted Automated Release.
 #
 # `workflow_run` sidesteps the restriction: it runs in the base repo's
 # context with this workflow's own `permissions:` block honored in full,
@@ -23,8 +29,8 @@ permissions:
 jobs:
   fix-tidy:
     # Only chase this for a failed CI run that actually came from a PR (not
-    # push/schedule) authored by dependabot[bot] or hanthor-hive-agent[bot] -- narrowest possible
-    # trigger before spending a checkout+push on it. `go mod tidy -diff`
+    # push/schedule) authored by one of the dependency/agent bots -- narrowest
+    # possible trigger before spending a checkout+push on it. `go mod tidy -diff`
     # failing is not distinguished from other CI failures here (the
     # workflow_run event doesn't expose per-job conclusions); the tidy step
     # below is itself the real gate -- it only commits/pushes if there is
@@ -33,7 +39,9 @@ jobs:
     if: >
       github.event.workflow_run.conclusion == 'failure' &&
       github.event.workflow_run.event == 'pull_request' &&
-      (github.event.workflow_run.actor.login == 'dependabot[bot]' || github.event.workflow_run.actor.login == 'hanthor-hive-agent[bot]')
+      (github.event.workflow_run.actor.login == 'dependabot[bot]' ||
+      github.event.workflow_run.actor.login == 'renovate[bot]' ||
+      github.event.workflow_run.actor.login == 'hanthor-hive-agent[bot]')
     runs-on: ubuntu-24.04
     permissions:
       contents: write
