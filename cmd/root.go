@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 
 	"charm.land/fang/v2"
 	"github.com/spf13/cobra"
@@ -13,6 +14,21 @@ import (
 var (
 	version = "dev"
 )
+
+// reportedVersion returns the release version stamped at build time. For
+// `go install ...@latest` builds (no ldflags stamp), it falls back to the
+// Go module version so countme telemetry and --version don't collapse
+// into an undifferentiated "dev".
+func reportedVersion() string {
+	if version != "dev" {
+		return version
+	}
+	if info, ok := debug.ReadBuildInfo(); ok &&
+		info.Main.Version != "" && info.Main.Version != "(devel)" {
+		return info.Main.Version
+	}
+	return version
+}
 
 var rootCmd = &cobra.Command{
 	Use:   "bluefin-cli",
@@ -26,7 +42,7 @@ var rootCmd = &cobra.Command{
 - Automated Theme & Wallpaper Switching (Sunset)
 - Automated Font Installation
 - Monthly Wallpaper Themes`,
-	Version: version,
+	Version: reportedVersion(),
 
 	// Fire the countme ping in the background on every invocation.
 	// This is a no-op if already counted this week, or if opted out.
@@ -34,7 +50,7 @@ var rootCmd = &cobra.Command{
 		// Skip the ping when the user is managing countme itself, to avoid
 		// a ping firing just before an explicit --disable.
 		if cmd.Name() != "countme" {
-			go countme.Count(version)
+			go countme.Count(reportedVersion())
 		}
 		applyThemeFlavor()
 		return nil
@@ -53,10 +69,10 @@ var rootCmd = &cobra.Command{
 // Execute runs the root command via fang (styled help/errors, manpage and
 // completion commands, --version).
 func Execute() error {
-	return fang.Execute(context.Background(), rootCmd, fang.WithVersion(version))
+	return fang.Execute(context.Background(), rootCmd, fang.WithVersion(reportedVersion()))
 }
 
 func init() {
-	rootCmd.SetVersionTemplate(fmt.Sprintf("bluefin-cli version %s\n", version))
-	status.AppVersion = version
+	rootCmd.SetVersionTemplate(fmt.Sprintf("bluefin-cli version %s\n", reportedVersion()))
+	status.AppVersion = reportedVersion()
 }

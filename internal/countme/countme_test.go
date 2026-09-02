@@ -413,3 +413,17 @@ func TestWindowToUnix_EdgeCases(t *testing.T) {
 		t.Errorf("window 0 start (%d) should align to offset boundary", w0)
 	}
 }
+
+func TestFedoraReleaseIsSupported(t *testing.T) {
+	// Guards against an empty ldflags stamp or a forgotten bump: the value
+	// must be a plain numeric Fedora release, or every ping lands on a
+	// nonexistent/EOL metalink repo.
+	if fedoraRelease == "" {
+		t.Fatal("fedoraRelease is empty — check the -X ldflags stamp")
+	}
+	for _, r := range fedoraRelease {
+		if r < '0' || r > '9' {
+			t.Fatalf("fedoraRelease = %q, want a numeric release (e.g. \"44\")", fedoraRelease)
+		}
+	}
+}

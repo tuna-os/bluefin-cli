@@ -42,13 +42,18 @@ const (
 	bucket3Threshold = 5
 	bucket4Threshold = 25
 
-	// fedoraRelease is the Fedora version used in the metalink request URL.
-	// Update this alongside Bluefin's base Fedora release.
-	fedoraRelease = "42"
-
 	stateFile    = "countme.json"
 	optOutEnvVar = "BLUEFIN_DISABLE_COUNTME"
 )
+
+// fedoraRelease is the Fedora version used in the metalink request URL.
+// It must track a supported Fedora release: pings against an EOL release
+// are miscategorized in Fedora's countme dataset and stop counting once
+// Fedora retires the metalink. Fedora 42 went EOL 2026-05-27.
+// Packagers may override at build time:
+//
+//	-X github.com/tuna-os/bluefin-cli/internal/countme.fedoraRelease=44
+var fedoraRelease = "44"
 
 // State is persisted to disk to track epoch (first use) and last counted window.
 type State struct {
