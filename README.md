@@ -370,9 +370,21 @@ grep    # ugrep (if installed)
 
 ## 📚 Documentation
 
-- [Interactive Menu Structure](docs/menus.md): A visual guide to the application's menu hierarchy and options.
-- [Available Tools](docs/tools.md): A comprehensive list of all tools and bundles available.
-- [Winget Publishing Workflow](.github/workflows/winget.yml): manual fallback for re-submitting the Windows package to winget-pkgs (publishing is automated by GoReleaser on release).
+- [Command reference](docs/commands/bluefin-cli.md): Generated documentation for
+  every command and flag.
+- [Interactive menu structure](docs/menus.md): Menu hierarchy, navigation, and
+  available actions.
+- [Standard and plus builds](docs/vanilla-vs-extra.md): Feature differences
+  between the two published binaries.
+- [Available tools](docs/tools.md): Tools and bundles included with Bluefin CLI.
+- [GNOME integration](docs/gnome.md): GNOME-specific setup and behavior.
+- [AI tools](docs/ai.md) and [CNCF tools](docs/cncf.md): Details for the curated
+  bundle categories.
+
+Maintainers can find package-channel credentials and release verification in
+[Release publishing](docs/release-publishing.md). The
+[Winget workflow](.github/workflows/winget.yml) is the manual fallback for
+re-submitting the Windows package; GoReleaser handles the normal release path.
 
 ## 🏗️ Project Structure
 
