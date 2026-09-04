@@ -348,7 +348,7 @@ bluefin-cli starship install
 
 ### Bling Tools
 
-The bling command configures these modern CLI tools:
+The shell command configures these modern CLI tools:
 
 - **eza**: Modern replacement for `ls` with icons and colors
 - **bat**: `cat` clone with syntax highlighting
