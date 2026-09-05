@@ -1,20 +1,20 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
+    "local>tuna-os/.github",
+    "local>tuna-os/.github"
   ],
-  "automerge": false,
-  "platformAutomerge": true,
+  "postUpgradeTasks": {
+    "commands": [
+      "go mod tidy"
+    ],
+    "fileFilters": [
+      "go.mod",
+      "go.sum"
+    ],
+    "executionMode": "update"
+  },
   "packageRules": [
-    {
-      "matchUpdateTypes": [
-        "patch",
-        "pin",
-        "pinDigest",
-        "digest"
-      ],
-      "automerge": true
-    },
     {
       "description": "fedora base image major bumps are IGNORED (not even proposed): the fedora:46/rawhide image's dnf repos serve fc45-built packages with a keyring mismatch, breaking container builds. automerge:false alone did not stop renovate (tacklebox #209/#211); ignore prevents PR creation. Remove once the upstream image is consistent.",
       "matchDatasources": [
@@ -31,15 +31,5 @@
       "automerge": false,
       "enabled": false
     }
-  ],
-  "postUpgradeTasks": {
-    "commands": [
-      "go mod tidy"
-    ],
-    "fileFilters": [
-      "go.mod",
-      "go.sum"
-    ],
-    "executionMode": "update"
-  }
+  ]
 }
