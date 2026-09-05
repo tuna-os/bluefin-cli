@@ -1,8 +1,9 @@
 # Release publishing credentials
 
 GoReleaser publishes the Homebrew formula to
-[`tuna-os/homebrew-tap`](https://github.com/tuna-os/homebrew-tap). The release
-workflow passes the repository secret `HOMEBREW_TAP_TOKEN` to GoReleaser, and
+[`tuna-os/homebrew-tap`](https://github.com/tuna-os/homebrew-tap). The
+semantic-release workflow passes the repository secret
+`HOMEBREW_TAP_TOKEN` to GoReleaser, and
 `.goreleaser.yaml` skips the formula upload when that variable is empty.
 
 ## One-time administrator setup
@@ -24,8 +25,9 @@ Do not put it in the workflow file, `.goreleaser.yaml`, or a fork.
 
 ## Verification
 
-After adding the secret, trigger a release from a release tag and check the
-GoReleaser output for the Homebrew publisher. The generated formula should land
+After adding the secret, merge a conventional commit that warrants a release
+to `main` and check the `Automated Release` workflow's GoReleaser output for
+the Homebrew publisher. The generated formula should land
 in `tuna-os/homebrew-tap` under `Formula/` on `main`.
 
 Without the secret, releases intentionally remain green and publish the other
@@ -36,8 +38,9 @@ organization credential.
 ## Scoop
 
 GoReleaser publishes the Windows Scoop manifest to
-[`tuna-os/scoop-bucket`](https://github.com/tuna-os/scoop-bucket). The release
-workflow passes the repository secret `SCOOP_BUCKET_TOKEN` to GoReleaser, and
+[`tuna-os/scoop-bucket`](https://github.com/tuna-os/scoop-bucket). The
+semantic-release workflow passes the repository secret
+`SCOOP_BUCKET_TOKEN` to GoReleaser, and
 `.goreleaser.yaml` skips the Scoop upload when that variable is empty.
 
 ## One-time administrator setup
@@ -59,8 +62,9 @@ branch. Do not put it in the workflow file, `.goreleaser.yaml`, or a fork.
 
 ## Verification
 
-After adding the secret, trigger a release from a release tag and check the
-GoReleaser output for the Scoop publisher. The generated manifest should land
+After adding the secret, merge a conventional commit that warrants a release
+to `main` and check the `Automated Release` workflow's GoReleaser output for
+the Scoop publisher. The generated manifest should land
 in `tuna-os/scoop-bucket` on `main`.
 
 Without the secret, releases intentionally remain green and publish the other
