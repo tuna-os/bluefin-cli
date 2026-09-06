@@ -1,9 +1,13 @@
 // Tests for the Fedora countme protocol implementation.
 //
 // These tests cover time window arithmetic, age bucket computation,
-// user-agent generation, state persistence, and status string formatting.
+// user-agent generation, state persistence, status string formatting, and
+// the Count/Disable/Enable state-transition and opt-out orchestration logic.
 // HTTP calls (sendPing) and environment-sensitive functions (variant,
-// goosName, baseArch) are tested at the unit level where possible.
+// goosName, baseArch) are tested at the unit level where possible. Count's
+// success path (new window + successful ping) is left untested here since
+// it requires a live network call to Fedora's metalink infrastructure with
+// no injectable HTTP client seam.
 package countme
 
 import (
@@ -411,6 +415,145 @@ func TestWindowToUnix_EdgeCases(t *testing.T) {
 	w0 := windowToUnix(0)
 	if w0%604800 != 345600%604800 {
 		t.Errorf("window 0 start (%d) should align to offset boundary", w0)
+	}
+}
+
+// ── Count / Disable / Enable ─────────────────────────────────────────────────
+
+// sandboxHome points $HOME at a fresh temp dir and clears HOMEBREW_PREFIX so
+// env.GetConfigDir deterministically resolves to <tmp>/.config/bluefin-cli.
+func sandboxHome(t *testing.T) string {
+	t.Helper()
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("HOMEBREW_PREFIX", "")
+	configDir := filepath.Join(home, ".config", "bluefin-cli")
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	return filepath.Join(configDir, "countme.json")
+}
+
+func TestCount_OptOutEnvVar_NoStateWritten(t *testing.T) {
+	statePath := sandboxHome(t)
+	t.Setenv("BLUEFIN_DISABLE_COUNTME", "1")
+
+	Count("0.0.3")
+
+	if _, err := os.Stat(statePath); !os.IsNotExist(err) {
+		t.Errorf("opt-out env var should short-circuit before any state I/O, but state file exists at %s", statePath)
+	}
+}
+
+func TestCount_DisabledState_NoOp(t *testing.T) {
+	statePath := sandboxHome(t)
+	t.Setenv("BLUEFIN_DISABLE_COUNTME", "")
+
+	original := State{Epoch: 1000, Window: 2000, Disabled: true}
+	if err := saveState(statePath, original); err != nil {
+		t.Fatal(err)
+	}
+
+	Count("0.0.3")
+
+	got, err := loadState(statePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != original {
+		t.Errorf("Count should leave a disabled state untouched, got %+v, want %+v", got, original)
+	}
+}
+
+func TestCount_AlreadyCountedThisWindow_NoOp(t *testing.T) {
+	statePath := sandboxHome(t)
+	t.Setenv("BLUEFIN_DISABLE_COUNTME", "")
+
+	curWindow := windowNumber(time.Now().Unix())
+	original := State{Epoch: windowToUnix(curWindow), Window: time.Now().Unix(), Disabled: false}
+	if err := saveState(statePath, original); err != nil {
+		t.Fatal(err)
+	}
+
+	Count("0.0.3")
+
+	got, err := loadState(statePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != original {
+		t.Errorf("Count should be a no-op within the same window, got %+v, want %+v", got, original)
+	}
+}
+
+func TestCount_LoadStateError_NoOp(t *testing.T) {
+	statePath := sandboxHome(t)
+	t.Setenv("BLUEFIN_DISABLE_COUNTME", "")
+
+	// A directory in place of the state file makes loadState's ReadFile fail
+	// with something other than "not exist", forcing Count's early return.
+	if err := os.MkdirAll(statePath, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Must not panic; loadState returns an error for a path that is a directory.
+	Count("0.0.3")
+}
+
+func TestDisable_PersistsDisabledTrue(t *testing.T) {
+	statePath := sandboxHome(t)
+
+	if err := Disable(); err != nil {
+		t.Fatalf("Disable() returned error: %v", err)
+	}
+
+	got, err := loadState(statePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.Disabled {
+		t.Errorf("Disable() should persist Disabled=true, got %+v", got)
+	}
+}
+
+func TestEnable_PersistsDisabledFalse(t *testing.T) {
+	statePath := sandboxHome(t)
+
+	original := State{Epoch: 42, Window: 99, Disabled: true}
+	if err := saveState(statePath, original); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := Enable(); err != nil {
+		t.Fatalf("Enable() returned error: %v", err)
+	}
+
+	got, err := loadState(statePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Disabled {
+		t.Errorf("Enable() should persist Disabled=false, got %+v", got)
+	}
+	if got.Epoch != original.Epoch || got.Window != original.Window {
+		t.Errorf("Enable() should only flip Disabled, got %+v, want epoch/window preserved from %+v", got, original)
+	}
+}
+
+func TestDisable_EnsureConfigDirError(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("HOMEBREW_PREFIX", "")
+
+	// Put a plain file where the config directory needs to be created, so
+	// EnsureConfigDir's MkdirAll fails.
+	blocker := filepath.Join(home, ".config")
+	if err := os.WriteFile(blocker, []byte("not a directory"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := Disable(); err == nil {
+		t.Error("Disable() should return an error when the config directory cannot be created")
 	}
 }
 
