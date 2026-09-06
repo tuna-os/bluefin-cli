@@ -232,7 +232,7 @@ Features:
 - **zoxide**: Smarter `cd`
 - **atuin**: Shell history sync
 - **starship**: Cross-shell prompt
-- **uutils**: Rust rewrite of coreutilsl
+- **uutils**: Rust rewrite of coreutils
 
 #### MOTD - Message of the Day
 
