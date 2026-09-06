@@ -1,15 +1,19 @@
-## bluefin-cli menu
+## bluefin-cli fonts
 
-Open the interactive Bluefin main menu
+Install individual development fonts
+
+### Synopsis
+
+Select and install individual development fonts from a curated list.
 
 ```
-bluefin-cli menu [flags]
+bluefin-cli fonts [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for menu
+  -h, --help   help for fonts
 ```
 
 ### SEE ALSO
