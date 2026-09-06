@@ -94,9 +94,9 @@ shell-with-bling: build-container build
         bluefin-cli-dev \
         bash -c 'mkdir -p ~/.config/fish && \
                  touch ~/.bashrc ~/.zshrc ~/.config/fish/config.fish && \
-                 ./bluefin-cli bling bash on && \
-                 ./bluefin-cli bling zsh on && \
-                 ./bluefin-cli bling fish on && \
+                 ./bluefin-cli shell bash on && \
+                 ./bluefin-cli shell zsh on && \
+                 ./bluefin-cli shell fish on && \
                  ./bluefin-cli motd toggle bash on && \
                  echo "" && \
                  echo "=== Bling has been enabled ===" && \
@@ -122,7 +122,7 @@ bash: build-container build
         bluefin-cli-dev \
         bash -c 'mkdir -p ~/.config/fish && \
                  touch ~/.bashrc ~/.zshrc ~/.config/fish/config.fish && \
-                 ./bluefin-cli bling bash on > /dev/null 2>&1 && \
+                 ./bluefin-cli shell bash on > /dev/null 2>&1 && \
                  echo "✓ Bling enabled - Tools: starship=$(command -v starship), eza=$(command -v eza)" && \
                  exec bash'
 
@@ -140,7 +140,7 @@ zsh: build-container build
         bash -c 'mkdir -p ~/.config/fish ~/.local/share/bluefin-cli/bling && \
                  rm -f ~/.zshrc ~/.local/share/bluefin-cli/bling/bling.sh && \
                  touch ~/.bashrc ~/.zshrc ~/.config/fish/config.fish && \
-                 ./bluefin-cli bling zsh on > /dev/null 2>&1 && \
+                 ./bluefin-cli shell zsh on > /dev/null 2>&1 && \
                  echo "✓ Bling enabled - Tools: starship=$(command -v starship), eza=$(command -v eza)" && \
                  ZDOTDIR=/root exec zsh'
 
@@ -156,7 +156,7 @@ fish: build-container build
         bluefin-cli-dev \
         bash -c 'mkdir -p ~/.config/fish && \
                  touch ~/.bashrc ~/.zshrc ~/.config/fish/config.fish && \
-                 ./bluefin-cli bling fish on > /dev/null 2>&1 && \
+                 ./bluefin-cli shell fish on > /dev/null 2>&1 && \
                  exec fish'
 
 # Inspect what files were created by bling
@@ -169,9 +169,9 @@ inspect-bling: build-container build
         bluefin-cli-dev \
         bash -c 'mkdir -p ~/.config/fish && \
                  touch ~/.bashrc ~/.zshrc ~/.config/fish/config.fish && \
-                 ./bluefin-cli bling bash on && \
-                 ./bluefin-cli bling zsh on && \
-                 ./bluefin-cli bling fish on && \
+                 ./bluefin-cli shell bash on && \
+                 ./bluefin-cli shell zsh on && \
+                 ./bluefin-cli shell fish on && \
                  echo "=== Shell Configs ===" && \
                  echo "" && \
                  echo "--- ~/.bashrc ---" && \
