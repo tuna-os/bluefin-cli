@@ -8,6 +8,14 @@ import (
 	"testing"
 )
 
+// setHomeEnv points os.UserHomeDir() at dir on every platform: Unix reads
+// HOME, Windows reads USERPROFILE.
+func setHomeEnv(t *testing.T, dir string) {
+	t.Helper()
+	t.Setenv("HOME", dir)
+	t.Setenv("USERPROFILE", dir)
+}
+
 func TestPreferredName(t *testing.T) {
 	got := PreferredName()
 	want := "Ghostty"
@@ -21,7 +29,7 @@ func TestPreferredName(t *testing.T) {
 
 func TestGhosttyConfigDir(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setHomeEnv(t, home)
 	got, err := ghosttyConfigDir()
 	if err != nil {
 		t.Fatalf("ghosttyConfigDir() error = %v", err)
@@ -34,7 +42,7 @@ func TestGhosttyConfigDir(t *testing.T) {
 
 func TestDetectNerdFontFound(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setHomeEnv(t, home)
 	fontDir := filepath.Join(home, ".local", "share", "fonts")
 	if err := os.MkdirAll(fontDir, 0o755); err != nil {
 		t.Fatal(err)
@@ -50,7 +58,7 @@ func TestDetectNerdFontFound(t *testing.T) {
 
 func TestDetectNerdFontNone(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setHomeEnv(t, home)
 	if got := DetectNerdFont(); got != "" {
 		t.Errorf("DetectNerdFont() = %q, want empty", got)
 	}
@@ -58,7 +66,7 @@ func TestDetectNerdFontNone(t *testing.T) {
 
 func TestWriteGhosttyConfigUnix(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setHomeEnv(t, home)
 
 	if err := writeGhosttyConfigUnix(); err != nil {
 		t.Fatalf("writeGhosttyConfigUnix() error = %v", err)
@@ -90,7 +98,7 @@ func TestWriteGhosttyConfigUnix(t *testing.T) {
 
 func TestWriteGhosttyConfigUnixPreservesUserContent(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setHomeEnv(t, home)
 	dir := filepath.Join(home, ".config", "ghostty")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
@@ -117,7 +125,7 @@ func TestWriteGhosttyConfigUnixPreservesUserContent(t *testing.T) {
 
 func TestWriteWezTermConfigFresh(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setHomeEnv(t, home)
 
 	if err := writeWezTermConfig(); err != nil {
 		t.Fatalf("writeWezTermConfig() error = %v", err)
@@ -134,7 +142,7 @@ func TestWriteWezTermConfigFresh(t *testing.T) {
 
 func TestWriteWezTermConfigLeavesExisting(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setHomeEnv(t, home)
 	cfgPath := filepath.Join(home, ".wezterm.lua")
 	if err := os.WriteFile(cfgPath, []byte("-- my config\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -154,7 +162,7 @@ func TestWriteWezTermConfigLeavesExisting(t *testing.T) {
 
 func TestWriteGhosttyConfigDispatch(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setHomeEnv(t, home)
 
 	if err := WriteGhosttyConfig(); err != nil {
 		t.Fatalf("WriteGhosttyConfig() error = %v", err)
@@ -222,7 +230,7 @@ func TestInstallGhosttyAlreadyInstalled(t *testing.T) {
 
 func TestDetectTerminals(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setHomeEnv(t, home)
 
 	if got := DetectTerminals(); len(got) != 0 {
 		t.Errorf("DetectTerminals() on empty HOME = %v, want empty", got)
@@ -258,7 +266,7 @@ func TestDetectTerminals(t *testing.T) {
 
 func TestSetTerminalFontDispatch(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setHomeEnv(t, home)
 
 	if err := SetTerminalFont(ConfiguredTerminal{Name: "Ghostty"}, "JetBrainsMono Nerd Font"); err != nil {
 		t.Errorf("SetTerminalFont(Ghostty) error = %v", err)
