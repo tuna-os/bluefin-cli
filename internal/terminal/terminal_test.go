@@ -9,11 +9,15 @@ import (
 )
 
 // setHomeEnv points os.UserHomeDir() at dir on every platform: Unix reads
-// HOME, Windows reads USERPROFILE.
+// HOME, Windows reads USERPROFILE. It also isolates APPDATA/LOCALAPPDATA
+// under dir so Windows Terminal detection doesn't pick up a real install
+// on the host/runner (LOCALAPPDATA is independent of USERPROFILE).
 func setHomeEnv(t *testing.T, dir string) {
 	t.Helper()
 	t.Setenv("HOME", dir)
 	t.Setenv("USERPROFILE", dir)
+	t.Setenv("APPDATA", filepath.Join(dir, "AppData", "Roaming"))
+	t.Setenv("LOCALAPPDATA", filepath.Join(dir, "AppData", "Local"))
 }
 
 func TestPreferredName(t *testing.T) {
