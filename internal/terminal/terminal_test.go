@@ -232,8 +232,14 @@ func TestDetectTerminals(t *testing.T) {
 	home := t.TempDir()
 	setHomeEnv(t, home)
 
-	if got := DetectTerminals(); len(got) != 0 {
-		t.Errorf("DetectTerminals() on empty HOME = %v, want empty", got)
+	// Terminal.app is always present on darwin regardless of HOME, and has
+	// no config file of its own (configured via `defaults`, not a path).
+	wantEmptyOnBareHome := 0
+	if runtime.GOOS == "darwin" {
+		wantEmptyOnBareHome = 1
+	}
+	if got := DetectTerminals(); len(got) != wantEmptyOnBareHome {
+		t.Errorf("DetectTerminals() on empty HOME = %v, want len %d", got, wantEmptyOnBareHome)
 	}
 
 	if err := os.MkdirAll(filepath.Join(home, ".config", "alacritty"), 0o755); err != nil {
@@ -253,6 +259,9 @@ func TestDetectTerminals(t *testing.T) {
 	names := map[string]bool{}
 	for _, term := range got {
 		names[term.Name] = true
+		if term.Name == "Terminal.app" {
+			continue
+		}
 		if !term.IsReady || term.ConfigDir == "" {
 			t.Errorf("terminal %q should be ready with a config dir, got %+v", term.Name, term)
 		}
@@ -275,9 +284,15 @@ func TestSetTerminalFontDispatch(t *testing.T) {
 		t.Errorf("expected ghostty config to be written: %v", err)
 	}
 
-	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
+	// Linux has no platform-specific terminals, so unknown names no-op.
+	// Darwin and Windows recognize a fixed set and error on anything else.
+	if runtime.GOOS == "linux" {
 		if err := SetTerminalFont(ConfiguredTerminal{Name: "SomeOtherTerminal"}, "Hack Nerd Font"); err != nil {
 			t.Errorf("SetTerminalFont(default) error = %v, want nil from platform fallback", err)
+		}
+	} else {
+		if err := SetTerminalFont(ConfiguredTerminal{Name: "SomeOtherTerminal"}, "Hack Nerd Font"); err == nil {
+			t.Error("SetTerminalFont(default) error = nil, want error for unrecognized terminal")
 		}
 	}
 }
