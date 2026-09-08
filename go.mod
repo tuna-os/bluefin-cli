@@ -1,6 +1,6 @@
 module github.com/tuna-os/bluefin-cli
 
-go 1.25.8
+go 1.26.0
 
 require (
 	charm.land/bubbles/v2 v2.2.1
@@ -18,7 +18,7 @@ require (
 	github.com/spf13/viper v1.21.0
 	golang.org/x/image v0.45.0
 	golang.org/x/mod v0.40.0
-	golang.org/x/sys v0.47.0
+	golang.org/x/sys v0.48.0
 )
 
 require (
