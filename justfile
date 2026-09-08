@@ -291,6 +291,14 @@ update-resources:
     echo "  -> wallpaper-casks.json"
     echo "Update complete!"
 
+# Regenerate the embedded Homebrew-to-Winget package mapping on Windows.
+update-winget-mapping:
+    pwsh -NoProfile -File scripts/winget/update-mapping.ps1
+
+# Summarize coverage of the embedded Winget package mapping on Windows.
+summarize-winget-mapping:
+    pwsh -NoProfile -File scripts/winget/summarize-mapping.ps1
+
 # Show Go module info
 mod-info: build-container
     @echo "Go module information:"

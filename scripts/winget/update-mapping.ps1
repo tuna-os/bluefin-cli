@@ -1,9 +1,11 @@
 $ErrorActionPreference = 'Stop'
 
-$packagesPath = 'tmp/windows-packages.txt'
+$packagesPath = 'scripts/winget/windows-packages.txt'
 $mappingPath = 'internal/install/windows_mapping.json'
 $reportPath = 'tmp/winget-mapping-report.csv'
 $unmatchedPath = 'tmp/winget-unmatched.txt'
+
+New-Item -ItemType Directory -Force -Path 'tmp' | Out-Null
 
 if (-not (Test-Path $packagesPath)) {
     throw "Package list not found: $packagesPath"

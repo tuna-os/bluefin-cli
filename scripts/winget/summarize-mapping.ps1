@@ -1,9 +1,11 @@
 $ErrorActionPreference = 'Stop'
 
-$packagesPath = 'tmp/windows-packages.txt'
+$packagesPath = 'scripts/winget/windows-packages.txt'
 $mappingPath = 'internal/install/windows_mapping.json'
 $reportPath = 'tmp/winget-mapping-report.csv'
 $unmatchedPath = 'tmp/winget-unmatched.txt'
+
+New-Item -ItemType Directory -Force -Path 'tmp' | Out-Null
 
 $packages = Get-Content $packagesPath | Where-Object { $_.Trim() -ne '' } | Sort-Object -Unique
 $mapping = Get-Content $mappingPath -Raw | ConvertFrom-Json -AsHashtable
