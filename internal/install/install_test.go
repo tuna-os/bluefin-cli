@@ -2,6 +2,7 @@ package install
 
 import (
 	"os"
+	"slices"
 	"sync"
 	"testing"
 )
@@ -273,5 +274,52 @@ func TestWindowsPackagesForBundlesDedupesIDs(t *testing.T) {
 
 	if len(pkgs) == 0 {
 		t.Fatal("expected at least one package")
+	}
+}
+
+// TestWindowsPackageMappingLoads is the load gate windows_mapping.json was
+// missing (tuna-os/bluefin-cli#232). Its sibling windows_bundles.json had
+// TestWindowsBundleManifestLoads; this mapping had only tests that stubbed the
+// loader out or asserted behavior an empty map also satisfies, so truncating
+// or emptying the file kept every CI job green and shipped a build where
+// `install` on Windows searched winget for raw Homebrew names.
+func TestWindowsPackageMappingLoads(t *testing.T) {
+	aliases := loadWindowsPackageAliases()
+
+	if len(aliases) == 0 {
+		t.Fatal("windows_mapping.json parsed to an empty mapping")
+	}
+
+	// A few known keys, so an accidentally-rewritten file that still parses as
+	// a non-empty JSON object does not pass either.
+	for name, wantAlias := range map[string]string{
+		"bat": "sharkdp.bat",
+		"fd":  "sharkdp.fd",
+		"eza": "eza-community.eza",
+	} {
+		got, ok := aliases[name]
+		if !ok {
+			t.Errorf("windows_mapping.json has no entry for %q", name)
+			continue
+		}
+		if !slices.Contains(got, wantAlias) {
+			t.Errorf("windows_mapping.json maps %q to %v, want it to include %q", name, got, wantAlias)
+		}
+	}
+}
+
+// TestWindowsCandidatesUsesTheRealMapping exercises windowsCandidates against
+// the embedded bytes rather than a stub, so the mapping actually has to load
+// for this to pass.
+func TestWindowsCandidatesUsesTheRealMapping(t *testing.T) {
+	got := windowsCandidates("bat")
+	if len(got) < 2 {
+		t.Fatalf("windowsCandidates(\"bat\") = %v, want the name plus at least one winget ID", got)
+	}
+	if got[0] != "bat" {
+		t.Errorf("windowsCandidates(\"bat\")[0] = %q, want the original name first", got[0])
+	}
+	if !slices.Contains(got, "sharkdp.bat") {
+		t.Errorf("windowsCandidates(\"bat\") = %v, want it to include sharkdp.bat", got)
 	}
 }
