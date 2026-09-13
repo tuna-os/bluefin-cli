@@ -1,13 +1,17 @@
 // Tests for the Fedora countme protocol implementation.
 //
 // These tests cover time window arithmetic, age bucket computation,
-// user-agent generation, state persistence, and status string formatting.
-// HTTP calls (sendPing) and environment-sensitive functions (variant,
-// goosName, baseArch) are tested at the unit level where possible.
+// user-agent generation, state persistence, status string formatting, and
+// the Count/Disable/Enable state-transition and opt-out orchestration logic.
+// Environment-sensitive functions (variant, goosName, baseArch) are tested at
+// the unit level where possible. Count's ping goes to metalinkBaseURL, which
+// the tests redirect at a local httptest server rather than at Fedora.
 package countme
 
 import (
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -425,5 +429,291 @@ func TestFedoraReleaseIsSupported(t *testing.T) {
 		if r < '0' || r > '9' {
 			t.Fatalf("fedoraRelease = %q, want a numeric release (e.g. \"44\")", fedoraRelease)
 		}
+	}
+}
+
+// ── Count / Disable / Enable ─────────────────────────────────────────────────
+
+// sandboxHome points $HOME at a fresh temp dir and clears HOMEBREW_PREFIX so
+// env.GetConfigDir deterministically resolves to <tmp>/.config/bluefin-cli.
+// It returns the path the state file will live at.
+func sandboxHome(t *testing.T) string {
+	t.Helper()
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("HOMEBREW_PREFIX", "")
+	configDir := filepath.Join(home, ".config", "bluefin-cli")
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	return filepath.Join(configDir, stateFile)
+}
+
+// stubMetalink points every ping at a local server and reports how many
+// requests it received.
+func stubMetalink(t *testing.T, status int) *int {
+	t.Helper()
+	hits := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits++
+		w.WriteHeader(status)
+	}))
+	t.Cleanup(server.Close)
+
+	original := metalinkBaseURL
+	metalinkBaseURL = server.URL
+	t.Cleanup(func() { metalinkBaseURL = original })
+	return &hits
+}
+
+func TestCount_OptOutEnvVar_NoStateWrittenAndNoPing(t *testing.T) {
+	statePath := sandboxHome(t)
+	hits := stubMetalink(t, http.StatusOK)
+	t.Setenv(optOutEnvVar, "1")
+
+	Count("0.0.3")
+
+	if _, err := os.Stat(statePath); !os.IsNotExist(err) {
+		t.Errorf("opt-out should short-circuit before any state I/O, but %s exists", statePath)
+	}
+	if *hits != 0 {
+		t.Errorf("opt-out still sent %d ping(s)", *hits)
+	}
+}
+
+func TestCount_DisabledState_NoOpAndNoPing(t *testing.T) {
+	statePath := sandboxHome(t)
+	hits := stubMetalink(t, http.StatusOK)
+	t.Setenv(optOutEnvVar, "")
+
+	original := State{Epoch: 1000, Window: 2000, Disabled: true}
+	if err := saveState(statePath, original); err != nil {
+		t.Fatal(err)
+	}
+
+	Count("0.0.3")
+
+	got, err := loadState(statePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != original {
+		t.Errorf("Count left a disabled state modified: got %+v, want %+v", got, original)
+	}
+	if *hits != 0 {
+		t.Errorf("a disabled state still sent %d ping(s)", *hits)
+	}
+}
+
+func TestCount_AlreadyCountedThisWindow_NoOp(t *testing.T) {
+	statePath := sandboxHome(t)
+	hits := stubMetalink(t, http.StatusOK)
+	t.Setenv(optOutEnvVar, "")
+
+	now := time.Now().Unix()
+	original := State{Epoch: windowToUnix(windowNumber(now)), Window: now, Disabled: false}
+	if err := saveState(statePath, original); err != nil {
+		t.Fatal(err)
+	}
+
+	Count("0.0.3")
+
+	got, err := loadState(statePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != original {
+		t.Errorf("Count should be a no-op within the same window: got %+v, want %+v", got, original)
+	}
+	if *hits != 0 {
+		t.Errorf("Count pinged %d time(s) inside an already-counted window", *hits)
+	}
+}
+
+// TestCount_FirstRun_PingsAndRecordsWindow is the success path: no state file
+// at all, so Count seeds the epoch, pings, and records the window.
+func TestCount_FirstRun_PingsAndRecordsWindow(t *testing.T) {
+	statePath := sandboxHome(t)
+	hits := stubMetalink(t, http.StatusOK)
+	t.Setenv(optOutEnvVar, "")
+
+	before := time.Now().Unix()
+	Count("0.0.3")
+
+	if *hits != 1 {
+		t.Fatalf("first run sent %d ping(s), want exactly 1", *hits)
+	}
+	got, err := loadState(statePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Epoch == 0 {
+		t.Error("first run did not seed the epoch")
+	}
+	if got.Window < before {
+		t.Errorf("first run recorded Window = %d, want >= %d", got.Window, before)
+	}
+	if got.Disabled {
+		t.Error("first run should not mark the state disabled")
+	}
+}
+
+// TestCount_StaleWindow_PingsAgain a state from a previous window must ping
+// again and advance, without the epoch moving.
+func TestCount_StaleWindow_PingsAgain(t *testing.T) {
+	statePath := sandboxHome(t)
+	hits := stubMetalink(t, http.StatusOK)
+	t.Setenv(optOutEnvVar, "")
+
+	// Ten windows ago: old enough that lastWindow < curWindow.
+	stale := time.Now().Unix() - 10*countmeWindow
+	original := State{Epoch: windowToUnix(windowNumber(stale)), Window: stale}
+	if err := saveState(statePath, original); err != nil {
+		t.Fatal(err)
+	}
+
+	Count("0.0.3")
+
+	if *hits != 1 {
+		t.Fatalf("a stale window sent %d ping(s), want exactly 1", *hits)
+	}
+	got, err := loadState(statePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Window <= original.Window {
+		t.Errorf("Window did not advance: got %d, want > %d", got.Window, original.Window)
+	}
+	if got.Epoch != original.Epoch {
+		t.Errorf("Epoch moved: got %d, want %d — the age bucket depends on it staying put", got.Epoch, original.Epoch)
+	}
+}
+
+// TestCount_PingFailure_LeavesWindowUnchanged a failed ping must not record
+// the window, or the run is lost and never retried this week.
+func TestCount_PingFailure_LeavesWindowUnchanged(t *testing.T) {
+	statePath := sandboxHome(t)
+	t.Setenv(optOutEnvVar, "")
+
+	// A closed server: the request fails at the transport level, which is what
+	// sendPing actually reports on. (An HTTP 500 is not currently treated as a
+	// failure by sendPing, which only checks the transport error.)
+	server := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	url := server.URL
+	server.Close()
+	original := metalinkBaseURL
+	metalinkBaseURL = url
+	t.Cleanup(func() { metalinkBaseURL = original })
+
+	stale := time.Now().Unix() - 10*countmeWindow
+	seed := State{Epoch: windowToUnix(windowNumber(stale)), Window: stale}
+	if err := saveState(statePath, seed); err != nil {
+		t.Fatal(err)
+	}
+
+	Count("0.0.3")
+
+	got, err := loadState(statePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Window != seed.Window {
+		t.Errorf("a failed ping still advanced Window to %d, want %d left alone so the next run retries", got.Window, seed.Window)
+	}
+}
+
+func TestCount_LoadStateError_NoOp(t *testing.T) {
+	statePath := sandboxHome(t)
+	hits := stubMetalink(t, http.StatusOK)
+	t.Setenv(optOutEnvVar, "")
+
+	// A directory in place of the state file makes loadState's ReadFile fail
+	// with something other than "not exist", forcing Count's early return.
+	if err := os.MkdirAll(statePath, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	Count("0.0.3") // must not panic
+
+	if *hits != 0 {
+		t.Errorf("an unreadable state file still sent %d ping(s)", *hits)
+	}
+}
+
+func TestDisable_PersistsDisabledTrue(t *testing.T) {
+	statePath := sandboxHome(t)
+
+	if err := Disable(); err != nil {
+		t.Fatalf("Disable() returned error: %v", err)
+	}
+
+	got, err := loadState(statePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.Disabled {
+		t.Errorf("Disable() should persist Disabled=true, got %+v", got)
+	}
+}
+
+func TestEnable_PersistsDisabledFalseAndKeepsHistory(t *testing.T) {
+	statePath := sandboxHome(t)
+
+	original := State{Epoch: 42, Window: 99, Disabled: true}
+	if err := saveState(statePath, original); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := Enable(); err != nil {
+		t.Fatalf("Enable() returned error: %v", err)
+	}
+
+	got, err := loadState(statePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Disabled {
+		t.Errorf("Enable() should persist Disabled=false, got %+v", got)
+	}
+	if got.Epoch != original.Epoch || got.Window != original.Window {
+		t.Errorf("Enable() should only flip Disabled: got %+v, want epoch/window preserved from %+v", got, original)
+	}
+}
+
+// TestDisableEnable_RoundTrip opting out and back in must leave the state
+// usable rather than wedged.
+func TestDisableEnable_RoundTrip(t *testing.T) {
+	statePath := sandboxHome(t)
+
+	if err := Disable(); err != nil {
+		t.Fatal(err)
+	}
+	if err := Enable(); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := loadState(statePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Disabled {
+		t.Errorf("after disable+enable the state is still disabled: %+v", got)
+	}
+}
+
+func TestDisable_EnsureConfigDirError(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("HOMEBREW_PREFIX", "")
+
+	// A plain file where the config directory needs to be makes
+	// EnsureConfigDir's MkdirAll fail.
+	blocker := filepath.Join(home, ".config")
+	if err := os.WriteFile(blocker, []byte("not a directory"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := Disable(); err == nil {
+		t.Error("Disable() should return an error when the config directory cannot be created")
 	}
 }

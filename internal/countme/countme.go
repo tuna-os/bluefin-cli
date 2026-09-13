@@ -225,11 +225,18 @@ func userAgent(cliVersion string) string {
 
 // sendPing fires the countme GET request. The response body is discarded;
 // the server-side infrastructure logs the request from the access log.
+// metalinkBaseURL is the endpoint every ping goes to. It is a variable rather
+// than a constant so tests can point Count at a local server: without that
+// seam, Count's success path -- new window, ping accepted, window recorded --
+// can only be exercised against Fedora's live infrastructure, which is not
+// something a unit test should do (tuna-os/bluefin-cli#251).
+var metalinkBaseURL = "https://mirrors.fedoraproject.org/metalink"
+
 func sendPing(cliVersion string, bucket int) error {
 	arch := baseArch()
 	url := fmt.Sprintf(
-		"https://mirrors.fedoraproject.org/metalink?repo=fedora-%s&arch=%s&countme=%d",
-		fedoraRelease, arch, bucket,
+		"%s?repo=fedora-%s&arch=%s&countme=%d",
+		metalinkBaseURL, fedoraRelease, arch, bucket,
 	)
 
 	client := &http.Client{Timeout: 10 * time.Second}
