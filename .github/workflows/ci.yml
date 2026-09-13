@@ -91,6 +91,33 @@ jobs:
     - name: Run TUI state suite
       run: ./scripts/tui-state.sh ./bluefin-cli-smoke
 
+  # The main-protection ruleset requires a status check named exactly
+  # "Run Tests". Turning that job into a standard/extra matrix
+  # (tuna-os/bluefin-cli#264) renamed it to "Run Tests (standard)" and
+  # "Run Tests (extra)", so the required context would never report again and
+  # every pull request -- starting with the one that made the change -- would
+  # be unmergeable with "Required status check \"Run Tests\" is expected".
+  #
+  # This job keeps that name reporting and passes only when every leg of the
+  # matrix passed, so the gate keeps its meaning and future changes to the
+  # matrix cannot break it. `if: always()` matters: without it a failed matrix
+  # skips this job, the required check never reports at all, and a red PR is
+  # indistinguishable from one still waiting.
+  test-result:
+    name: Run Tests
+    runs-on: ubuntu-24.04
+    needs: test
+    if: always()
+
+    steps:
+    - name: Report the matrix result
+      run: |
+        echo "standard/extra test matrix result: ${{ needs.test.result }}"
+        if [ "${{ needs.test.result }}" != "success" ]; then
+          echo "::error::one or more legs of the Run Tests matrix did not pass"
+          exit 1
+        fi
+
   # Same variant matrix as `test`: ./test/ execs the binary at the repo root,
   # so each variant has to be exercised against its own build.
   integration-test:
