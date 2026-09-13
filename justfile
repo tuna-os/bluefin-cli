@@ -261,6 +261,10 @@ gen-docs: build
 update-resources:
     @python3 scripts/update-resources.py
 
+# Assert the shell experience in every installed shell (aliases, prompt, PATH).
+shell-experience: build
+    @./scripts/shell-experience.sh ./bluefin-cli
+
 # Regenerate the embedded Homebrew-to-Winget package mapping on Windows.
 update-winget-mapping:
     pwsh -NoProfile -File scripts/winget/update-mapping.ps1

@@ -330,6 +330,56 @@ jobs:
           exit 1
         fi
 
+  shell-experience:
+    name: Shell experience (behavioral)
+    runs-on: ubuntu-24.04
+
+    # The syntax job proves each generated init script parses. Parsing is a weak
+    # gate: `zoxide init posix` without a hook parses fine and then prints
+    # "PWD hooks are not supported on POSIX shells" over the user's first prompt
+    # with zoxide never loading, and a bare `return` parses fine and then errors
+    # at the top level of the `eval` that .bashrc actually uses. Both shipped.
+    #
+    # This job starts each shell for real, evaluates the init the way that
+    # shell's documented rc line does, and asserts the experience the user
+    # gets: the aliases exist, the integrations loaded, PATH carries the uutils
+    # directories when they are enabled, and nothing was printed on the way.
+    #
+    # The tools are really installed, so the assertions test the loaded path
+    # rather than the absent one.
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+
+    - name: Set up Go
+      uses: actions/setup-go@v7
+      with:
+        go-version: '1.27'
+
+    - name: Install shells and the tools the experience wires up
+      run: |
+        set -eux
+        sudo apt-get update
+        sudo apt-get install -y zsh fish dash busybox eza bat fzf zoxide ugrep
+        # Nushell is not packaged for Ubuntu; take the release tarball.
+        NU_VERSION=0.108.0
+        curl -fsSL -o /tmp/nu.tar.gz \
+          "https://github.com/nushell/nushell/releases/download/${NU_VERSION}/nu-${NU_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+        sudo tar -xzf /tmp/nu.tar.gz -C /usr/local/bin --strip-components=1 \
+          "nu-${NU_VERSION}-x86_64-unknown-linux-gnu/nu"
+        # starship has no Ubuntu package either, and it is the one integration
+        # with a prompt hook in every shell.
+        curl -fsSL https://starship.rs/install.sh | sudo sh -s -- --yes >/dev/null
+        for t in zsh fish dash busybox eza fzf zoxide ug nu starship; do
+          command -v "$t" >/dev/null || { echo "::error::$t did not install"; exit 1; }
+        done
+
+    - name: Build binary
+      run: go build -o bluefin-cli .
+
+    - name: Assert the shell experience in every shell
+      run: ./scripts/shell-experience.sh ./bluefin-cli
+
   docs-current:
     name: docs/commands is current
     runs-on: ubuntu-24.04

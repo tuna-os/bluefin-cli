@@ -1,7 +1,15 @@
 #!/usr/bin/env sh
 
-# Check if Bluefin shell has already been sourced so that we dont break atuin. https://github.com/atuinsh/atuin/issues/380#issuecomment-1594014644
-[ "${SOURCED_BLUEFIN_SHELL:-0}" -eq 1 ] && return 
+# Load once per shell, so that re-reading the rc file does not initialize atuin
+# a second time: https://github.com/atuinsh/atuin/issues/380#issuecomment-1594014644
+#
+# This is a conditional rather than an early `return` because bash and zsh are
+# documented to run this through `eval "$(bluefin-cli init bash)"`, and `return`
+# at the top level of an eval is an error -- "can only `return' from a function
+# or sourced script" -- which bash printed on every `source ~/.bashrc` while
+# carrying on to run the body anyway. So the guard never actually guarded
+# anything on the path almost every user takes.
+if [ "${SOURCED_BLUEFIN_SHELL:-0}" != 1 ]; then
 SOURCED_BLUEFIN_SHELL=1
 
 # Default to enabled if variable is not set (backwards compatibility)
@@ -74,13 +82,18 @@ fi
 # Not every prompt or history tool speaks every POSIX shell. ash (busybox --
 # the default on Alpine and postmarketOS) has no init target in atuin,
 # starship or carapace, so those are skipped there instead of being handed a
-# shell name they reject. zoxide does support it, under the name "posix".
-# Anything else keeps the shell's own name, exactly as before.
+# shell name they reject. zoxide does support it, under the name "posix", but
+# only with an explicit prompt hook: `zoxide init posix` on its own fails with
+# "PWD hooks are not supported on POSIX shells", printing that at every shell
+# start and leaving zoxide unloaded. Anything else keeps the shell's own name
+# and zoxide's default hook, exactly as before.
 ZOXIDE_TARGET="$BLING_SHELL"
+ZOXIDE_HOOK_ARGS=""
 case "$BLING_SHELL" in
     ash|dash|sh)
         BLUEFIN_SHELL_HAS_NATIVE_INIT=0
         ZOXIDE_TARGET="posix"
+        ZOXIDE_HOOK_ARGS="--hook prompt"
         ;;
     *)
         BLUEFIN_SHELL_HAS_NATIVE_INIT=1
@@ -107,13 +120,11 @@ fi
 
 [ "$BLUEFIN_SHELL_HAS_NATIVE_INIT" -eq 1 ] && [ "$BLUEFIN_SHELL_ENABLE_STARSHIP" -eq 1 ] && [ "$(command -v starship)" ] && eval "$(starship init ${BLING_SHELL})"
 
-[ "$BLUEFIN_SHELL_ENABLE_ZOXIDE" -eq 1 ] && [ "$(command -v zoxide)" ] && eval "$(zoxide init ${ZOXIDE_TARGET})"
+[ "$BLUEFIN_SHELL_ENABLE_ZOXIDE" -eq 1 ] && [ "$(command -v zoxide)" ] && eval "$(zoxide init ${ZOXIDE_TARGET} ${ZOXIDE_HOOK_ARGS})"
 
 [ "$BLUEFIN_SHELL_HAS_NATIVE_INIT" -eq 1 ] && [ "$BLUEFIN_SHELL_ENABLE_CARAPACE" -eq 1 ] && [ "$(command -v carapace)" ] && eval "$(carapace _carapace ${BLING_SHELL})"
 
 if [ "$BLUEFIN_SHELL_ENABLE_MOTD" -eq 1 ] && [ -n "$PS1" ] && [ -t 1 ] && [ "$(command -v bluefin-cli)" ]; then
     bluefin-cli motd show
 fi
-
-
-
+fi

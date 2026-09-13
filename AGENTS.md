@@ -57,6 +57,14 @@ just gen-docs                 # regenerate docs/commands
 Use `just --list` for the complete recipe list. Podman is required by the
 container-based recipes.
 
+Three shell suites sit under `scripts/`, and they check different things:
+`tui-smoke.sh` asserts what appears on screen, `tui-state.sh` asserts what
+lands in config files, and `shell-experience.sh` starts each supported shell
+and asserts the experience the init script produces -- the aliases, the
+prompt, PATH, and that startup stays silent. Run the last one with
+`scripts/shell-experience.sh <binary> [shell ...]`; it skips any shell that is
+not installed, so it is useful locally with only bash.
+
 ## Change guidelines
 
 - Put shared behavior in the relevant `internal/` package, and keep the
