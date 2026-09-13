@@ -15,7 +15,7 @@ var cleanupCmd = &cobra.Command{
 By default, this command also attempts to uninstall managed software and modules.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		opts := shell.UninstallOptions{
-			Shells:         []string{"powershell", "bash", "zsh", "fish"},
+			Shells:         append([]string{"powershell"}, shell.ManagedShells()...),
 			RemoveSoftware: true,
 			RemoveModules:  true,
 			RemoveConfig:   false, // Keep config by default unless --all or similar is used

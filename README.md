@@ -2,12 +2,13 @@
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/tuna-os/bluefin-cli/blob/main/LICENSE)
 
-A powerful, modern CLI tool for managing shell configuration and development environment customization. Built with beautiful TUIs using [Charm](https://charm.sh/) libraries.
+A strong, modern CLI tool that manages your shell configuration and the look of
+your development environment. Its TUIs use the [Charm](https://charm.sh/) libraries.
 
 ## ✨ Features
 
 - **🎨 Interactive Menu**: Default TUI experience for easy navigation
-- **✨ Bling**: Toggle modern shell enhancements (eza, bat, ugrep, zoxide, atuin, starship)
+- **✨ Shell Experience**: Turn on modern tools for your shell (eza, bat, ugrep, zoxide, atuin, starship)
 - **📰 MOTD**: Beautiful Message of the Day with system info and random tips
 - **📦 Bundle Installer**: Install curated tool bundles (ai, cli, fonts, k8s) from Universal Blue
 - **🖼️ Wallpapers**: Install desktop wallpaper collections from ublue-os/tap
@@ -15,17 +16,17 @@ A powerful, modern CLI tool for managing shell configuration and development env
 - **📊 Status Command**: View configuration and installed tools at a glance
 - **🩺 Doctor**: `bluefin-cli doctor` diagnoses setup problems with fix hints
 - **🎨 Theme Flavors**: `bluefin-cli theme <flavor>` pins a Catppuccin flavor (latte, frappe, macchiato, mocha) or follows your terminal with `auto`
-- **⬆ Self-Update**: `bluefin-cli update` for script installs — sha256-verified against the release checksums; package-manager installs are pointed at the right upgrade command
-- **🏠 My Brewfile**: one file describes your machine's packages — `brew`/`cask` lines plus `winget`/`scoop`/`choco` on Windows. `bluefin-cli brewfile dump` captures what's installed, `add`/`remove` edit it, `install` applies everything; the TUI's Install Apps → My Brewfile does all of it interactively with per-package management. Extra recipes in `~/.config/bluefin-cli/bundles/*.Brewfile` appear alongside the curated bundles
+- **⬆ Self-Update**: `bluefin-cli update` for script installs — sha256-verified against the release checksums. For a package-manager install, it tells you the correct upgrade command
+- **🏠 My Brewfile**: one file describes your machine's packages — `brew`/`cask` lines plus `winget`/`scoop`/`choco` on Windows. `bluefin-cli brewfile dump` records the installed packages. `add`/`remove` edit that file, and `install` applies all of it. The TUI does the same from Install Apps → My Brewfile, one package at a time. Extra recipes in `~/.config/bluefin-cli/bundles/*.Brewfile` appear alongside the curated bundles
 - **📦 Profiles**: `bluefin-cli profile export > setup.json` on one machine, `profile import setup.json` on another — shells, tools, and theme replayed exactly
-- **🦕 A fully native TUI**: persistent shell with breadcrumbs, fuzzy filtering (`/`), a `ctrl+p` command palette, and a dot-matrix dino running the header — plus a hidden surprise for those who find it
+- **🦕 A fully native TUI**: a persistent shell with breadcrumbs, a fuzzy filter (`/`), a `ctrl+p` command palette, and a dot-matrix dino in the header. It also hides a surprise.
 
 ## 🚀 Installation
 
-> **Status (2026-08-14):** releases ship prebuilt binary assets (v0.10.6+
-> publishes tarballs for Linux/macOS/Windows + native deb/rpm packages), so
-> the one-liner scripts below work. The package-manager paths that are still
-> pending are marked individually below.
+> **Status (2026-08-14):** each release ships prebuilt binary assets. Since
+> v0.10.6 that includes tarballs for Linux, macOS and Windows, plus native deb
+> and rpm packages, so the one-liner scripts below work. A note marks each
+> package-manager path that is not ready yet.
 
 ### One-liner (Linux / macOS)
 
@@ -141,7 +142,7 @@ go install github.com/tuna-os/bluefin-cli@latest
 ### Build from Source (Any OS)
 
 **Prerequisites:**
-- Go 1.25 or later
+- Go 1.26.0 or later
 
 ```bash
 git clone https://github.com/tuna-os/bluefin-cli.git
@@ -151,14 +152,14 @@ go build -o bluefin-cli .
 
 On Windows, use `go build -o bluefin-cli.exe .`.
 
-Maintainers: qualifying merges to `main` are versioned by semantic-release,
-which invokes GoReleaser to publish release assets and package channels.
-`.github/workflows/winget.yml` is a manual fallback for re-submitting a Winget
-version.
+Maintainers: semantic-release gives a version to each qualified merge to
+`main`, then calls GoReleaser to send the release assets to the package
+channels. `.github/workflows/winget.yml` is a manual fallback, to submit a
+Winget version again.
 
-Scoop publishing requires the `SCOOP_BUCKET_TOKEN` repository secret (a fine-grained PAT with write access to `tuna-os/scoop-bucket`), without which the Scoop manifest upload step is safely skipped during release workflows. See [docs/release-publishing.md](docs/release-publishing.md) for details.
+A Scoop release needs the `SCOOP_BUCKET_TOKEN` repository secret (a fine-grained PAT with write access to `tuna-os/scoop-bucket`), without which the Scoop manifest upload step is safely skipped during release workflows. See [docs/release-publishing.md](docs/release-publishing.md) for details.
 
-Homebrew tap publishing requires the `HOMEBREW_TAP_TOKEN` repository secret (a fine-grained PAT with write access to `tuna-os/homebrew-tap`), without which the formula upload step is safely skipped during release workflows. See [docs/release-publishing.md](docs/release-publishing.md) for details.
+A Homebrew tap release needs the `HOMEBREW_TAP_TOKEN` repository secret (a fine-grained PAT with write access to `tuna-os/homebrew-tap`), without which the formula upload step is safely skipped during release workflows. See [docs/release-publishing.md](docs/release-publishing.md) for details.
 
 Homebrew release process: when semantic-release determines that a merge to
 `main` warrants a release, it invokes GoReleaser, which publishes the binary
@@ -172,7 +173,7 @@ and open a PR in that tap.
 
 ### Interactive Menu (Default)
 
-Simply run the command to launch the interactive menu:
+Run the command to start the interactive menu:
 
 ```bash
 bluefin-cli
@@ -215,24 +216,34 @@ To enable the shell experience:
 
 ```bash
 bluefin-cli shell bash on
-# or
-
 bluefin-cli shell zsh on
-# or
-
 bluefin-cli shell fish on
+bluefin-cli shell ash on      # busybox ash (Alpine, postmarketOS)
+bluefin-cli shell nu on       # Nushell
+bluefin-cli shell powershell on
 ```
 
 Or use the interactive menu: `bluefin-cli menu` -> "Shell Experience".
 
+Two shells need a word of explanation:
+
+- **ash** has no rc file by convention. An interactive ash reads the file that
+  `$ENV` names. Thus `shell ash on` writes `~/.ashrc`, then exports `ENV` from
+  `~/.profile` so that ash reads it. atuin, starship and carapace have no ash
+  target, so bluefin-cli omits them there. The other tools work as usual.
+- **Nushell** cannot evaluate a string. Thus `shell nu on` writes the init
+  script to `~/.config/nushell/bluefin-cli.nu`, and `config.nu` reads it from
+  there. Run `bluefin-cli shell nu on` again after you change your tool
+  configuration, to make a new copy of that script.
+
 Features:
 - **eza**: Modern replacement for `ls`
-- **bat**: Syntax highlighting for `cat`
+- **bat**: Syntax color for `cat`
 - **ugrep**: Faster grep
 - **zoxide**: Smarter `cd`
 - **atuin**: Shell history sync
 - **starship**: Cross-shell prompt
-- **uutils**: Rust rewrite of coreutilsl
+- **uutils**: Rust rewrite of coreutils
 
 #### MOTD - Message of the Day
 
@@ -325,7 +336,7 @@ Non-interactive wallpaper flags:
 - `--apply-theme`: Apply a Windows theme after registration (WSL only).
 - `--theme <name>`: Theme to apply in non-interactive mode (`Bluefin`, `Aurora`, `Bazzite`).
 - `--enable-mode-sync`: Enable day/night wallpaper sync task.
-- `--enable-auto-dark-light`: Enable 6 AM/6 PM light/dark switching tasks (requires `--enable-mode-sync`).
+- `--enable-auto-dark-light`: Turn on the 6 AM and 6 PM light/dark tasks (needs `--enable-mode-sync`).
 - `--trigger-source <source>`: Mode-sync trigger source (`polling`, `startup`, `autodarkmode`).
 
 `autodarkmode` notes:
@@ -350,12 +361,12 @@ bluefin-cli starship install
 
 ## 🔧 What Gets Configured
 
-### Bling Tools
+### Shell Experience Tools
 
-The bling command configures these modern CLI tools:
+The shell command configures these modern CLI tools:
 
 - **eza**: Modern replacement for `ls` with icons and colors
-- **bat**: `cat` clone with syntax highlighting
+- **bat**: A `cat` clone with syntax color
 - **zoxide**: Smarter `cd` command that learns your habits
 - **atuin**: Magical shell history with sync and search (optional)
 - **starship**: Fast, customizable prompt for any shell
@@ -363,7 +374,7 @@ The bling command configures these modern CLI tools:
 
 ### Shell Aliases
 
-When bling is enabled in your shell:
+When the shell experience is enabled in your shell:
 
 ```bash
 ll      # eza -l --icons=auto --group-directories-first
@@ -420,7 +431,7 @@ This project consolidates and modernizes functionality from:
 
 ### Prerequisites
 
-- Go 1.25.8 or later (the CI jobs currently validate with Go 1.27)
+- Go 1.26.0 or later, matching the `go` directive in `go.mod` (the CI jobs validate with Go 1.27)
 - Podman (for containerized testing)
 - just (for running recipes)
 
@@ -454,7 +465,7 @@ go test -tags extra -race ./...
 
 ### Interactive Development
 
-Launch shells with bling pre-configured:
+Launch shells with the shell experience pre-configured:
 
 ```bash
 just bash   # Test in bash

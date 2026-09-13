@@ -6,16 +6,40 @@ on:
   pull_request:
     branches: [ main ]
 
-# Superseded runs waste the queue; only the newest per ref matters.
+# Superseded PR pushes waste the queue, so only the newest run per pull request
+# matters. Pushes to main are NOT cancelled (tuna-os/bluefin-cli#257): main runs
+# are the release gate and each commit needs its own verdict, so evicting an
+# in-flight run reports a real failure as "cancelled" and lets it through.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Least privilege by default: every job in this file starts read-only and
+# must widen its own `permissions:` block to do more.
+permissions:
+  contents: read
 
 jobs:
+  # bluefin-cli ships two binaries from mutually exclusive build tags: the
+  # standard one compiles `!extra`, bluefin-cli-plus compiles `extra`
+  # (tuna-os/bluefin-cli#264). Variant is a matrix dimension so each shipped
+  # artifact is built and tested as itself. Previously this job built a
+  # standard binary and then ran the suite with `-tags extra`, so the
+  # integration tests under ./test/ exec'd a standard binary while the
+  # in-process cmd package was compiled as extra -- a mix that describes
+  # neither released product.
   test:
-    name: Run Tests
+    name: Run Tests (${{ matrix.variant }})
     runs-on: ubuntu-24.04
-    
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: standard
+            tags: ''
+          - variant: extra
+            tags: extra
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v7
@@ -28,16 +52,17 @@ jobs:
     - name: Download dependencies
       run: go mod download
 
-    - name: Build binary for integration tests
-      run: go build -o bluefin-cli .
+    - name: Build ${{ matrix.variant }} binary for integration tests
+      run: go build ${{ matrix.tags && format('-tags {0}', matrix.tags) || '' }} -o bluefin-cli .
 
     - name: Run unit tests
-      run: go test -tags extra -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+      run: go test ${{ matrix.tags && format('-tags {0}', matrix.tags) || '' }} -v -race -coverprofile=coverage.txt -covermode=atomic ./...
       
     - name: Upload coverage
       uses: codecov/codecov-action@v7
       with:
         files: ./coverage.txt
+        flags: ${{ matrix.variant }}
         token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: false
 
@@ -66,9 +91,46 @@ jobs:
     - name: Run TUI state suite
       run: ./scripts/tui-state.sh ./bluefin-cli-smoke
 
-  integration-test:
-    name: Integration Tests
+  # The main-protection ruleset requires a status check named exactly
+  # "Run Tests". Turning that job into a standard/extra matrix
+  # (tuna-os/bluefin-cli#264) renamed it to "Run Tests (standard)" and
+  # "Run Tests (extra)", so the required context would never report again and
+  # every pull request -- starting with the one that made the change -- would
+  # be unmergeable with "Required status check \"Run Tests\" is expected".
+  #
+  # This job keeps that name reporting and passes only when every leg of the
+  # matrix passed, so the gate keeps its meaning and future changes to the
+  # matrix cannot break it. `if: always()` matters: without it a failed matrix
+  # skips this job, the required check never reports at all, and a red PR is
+  # indistinguishable from one still waiting.
+  test-result:
+    name: Run Tests
     runs-on: ubuntu-24.04
+    needs: test
+    if: always()
+
+    steps:
+    - name: Report the matrix result
+      run: |
+        echo "standard/extra test matrix result: ${{ needs.test.result }}"
+        if [ "${{ needs.test.result }}" != "success" ]; then
+          echo "::error::one or more legs of the Run Tests matrix did not pass"
+          exit 1
+        fi
+
+  # Same variant matrix as `test`: ./test/ execs the binary at the repo root,
+  # so each variant has to be exercised against its own build.
+  integration-test:
+    name: Integration Tests (${{ matrix.variant }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: standard
+            tags: ''
+          - variant: extra
+            tags: extra
 
     steps:
     - name: Checkout code
@@ -79,11 +141,11 @@ jobs:
       with:
         go-version: '1.27'
 
-    - name: Build binary
-      run: go build -tags extra -o bluefin-cli .
+    - name: Build ${{ matrix.variant }} binary
+      run: go build ${{ matrix.tags && format('-tags {0}', matrix.tags) || '' }} -o bluefin-cli .
 
     - name: Run integration tests
-      run: go test -v ./test/...
+      run: go test ${{ matrix.tags && format('-tags {0}', matrix.tags) || '' }} -v ./test/...
 
   container-test:
     name: Container-based Tests
@@ -172,6 +234,129 @@ jobs:
 
     - name: Run unit tests
       run: go test -tags extra ./...
+
+  shell-syntax:
+    name: Generated init scripts parse
+    runs-on: ubuntu-24.04
+
+    # The POSIX, fish, ash and nushell init scripts are only ever executed on a
+    # user's machine, so a syntax error in one of them ships silently and costs
+    # that user their prompt. Each generated script is parsed here by the shell
+    # it targets -- parse only, nothing is sourced or run
+    # (tuna-os/bluefin-cli#260).
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+
+    - name: Set up Go
+      uses: actions/setup-go@v7
+      with:
+        go-version: '1.27'
+
+    - name: Install shells
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y dash busybox fish
+        # Nushell is not packaged in Ubuntu; take the release tarball.
+        NU_VERSION=0.108.0
+        curl -fsSL -o /tmp/nu.tar.gz \
+          "https://github.com/nushell/nushell/releases/download/${NU_VERSION}/nu-${NU_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+        sudo tar -xzf /tmp/nu.tar.gz -C /usr/local/bin --strip-components=1 \
+          "nu-${NU_VERSION}-x86_64-unknown-linux-gnu/nu"
+        nu --version
+
+    - name: Build binary
+      run: go build -o bluefin-cli .
+
+    - name: bash / zsh / ash parse the POSIX script
+      run: |
+        set -eux
+        ./bluefin-cli init bash > /tmp/init-bash.sh
+        ./bluefin-cli init ash  > /tmp/init-ash.sh
+        bash -n /tmp/init-bash.sh
+        dash -n /tmp/init-ash.sh
+        busybox ash -n /tmp/init-ash.sh
+
+    - name: fish parses the fish script
+      run: |
+        set -eux
+        ./bluefin-cli init fish > /tmp/init.fish
+        fish --no-execute /tmp/init.fish
+
+    - name: nushell parses the nu script
+      run: |
+        set -eux
+        ./bluefin-cli init nu > /tmp/init.nu
+        # `nu --ide-check` parses the file and reports diagnostics without
+        # running it; a parse error makes it emit a diagnostic line.
+        nu --ide-check 100 /tmp/init.nu | tee /tmp/nu-check.txt
+        if grep -q '"type": *"diagnostic"' /tmp/nu-check.txt; then
+          echo "::error::nushell reported a diagnostic for the generated init script"
+          exit 1
+        fi
+
+    # A syntax gate nobody has seen fail is not a gate. Each check above is
+    # re-run against a deliberately broken script and must reject it; if one
+    # of these passes, the corresponding check above proves nothing and the
+    # job fails here rather than going quietly green forever.
+    - name: The parse checks reject broken input
+      run: |
+        set -eu
+        expect_reject() {
+          if "$@" >/dev/null 2>&1; then
+            echo "::error::$1 accepted a deliberately broken script — its check above is not a real gate"
+            exit 1
+          fi
+          echo "ok: $1 rejects broken input"
+        }
+
+        printf 'if [ 1 -eq 1 ]; then\n'        > /tmp/broken.sh
+        printf 'if true\n'                     > /tmp/broken.fish
+        printf 'let x = (\n'                   > /tmp/broken.nu
+
+        expect_reject bash -n /tmp/broken.sh
+        expect_reject dash -n /tmp/broken.sh
+        expect_reject busybox ash -n /tmp/broken.sh
+        expect_reject fish --no-execute /tmp/broken.fish
+
+        # nu --ide-check reports parse problems in its output rather than via
+        # exit status, so this one is checked the same way the real step is.
+        nu --ide-check 100 /tmp/broken.nu > /tmp/nu-broken.txt 2>&1 || true
+        if grep -q '"type": *"diagnostic"' /tmp/nu-broken.txt; then
+          echo "ok: nu --ide-check reports a diagnostic for broken input"
+        else
+          echo "::error::nu --ide-check did not flag a deliberately broken script — the nushell check above is not a real gate"
+          cat /tmp/nu-broken.txt
+          exit 1
+        fi
+
+  docs-current:
+    name: docs/commands is current
+    runs-on: ubuntu-24.04
+
+    # docs/commands is generated from the cobra command tree, and kept drifting
+    # out of date because nothing checked it (tuna-os/bluefin-cli#238, #244,
+    # #246). It is generated from the extra variant, which is the superset of
+    # both command trees.
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+
+    - name: Set up Go
+      uses: actions/setup-go@v7
+      with:
+        go-version: '1.27'
+
+    - name: Regenerate and diff
+      run: |
+        go build -tags extra -o bluefin-cli .
+        ./bluefin-cli docs --dest ./docs/commands
+        if ! git diff --quiet -- docs/commands; then
+          echo "::error::docs/commands is out of date — run 'just gen-docs' and commit the result"
+          git diff --stat -- docs/commands
+          git diff -- docs/commands
+          exit 1
+        fi
 
   goreleaser-check:
     name: goreleaser config

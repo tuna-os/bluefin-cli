@@ -118,11 +118,16 @@ var profilePushCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		tmp := filepath.Join(os.TempDir(), fmt.Sprintf("bluefin-profile-%d.json", os.Getpid()))
+		tmpFile, err := os.CreateTemp("", "bluefin-profile-*.json")
+		if err != nil {
+			return err
+		}
+		tmp := tmpFile.Name()
+		_ = tmpFile.Close()
+		defer func() { _ = os.Remove(tmp) }()
 		if err := p.Save(tmp); err != nil {
 			return err
 		}
-		defer func() { _ = os.Remove(tmp) }()
 
 		if id := viper.GetString("profile.gist_id"); id != "" {
 			out, err := exec.Command("gh", "gist", "edit", id, "--filename", profileGistFile, tmp).CombinedOutput()
@@ -133,11 +138,17 @@ var profilePushCmd = &cobra.Command{
 			return nil
 		}
 
-		named := filepath.Join(os.TempDir(), profileGistFile)
+		// gh names the gist file after the file on disk, so the basename has to
+		// stay profileGistFile — randomize the parent directory instead.
+		tmpDir, err := os.MkdirTemp("", "bluefin-profile-")
+		if err != nil {
+			return err
+		}
+		defer func() { _ = os.RemoveAll(tmpDir) }()
+		named := filepath.Join(tmpDir, profileGistFile)
 		if err := p.Save(named); err != nil {
 			return err
 		}
-		defer func() { _ = os.Remove(named) }()
 		out, err := exec.Command("gh", "gist", "create", "--desc", "bluefin-cli profile", named).CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("creating gist: %v\n%s", err, out)
@@ -172,11 +183,16 @@ var profilePullCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("fetching gist %s: %w", id, err)
 		}
-		tmp := filepath.Join(os.TempDir(), fmt.Sprintf("bluefin-profile-pull-%d.json", os.Getpid()))
+		pullFile, err := os.CreateTemp("", "bluefin-profile-pull-*.json")
+		if err != nil {
+			return err
+		}
+		tmp := pullFile.Name()
+		_ = pullFile.Close()
+		defer func() { _ = os.Remove(tmp) }()
 		if err := os.WriteFile(tmp, out, 0o600); err != nil {
 			return err
 		}
-		defer func() { _ = os.Remove(tmp) }()
 
 		p, err := profile.Load(tmp)
 		if err != nil {

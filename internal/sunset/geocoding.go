@@ -5,11 +5,17 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 var (
 	GeocodingBaseURL = "https://geocoding-api.open-meteo.com/v1/search"
 )
+
+// geocodingClient bounds every geocoding lookup. Without a timeout a hung or
+// throttled API keeps the CLI blocked indefinitely, since http.DefaultClient
+// has none.
+var geocodingClient = &http.Client{Timeout: 10 * time.Second}
 
 // GeocodeResult represents a simplified result from the geocoding API.
 type GeocodeResult struct {
@@ -28,7 +34,7 @@ type openMeteoResponse struct {
 func GeocodeCity(cityName string) (*GeocodeResult, error) {
 	apiURL := fmt.Sprintf("%s?name=%s&count=1&language=en&format=json", GeocodingBaseURL, url.QueryEscape(cityName))
 
-	resp, err := http.Get(apiURL)
+	resp, err := geocodingClient.Get(apiURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call geocoding API: %w", err)
 	}

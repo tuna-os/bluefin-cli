@@ -26,12 +26,20 @@ var (
 	windowsBundleManifestOnce sync.Once
 )
 
+// getWindowsBundleManifest parses the embedded bundle manifest. Like the alias
+// mapping next door, a parse failure is a build-time defect rather than a
+// runtime condition, so it is surfaced rather than swallowed
+// (tuna-os/bluefin-cli#232). Both embedded data contracts in this package now
+// fail the same way, so the gate is a rule of the package rather than
+// something one of them happens to have.
 func getWindowsBundleManifest() map[string]WindowsBundle {
 	windowsBundleManifestOnce.Do(func() {
 		manifest := make(map[string]WindowsBundle)
 		if err := json.Unmarshal(windowsBundlesJSON, &manifest); err != nil {
-			windowsBundleManifest = map[string]WindowsBundle{}
-			return
+			panic("install: embedded windows_bundles.json does not parse: " + err.Error())
+		}
+		if len(manifest) == 0 {
+			panic("install: embedded windows_bundles.json parsed to an empty manifest")
 		}
 		windowsBundleManifest = manifest
 	})

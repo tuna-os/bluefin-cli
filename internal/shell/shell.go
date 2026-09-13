@@ -1,3 +1,11 @@
+// Shell enablement, init-script rendering and cache, and status reporting.
+//
+// Package installation lives next door: installers.go owns the Homebrew and
+// cross-platform paths, windows_tools.go the winget/PowerShell ones, and
+// install_alpine.go the coldbrew/apk ones. Before that split
+// (tuna-os/bluefin-cli#217) all of it shared one module, so a change to a
+// platform backend sat in the same file as the interactive startup path and
+// neither could be read or evolved without the other.
 package shell
 
 import (
@@ -6,451 +14,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 
-	"charm.land/huh/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/tuna-os/bluefin-cli/internal/env"
 )
-
-func toolsForCurrentPlatform() []Tool {
-	if runtime.GOOS == "windows" {
-		return ToolsForShell("powershell")
-	}
-
-	// For non-Windows platforms, filter out tools that are explicitly unsupported on common shells.
-	// This ensures tools like gsudo (Windows-only) are not included.
-	filtered := make([]Tool, 0, len(Tools))
-	for _, tool := range Tools {
-		if tool.SupportsShell("bash") || tool.SupportsShell("zsh") || tool.SupportsShell("fish") {
-			filtered = append(filtered, tool)
-		}
-	}
-
-	return filtered
-}
-
-// InstallTools iterates through the config and installs enabled tools
-func InstallTools(shell string, cfg *Config) {
-	// If MOTD is enabled, ensure Glow is also considered enabled for installation
-	if cfg.IsEnabled("Motd") {
-		cfg.SetEnabled("Glow", true)
-	}
-
-	tools := ToolsForShell(shell)
-
-	// First check if we need to install anything
-	needsInstall := false
-	for _, tool := range tools {
-		if cfg.IsEnabled(tool.Name) {
-			if !isBinaryAvailable(tool) {
-				needsInstall = true
-				break
-			}
-		}
-	}
-
-	if !needsInstall {
-		return
-	}
-
-	if runtime.GOOS == "windows" {
-		installToolsWindows(cfg)
-		return
-	}
-
-	if env.IsAlpine() {
-		installToolsAlpine(tools, cfg)
-		return
-	}
-
-	// Ensure Homebrew is available
-	if err := ensureHomebrew(); err != nil {
-		fmt.Println(errorStyle.Render(fmt.Sprintf("Skipping tool installation: %v", err)))
-		return
-	}
-
-	for _, tool := range tools {
-		if cfg.IsEnabled(tool.Name) {
-			if err := ensureTool(tool.Binary, tool.GetBrewPkg()); err != nil {
-				fmt.Println(errorStyle.Render(fmt.Sprintf("Warning: Failed to install %s: %v", tool.GetBrewPkg(), err)))
-			}
-		}
-	}
-}
-
-func installToolsWindows(cfg *Config) {
-	if err := ensurePowerShellModules(); err != nil {
-		fmt.Println(errorStyle.Render(fmt.Sprintf("Warning: Failed to ensure PowerShell modules: %v", err)))
-	}
-
-	availableManagers := availableWindowsManagers()
-	if len(availableManagers) == 0 {
-		fmt.Println(errorStyle.Render("Skipping tool installation: winget not found"))
-		return
-	}
-
-	fmt.Println(infoStyle.Render("Installing enabled components using winget."))
-
-	tools := ToolsForShell("powershell")
-
-	for _, tool := range tools {
-		if strings.EqualFold(tool.Name, "Gsudo") && cfg.IsEnabled(tool.Name) {
-			if err := ensureWindowsTool(tool.Binary, tool.Pkg, availableManagers); err != nil {
-				fmt.Println(errorStyle.Render(fmt.Sprintf("Warning: Failed to install %s: %v", tool.Pkg, err)))
-			}
-			break
-		}
-	}
-
-	if err := primeGsudoCache(); err != nil {
-		fmt.Println(infoStyle.Render("Proceeding without gsudo elevation cache: " + err.Error()))
-	}
-
-	for _, tool := range tools {
-		if strings.EqualFold(tool.Name, "Gsudo") {
-			continue
-		}
-
-		if cfg.IsEnabled(tool.Name) {
-			if err := ensureWindowsTool(tool.Binary, tool.Pkg, availableManagers); err != nil {
-				fmt.Println(errorStyle.Render(fmt.Sprintf("Warning: Failed to install %s: %v", tool.Pkg, err)))
-			}
-		}
-	}
-
-	if cfg.IsEnabled("Motd") {
-		if err := ensureWindowsTool("glow", "charmbracelet.glow", availableManagers); err != nil {
-			fmt.Println(errorStyle.Render(fmt.Sprintf("Warning: Failed to install glow: %v", err)))
-		}
-	}
-}
-
-func ensurePowerShellModules() error {
-	modules := []string{"PSReadLine"}
-
-	var failures []string
-	for _, moduleName := range modules {
-		if err := ensurePowerShellModule(moduleName); err != nil {
-			failures = append(failures, fmt.Sprintf("%s (%v)", moduleName, err))
-		}
-	}
-
-	if err := ensurePSFileIcons(); err != nil {
-		failures = append(failures, fmt.Sprintf("PSFileIcons (%v)", err))
-	}
-
-	if len(failures) > 0 {
-		return fmt.Errorf("%s", strings.Join(failures, ", "))
-	}
-
-	return nil
-}
-
-func ensurePowerShellModule(moduleName string) error {
-	powerShellExe := windowsPowerShellExe()
-	modulePathReset := `$env:PSModulePath = @("$env:USERPROFILE\Documents\WindowsPowerShell\Modules", "$env:ProgramFiles\WindowsPowerShell\Modules", "$env:WINDIR\System32\WindowsPowerShell\v1.0\Modules") -join ';'`
-
-	checkScript := fmt.Sprintf("%s; if (Get-Module -ListAvailable -Name '%s' -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }", modulePathReset, moduleName)
-	check := exec.Command(powerShellExe, "-NoProfile", "-NonInteractive", "-Command", checkScript)
-	if err := check.Run(); err == nil {
-		return nil
-	}
-
-	fmt.Println(infoStyle.Render(fmt.Sprintf("⬇️  Installing PowerShell module %s...", moduleName)))
-	installScript := fmt.Sprintf("%s; $ErrorActionPreference='Stop'; Import-Module PackageManagement -ErrorAction Stop; Import-Module PowerShellGet -ErrorAction Stop; if (-not (Get-PackageProvider -Name NuGet -ListAvailable -ErrorAction SilentlyContinue)) { Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope CurrentUser -Force | Out-Null }; Set-PSRepository -Name PSGallery -InstallationPolicy Trusted -ErrorAction SilentlyContinue; Install-Module -Name '%s' -Scope CurrentUser -Repository PSGallery -Force -AllowClobber", modulePathReset, moduleName)
-	install := exec.Command(powerShellExe, "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", installScript)
-	install.Stdout = os.Stdout
-	install.Stderr = os.Stderr
-	if err := install.Run(); err != nil {
-		return fmt.Errorf("%w (try in Windows PowerShell: Install-Module -Name %s -Scope CurrentUser -Repository PSGallery -Force)", err, moduleName)
-	}
-
-	verify := exec.Command(powerShellExe, "-NoProfile", "-NonInteractive", "-Command", checkScript)
-	if err := verify.Run(); err != nil {
-		return fmt.Errorf("module %s install completed but module is still not discoverable", moduleName)
-	}
-
-	fmt.Println(successStyle.Render(fmt.Sprintf("✓ PowerShell module %s installed", moduleName)))
-	return nil
-}
-
-func windowsPowerShellExe() string {
-	if runtime.GOOS == "windows" {
-		systemPath := `C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe`
-		if _, err := os.Stat(systemPath); err == nil {
-			return systemPath
-		}
-	}
-
-	return "powershell.exe"
-}
-
-func ensureHomebrew() error {
-	if _, err := exec.LookPath("brew"); err == nil {
-		return nil
-	}
-
-	if runtime.GOOS == "windows" {
-		return fmt.Errorf("homebrew not found on Windows; install shell tools with winget")
-	}
-
-	commonPaths := []string{"/home/linuxbrew/.linuxbrew/bin/brew", "/opt/homebrew/bin/brew", "/usr/local/bin/brew"}
-	for _, p := range commonPaths {
-		if _, err := os.Stat(p); err == nil {
-			path := os.Getenv("PATH")
-			if err := os.Setenv("PATH", path+string(os.PathListSeparator)+filepath.Dir(p)); err != nil {
-				return fmt.Errorf("failed to update PATH: %w", err)
-			}
-			return nil
-		}
-	}
-
-	fmt.Println(infoStyle.Render("Homebrew is missing. It is required to install enabled components."))
-	var install bool
-	err := huh.NewConfirm().
-		Title("Would you like to install Homebrew?").
-		Value(&install).
-		Run()
-	if err != nil {
-		return err
-	}
-
-	if !install {
-		return fmt.Errorf("homebrew installation declined")
-	}
-
-	fmt.Println(infoStyle.Render("⬇️  Installing Homebrew..."))
-
-	cmd := exec.Command("/bin/bash", "-c", "curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | bash")
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to install homebrew: %w", err)
-	}
-
-	for _, p := range commonPaths {
-		if _, err := os.Stat(p); err == nil {
-			path := os.Getenv("PATH")
-			if err := os.Setenv("PATH", path+string(os.PathListSeparator)+filepath.Dir(p)); err != nil {
-				return fmt.Errorf("failed to update PATH: %w", err)
-			}
-			fmt.Println(successStyle.Render("✓ Homebrew installed and added to PATH for this session."))
-			return nil
-		}
-	}
-
-	return fmt.Errorf("homebrew installed but not found in expected locations")
-}
-
-// EnsureInstalled installs a single tool (matched by Binary in Tools) via
-// the best available manager on this platform, if it isn't already on
-// PATH. Used by `doctor --fix`, which needs a one-off install outside the
-// InstallTools bulk flow.
-func EnsureInstalled(binary string) error {
-	if _, err := exec.LookPath(binary); err == nil {
-		return nil
-	}
-	var tool *Tool
-	for i := range Tools {
-		if Tools[i].Binary == binary {
-			tool = &Tools[i]
-			break
-		}
-	}
-	if tool == nil {
-		return fmt.Errorf("unknown tool %q", binary)
-	}
-	if runtime.GOOS == "windows" {
-		return fmt.Errorf("install %s from the Shell menu on Windows", binary)
-	}
-	if env.IsAlpine() {
-		mgr := alpinePackageManager()
-		if mgr == "" {
-			return fmt.Errorf("neither coldbrew nor apk found")
-		}
-		return installAlpinePkg(mgr, tool.GetApkPkg())
-	}
-	return ensureTool(tool.Binary, tool.GetBrewPkg())
-}
-
-func ensureTool(binary, pkg string) error {
-	// Check both PATH and the brew opt prefix (uutils tools use libexec/uubin).
-	if checkBinary := func() bool {
-		if _, err := exec.LookPath(binary); err == nil {
-			return true
-		}
-		prefix := homebrewPrefix()
-		if prefix == "" {
-			return false
-		}
-		if _, err := os.Stat(filepath.Join(prefix, "opt", pkg, "libexec", "uubin", binary)); err == nil {
-			return true
-		}
-		return false
-	}(); checkBinary {
-		return nil
-	}
-
-	if _, err := exec.LookPath("brew"); err != nil {
-		return fmt.Errorf("brew not found")
-	}
-
-	fmt.Println(infoStyle.Render(fmt.Sprintf("⬇️  Installing %s via Homebrew...", pkg)))
-	cmd := exec.Command("brew", "install", pkg)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to install %s: %w", pkg, err)
-	}
-	fmt.Println(successStyle.Render(fmt.Sprintf("✓ %s installed successfully!", pkg)))
-	return nil
-}
-
-func ensureWindowsTool(binary, pkg string, managers []string) error {
-	if _, err := exec.LookPath(binary); err == nil {
-		return nil
-	}
-
-	candidates := []string{pkg, binary}
-	if pkg != strings.ToLower(pkg) {
-		candidates = append(candidates, strings.ToLower(pkg))
-	}
-
-	seen := map[string]bool{}
-	for _, manager := range managers {
-		for _, candidate := range candidates {
-			candidate = strings.TrimSpace(candidate)
-			if candidate == "" {
-				continue
-			}
-
-			key := manager + "::" + candidate
-			if seen[key] {
-				continue
-			}
-			seen[key] = true
-
-			if err := tryInstallWithWindowsManager(manager, candidate); err == nil {
-				fmt.Println(successStyle.Render(fmt.Sprintf("✓ %s installed via %s", pkg, manager)))
-				return nil
-			}
-
-			if _, err := exec.LookPath(binary); err == nil {
-				fmt.Println(successStyle.Render(fmt.Sprintf("✓ %s is already available", pkg)))
-				return nil
-			}
-		}
-	}
-
-	return fmt.Errorf("no matching package found in available managers")
-}
-
-func availableWindowsManagers() []string {
-	priority := []string{"winget"}
-	available := make([]string, 0, len(priority))
-	for _, manager := range priority {
-		if _, err := exec.LookPath(manager); err == nil {
-			available = append(available, manager)
-		}
-	}
-	return available
-}
-
-func tryInstallWithWindowsManager(manager, candidate string) error {
-	switch manager {
-	case "winget":
-		if wingetPackageInstalled(candidate) {
-			return nil
-		}
-
-		if err := runWingetInstallWithOptionalGsudo("--id", candidate, "--exact", "--source", "winget", "--accept-source-agreements", "--accept-package-agreements", "--silent"); err == nil {
-			return nil
-		}
-
-		if err := runWingetInstallWithOptionalGsudo("--name", candidate, "--source", "winget", "--accept-source-agreements", "--accept-package-agreements", "--silent"); err == nil {
-			return nil
-		}
-
-		if wingetPackageInstalled(candidate) {
-			return nil
-		}
-
-		return fmt.Errorf("winget install failed for %s", candidate)
-	default:
-		return fmt.Errorf("unsupported manager: %s", manager)
-	}
-}
-
-func runWingetInstallWithOptionalGsudo(args ...string) error {
-	wingetArgs := append([]string{"install"}, args...)
-
-	wingetPath := resolveWindowsExecutable("winget")
-	if wingetPath == "" {
-		wingetPath = "winget"
-	}
-
-	if gsudoPath := resolveWindowsExecutable("gsudo"); gsudoPath != "" {
-		commandArgs := append([]string{wingetPath}, wingetArgs...)
-		cmd := exec.Command(gsudoPath, commandArgs...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err == nil {
-			return nil
-		}
-	}
-
-	cmd := exec.Command(wingetPath, wingetArgs...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
-}
-
-func primeGsudoCache() error {
-	gsudoPath := resolveWindowsExecutable("gsudo")
-	if gsudoPath == "" {
-		return fmt.Errorf("gsudo not found")
-	}
-
-	cmd := exec.Command(gsudoPath, "cache", "on")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
-}
-
-func resolveWindowsExecutable(name string) string {
-	if path, err := exec.LookPath(name); err == nil {
-		return path
-	}
-
-	localAppData := strings.TrimSpace(os.Getenv("LOCALAPPDATA"))
-	if localAppData != "" {
-		candidate := filepath.Join(localAppData, "Microsoft", "WinGet", "Links", name+".exe")
-		if info, err := os.Stat(candidate); err == nil && !info.IsDir() {
-			return candidate
-		}
-	}
-
-	return ""
-}
-
-func wingetPackageInstalled(candidate string) bool {
-	cmd := exec.Command("winget", "list", "--id", candidate, "--exact", "--source", "winget", "--accept-source-agreements")
-	out, err := cmd.Output()
-	if err != nil {
-		return false
-	}
-
-	text := strings.ToLower(string(out))
-	if strings.Contains(text, "no installed package") {
-		return false
-	}
-
-	return strings.Contains(text, strings.ToLower(candidate))
-}
 
 //go:embed resources/shell.sh
 var shellShScript string
@@ -458,64 +26,11 @@ var shellShScript string
 //go:embed resources/shell.fish
 var shellFishScript string
 
+//go:embed resources/shell.nu
+var shellNuScript string
+
 //go:embed resources/shell.ps1
 var shellPowerShellScript string
-
-//go:embed resources/psfileicons/PSFileIcons.dll
-var psFileIconsDLL []byte
-
-//go:embed resources/psfileicons/PSFileIcons.psm1
-var psFileIconsPsm1 string
-
-//go:embed resources/psfileicons/PSFileIcons.psd1
-var psFileIconsPsd1 string
-
-//go:embed resources/psfileicons/PSFileIcons.format.ps1xml
-var psFileIconsFormatXml string
-
-// ensurePSFileIcons extracts the bundled PSFileIcons module to the user's
-// PowerShell module directory. Files are skipped if they are already up-to-date
-// (matched by size), so re-running this is cheap.
-func ensurePSFileIcons() error {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-
-	moduleDir := filepath.Join(home, "Documents", "PowerShell", "Modules", "PSFileIcons")
-	if err := os.MkdirAll(moduleDir, 0755); err != nil {
-		return err
-	}
-
-	type fileEntry struct {
-		name    string
-		content []byte
-	}
-
-	files := []fileEntry{
-		{"PSFileIcons.dll", psFileIconsDLL},
-		{"PSFileIcons.psm1", []byte(psFileIconsPsm1)},
-		{"PSFileIcons.psd1", []byte(psFileIconsPsd1)},
-		{"PSFileIcons.format.ps1xml", []byte(psFileIconsFormatXml)},
-	}
-
-	updated := false
-	for _, f := range files {
-		dest := filepath.Join(moduleDir, f.name)
-		if info, err := os.Stat(dest); err == nil && info.Size() == int64(len(f.content)) {
-			continue // already current
-		}
-		if err := os.WriteFile(dest, f.content, 0644); err != nil {
-			return fmt.Errorf("writing %s: %w", f.name, err)
-		}
-		updated = true
-	}
-
-	if updated {
-		fmt.Println(successStyle.Render("✓ PSFileIcons module installed"))
-	}
-	return nil
-}
 
 var (
 	successStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Bold(true)
@@ -531,37 +46,35 @@ func Toggle(shell string, enable bool) error {
 		return togglePowerShell(enable)
 	}
 
-	var configFile string
-	var rcLine string
-
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return err
 	}
 
-	switch shell {
-	case "bash":
-		configFile = filepath.Join(home, ".bashrc")
-		rcLine = fmt.Sprintf(`eval "$(bluefin-cli init bash)" %s`, shellMaker)
-	case "zsh":
-		configFile = filepath.Join(home, ".zshrc")
-		rcLine = fmt.Sprintf(`eval "$(bluefin-cli init zsh)" %s`, shellMaker)
-	case "fish":
-		configFile = filepath.Join(home, ".config/fish/config.fish")
-		rcLine = fmt.Sprintf(`bluefin-cli init fish | source %s`, shellMaker)
-	default:
-		return fmt.Errorf("unsupported shell: %s", shell)
+	spec, ok := LookupShell(shell)
+	if !ok {
+		return fmt.Errorf("unsupported shell: %s (supported: %s)", shell, strings.Join(ManagedShells(), ", "))
+	}
+	shell = spec.Name
+	configFile := spec.ConfigPath(home)
+	rcLine := spec.RCLine(home)
+
+	// Nushell cannot evaluate a string, so config.nu sources a file instead of
+	// piping `bluefin-cli init` into the shell. Render that file here, before
+	// the line that sources it is written.
+	if enable && spec.GeneratedInit != "" {
+		if err := writeGeneratedInit(spec, home); err != nil {
+			return err
+		}
 	}
 
 	content, err := os.ReadFile(configFile)
 	if err != nil {
 		if os.IsNotExist(err) && enable {
-			// Create if doesn't exist and we are enabling
-			// For fish, ensure dir exists
-			if shell == "fish" {
-				if err := os.MkdirAll(filepath.Dir(configFile), 0755); err != nil {
-					return err
-				}
+			// Create if it doesn't exist and we are enabling. fish and nushell
+			// both keep their config under ~/.config, which may be absent.
+			if err := spec.ensureRCDir(home); err != nil {
+				return err
 			}
 			content = []byte("")
 		} else if os.IsNotExist(err) && !enable {
@@ -600,6 +113,14 @@ func Toggle(shell string, enable bool) error {
 		if _, err := f.WriteString(prefix + rcLine + "\n"); err != nil {
 			return err
 		}
+		// ash has no rc file of its own: an interactive shell reads whatever
+		// $ENV names. Writing ~/.ashrc alone leaves it dormant, so point $ENV
+		// at it from ~/.profile too.
+		if shell == "ash" {
+			if err := ensureAshENV(home); err != nil {
+				return err
+			}
+		}
 		fmt.Println(successStyle.Render(fmt.Sprintf("✓ Enabled shell experience for %s", shell)))
 	} else {
 		if !hasLine {
@@ -622,6 +143,16 @@ func Toggle(shell string, enable bool) error {
 
 		if err := os.WriteFile(configFile, []byte(output), 0644); err != nil {
 			return err
+		}
+		if shell == "ash" {
+			if err := removeAshENV(home); err != nil {
+				return err
+			}
+		}
+		if path := spec.GeneratedInitPath(home); path != "" {
+			if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+				return err
+			}
 		}
 		fmt.Println(successStyle.Render(fmt.Sprintf("✓ Disabled shell experience for %s", shell)))
 	}
@@ -791,31 +322,22 @@ func Init(shell string, config *Config) (string, error) {
 		return result, nil
 	}
 
+	// Unknown shells still render the POSIX script, as they always have: an
+	// unrecognized name reaching `init` is far more likely to be a
+	// sh-compatible shell than anything else.
+	spec, ok := LookupShell(shell)
+	if !ok {
+		spec = Shell{Name: shell, Flavor: "posix"}
+	}
+
 	for _, tool := range tools {
-		enabled := config.IsEnabled(tool.Name)
-
-		if shell == "fish" {
-			fmt.Fprintf(&sb, "set -gx %s %d\n", tool.GetEnvVar(), boolToInt(enabled))
-		} else {
-			fmt.Fprintf(&sb, "export %s=%d\n", tool.GetEnvVar(), boolToInt(enabled))
-		}
+		sb.WriteString(spec.exportVar(tool.GetEnvVar(), boolToInt(config.IsEnabled(tool.Name))))
 	}
-
-	if shell == "fish" {
-		fmt.Fprintf(&sb, "set -gx BLUEFIN_SHELL_ENABLE_MOTD %d\n", boolToInt(config.IsEnabled("Motd")))
-		fmt.Fprintf(&sb, "set -gx BLING_SHELL %s\n", shell)
-	} else {
-		fmt.Fprintf(&sb, "export BLUEFIN_SHELL_ENABLE_MOTD=%d\n", boolToInt(config.IsEnabled("Motd")))
-		fmt.Fprintf(&sb, "export BLING_SHELL=\"%s\"\n", shell)
-	}
+	sb.WriteString(spec.exportVar("BLUEFIN_SHELL_ENABLE_MOTD", boolToInt(config.IsEnabled("Motd"))))
+	sb.WriteString(spec.exportString("BLING_SHELL", spec.Name))
 
 	sb.WriteString("\n")
-
-	if shell == "fish" {
-		sb.WriteString(shellFishScript)
-	} else {
-		sb.WriteString(shellShScript)
-	}
+	sb.WriteString(spec.script())
 
 	result := sb.String()
 	saveInitCache(shell, result)
@@ -824,28 +346,19 @@ func Init(shell string, config *Config) (string, error) {
 
 func CheckStatus() map[string]bool {
 	status := make(map[string]bool)
-	shells := []string{"bash", "zsh", "fish"}
 	home, _ := os.UserHomeDir()
 
-	for _, shell := range shells {
-		var configFile string
-		switch shell {
-		case "bash":
-			configFile = filepath.Join(home, ".bashrc")
-		case "zsh":
-			configFile = filepath.Join(home, ".zshrc")
-		case "fish":
-			configFile = filepath.Join(home, ".config/fish/config.fish")
-		}
-
-		content, err := os.ReadFile(configFile)
+	for _, spec := range registry {
+		content, err := os.ReadFile(spec.ConfigPath(home))
 		if err != nil {
-			status[shell] = false
+			status[spec.Name] = false
 			continue
 		}
 
-		status[shell] = strings.Contains(string(content), shellMaker) || strings.Contains(string(content), "# bluefin-cli bling")
+		status[spec.Name] = strings.Contains(string(content), shellMaker) || strings.Contains(string(content), blingMarker)
 	}
+	// Nushell is spelled both ways in the wild; report it under both.
+	status["nushell"] = status["nu"]
 
 	status["powershell"] = checkPowerShellStatus()
 	status["pwsh"] = status["powershell"]
@@ -853,59 +366,13 @@ func CheckStatus() map[string]bool {
 	return status
 }
 
-// homebrewPrefix resolves the Homebrew prefix using the same logic as the
-// embedded shell.sh: respect HOMEBREW_PREFIX env var, probe common paths,
-// and fall back to the Linuxbrew default. Returns "" when brew is absent.
-func homebrewPrefix() string {
-	if p := os.Getenv("HOMEBREW_PREFIX"); p != "" {
-		return p
-	}
-	for _, p := range []string{"/opt/homebrew", "/usr/local", "/home/linuxbrew/.linuxbrew"} {
-		if _, err := os.Stat(filepath.Join(p, "bin", "brew")); err == nil {
-			return p
-		}
-	}
-	return ""
-}
-
-// isBinaryAvailable reports whether tool.Binary can be found on PATH or,
-// for uutils tools that Homebrew installs into a non-standard libexec
-// directory, inside the brew opt prefix.
-func isBinaryAvailable(tool Tool) bool {
-	if _, err := exec.LookPath(tool.Binary); err == nil {
-		return true
-	}
-	prefix := homebrewPrefix()
-	if prefix == "" {
-		return false
-	}
-	// uutils-coreutils / uutils-findutils / uutils-diffutils all follow
-	// the same Homebrew layout: <prefix>/opt/<pkg>/libexec/uubin/<binary>
-	optBin := filepath.Join(prefix, "opt", tool.GetBrewPkg(), "libexec", "uubin", tool.Binary)
-	if _, err := os.Stat(optBin); err == nil {
-		return true
-	}
-	return false
-}
-
-func CheckDependencies() map[string]bool {
-	status := make(map[string]bool)
-
-	for _, tool := range toolsForCurrentPlatform() {
-		status[tool.Binary] = isBinaryAvailable(tool)
-	}
-
-	return status
-}
-
 // GetInstalledShells returns a list of shells that are available in the PATH
 func GetInstalledShells() []string {
 	var installed []string
-	shells := []string{"bash", "zsh", "fish"}
 
-	for _, s := range shells {
-		if _, err := exec.LookPath(s); err == nil {
-			installed = append(installed, s)
+	for _, spec := range registry {
+		if spec.IsInstalled() {
+			installed = append(installed, spec.Name)
 		}
 	}
 
@@ -918,4 +385,74 @@ func GetInstalledShells() []string {
 	}
 
 	return installed
+}
+
+// writeGeneratedInit renders the init script for a shell that sources a file
+// rather than evaluating a pipe, and writes it next to that shell's config.
+func writeGeneratedInit(spec Shell, home string) error {
+	path := spec.GeneratedInitPath(home)
+	if path == "" {
+		return nil
+	}
+	if err := spec.ensureRCDir(home); err != nil {
+		return err
+	}
+	cfg, err := LoadConfig(spec.Name)
+	if err != nil {
+		cfg = DefaultConfig(spec.Name)
+	}
+	script, err := Init(spec.Name, cfg)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, []byte(script), 0644)
+}
+
+// ensureAshENV points $ENV at ~/.ashrc from ~/.profile, which is what makes
+// an interactive ash read the rc file at all. It is a no-op once the line is
+// present.
+func ensureAshENV(home string) error {
+	profile := filepath.Join(home, ".profile")
+	content, err := os.ReadFile(profile)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	text := string(content)
+	if strings.Contains(text, ashENVLine) {
+		return nil
+	}
+	prefix := "\n"
+	if len(text) == 0 || strings.HasSuffix(text, "\n") {
+		prefix = ""
+	}
+	f, err := os.OpenFile(profile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = f.Close() }()
+	_, err = f.WriteString(prefix + ashENVLine + "\n")
+	return err
+}
+
+// removeAshENV takes the $ENV line back out of ~/.profile. Only lines
+// carrying both the export and the bluefin marker are touched, so a user's
+// own $ENV setup survives.
+func removeAshENV(home string) error {
+	profile := filepath.Join(home, ".profile")
+	content, err := os.ReadFile(profile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	var kept []string
+	for _, line := range strings.Split(string(content), "\n") {
+		if strings.Contains(line, shellMaker) && strings.Contains(line, "ENV=") {
+			continue
+		}
+		kept = append(kept, line)
+	}
+	output := strings.TrimRight(strings.Join(kept, "\n"), "\n") + "\n"
+	return os.WriteFile(profile, []byte(output), 0644)
 }

@@ -14,12 +14,18 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 )
 
 var (
 	wallpaperTapRawBasePrimary  = "https://raw.githubusercontent.com/ublue-os/homebrew-tap/main/Casks"
 	wallpaperTapRawBaseFallback = "https://raw.githubusercontent.com/ublue-os/tap/main/Casks"
 	caskURLLine                 = regexp.MustCompile(`(?m)^\s*url\s+"([^"]+)"`)
+
+	// caskClient fetches small cask files; archiveClient pulls multi-hundred-MB
+	// wallpaper archives, so it gets a much larger budget.
+	caskClient    = &http.Client{Timeout: 30 * time.Second}
+	archiveClient = &http.Client{Timeout: 10 * time.Minute}
 )
 
 // fetchWallpaperArchiveURLFromTap fetches the cask file from the ublue-os tap on
@@ -32,7 +38,7 @@ func fetchWallpaperArchiveURLFromTap(caskName string) (string, error) {
 
 	var lastErr error
 	for _, url := range candidates {
-		resp, err := http.Get(url) //nolint:gosec
+		resp, err := caskClient.Get(url) //nolint:gosec
 		if err != nil {
 			lastErr = err
 			continue
@@ -58,7 +64,7 @@ func fetchWallpaperArchiveURLFromTap(caskName string) (string, error) {
 // downloadAndExtractWallpaperArchive downloads an archive from archiveURL and
 // extracts its contents into targetDir, supporting .zip and .tar.gz formats.
 func downloadAndExtractWallpaperArchive(archiveURL, targetDir string) error {
-	resp, err := http.Get(archiveURL) //nolint:gosec
+	resp, err := archiveClient.Get(archiveURL) //nolint:gosec
 	if err != nil {
 		return fmt.Errorf("failed to download wallpaper archive: %w", err)
 	}

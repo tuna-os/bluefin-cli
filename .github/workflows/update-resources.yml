@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '0 0 * * 1' # Every Monday at 00:00 UTC
   workflow_dispatch: # Allow manual trigger
+# Least privilege by default: every job in this file starts read-only and
+# must widen its own `permissions:` block to do more.
+permissions:
+  contents: read
+
 
 jobs:
   update:
@@ -16,11 +21,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27'
+
       - name: Install just
         uses: taiki-e/install-action@just
 
       - name: Update Brewfiles
+        env:
+          # Lets the updater resolve each upstream branch to a commit SHA
+          # through the API rather than falling back to an unpinned fetch.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: just update-resources
+
+      - name: Verify provenance matches the updated tree
+        run: go test -run TestProvenance ./internal/install/
 
       - name: Check for changes
         id: git-check

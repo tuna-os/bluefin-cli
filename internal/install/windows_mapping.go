@@ -15,10 +15,24 @@ var (
 	windowsPackageAliasesLoad = loadWindowsPackageAliases
 )
 
+// loadWindowsPackageAliases parses the embedded mapping.
+//
+// A parse failure here is a build-time defect, not a runtime condition: the
+// bytes are compiled into the binary, so if they are malformed they were
+// malformed for every user of that build. Degrading to an empty map made that
+// defect invisible (tuna-os/bluefin-cli#232) -- windowsCandidates would return
+// just the Homebrew name for every package, so `install` on Windows searched
+// winget for "fd" and "bat" instead of "sharkdp.fd" and "sharkdp.bat", failing
+// one package at a time with nothing anywhere reporting that the mapping had
+// not loaded. Panicking instead makes any test that touches the loader fail
+// loudly in CI, which is the only place the problem can still be fixed.
 func loadWindowsPackageAliases() map[string][]string {
 	aliases := make(map[string][]string)
 	if err := json.Unmarshal(windowsMappingJSON, &aliases); err != nil {
-		return map[string][]string{}
+		panic("install: embedded windows_mapping.json does not parse: " + err.Error())
+	}
+	if len(aliases) == 0 {
+		panic("install: embedded windows_mapping.json parsed to an empty mapping")
 	}
 	return aliases
 }

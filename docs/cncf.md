@@ -1,3 +1,4 @@
+<!-- ste-disable-file: every entry below quotes an upstream project's own one-line description verbatim, so that a reader can match this page against the project's own docs. Rewriting them into STE would misquote the projects. -->
 # CNCF Tools
 
 *A comprehensive collection of Cloud Native tools.*

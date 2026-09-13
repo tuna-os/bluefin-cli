@@ -1,0 +1,20 @@
+# Files compiled into the binary with //go:embed must be byte-identical in
+# every checkout, and git's line-ending conversion breaks that: on Windows,
+# where core.autocrlf is on by default, each one gains CRLF at checkout time.
+#
+# Two things go wrong (tuna-os/bluefin-cli#258).
+#
+# The visible one is that internal/install/resources/PROVENANCE.json records a
+# sha256 per embedded file, so every digest mismatches on a Windows checkout
+# and provenance_test.go fails there while passing everywhere else.
+#
+# The one that actually reaches users is worse: a binary built on Windows
+# embeds the CRLF copy of the shell scripts, and `bluefin-cli init bash`
+# then emits a script whose `eval` fails on Linux and WSL with
+# "$'\r': command not found".
+#
+# -text tells git to do no conversion on these paths at all, so what is
+# committed is what lands on disk and in the binary, on every platform.
+internal/install/resources/** -text
+internal/shell/resources/**   -text
+internal/install/*.json       -text
