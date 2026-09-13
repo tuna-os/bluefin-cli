@@ -9,6 +9,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"github.com/tuna-os/bluefin-cli/internal/env"
 	"github.com/tuna-os/bluefin-cli/internal/tui/theme"
 )
 
@@ -88,6 +89,11 @@ func (s *RunnerScreen) wait() tea.Cmd {
 }
 
 func (s *RunnerScreen) exec() {
+	// The task may print, but Bubble Tea still holds the keyboard, so it must
+	// not prompt. Anything that would has to see the terminal as taken
+	// (tuna-os/bluefin-cli#273).
+	defer env.HoldTerminal()()
+
 	r, w, err := os.Pipe()
 	if err != nil {
 		s.ch <- runnerEvent{done: true, err: s.run()}

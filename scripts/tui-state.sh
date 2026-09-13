@@ -49,6 +49,18 @@ tmux send-keys -t "$SESSION" Enter
 wait_for "› Shell" 15 || bad "did not reach the Shell submenu"
 wait_for "Enable for current shell" 10 || bad "shell menu did not render"
 tmux send-keys -t "$SESSION" Enter            # runner: "Enabling bash"
+
+# On a machine with no Homebrew, enabling now asks about it here, on the menu
+# thread, before the runner opens: a confirm inside the runner renders nowhere
+# the user can answer and spins forever (tuna-os/bluefin-cli#273). Answer no --
+# the shell must still be configured on a machine without brew. Conditional
+# rather than asserted, because a host that has brew never sees the prompt.
+if wait_for "Install Homebrew" 5; then
+  ok "missing-Homebrew confirm opened before the runner, not inside it"
+  tmux send-keys -t "$SESSION" n; sleep 0.4
+  tmux send-keys -t "$SESSION" Enter; sleep 0.4
+fi
+
 wait_for "Enabling bash" 10 || bad "toggle runner did not open"
 wait_runner 300 || bad "enable runner did not finish"
 tmux send-keys -t "$SESSION" Escape; sleep 0.6

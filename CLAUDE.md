@@ -28,6 +28,13 @@ scripts/tui-smoke.sh <binary>     # tmux end-to-end suite (15 assertions; runs i
 - **Anything that prints or blocks must run in `app.RunnerScreen`**, never
   synchronously in a `View`/`Update` (glow queries the terminal and will
   deadlock a synchronous capture).
+- **But a runner must never prompt.** A runner captures stdout, so a task can
+  print; Bubble Tea still holds the keyboard, so a `huh` prompt opened from
+  inside one renders nowhere the user can answer and waits forever (#273).
+  Ask on the menu thread before you push the runner, or push a `FormScreen`,
+  which owns input. `env.TerminalOwned()` reports the runner case, so shared
+  code can take a non-interactive path; note that a test or CI job has no TTY,
+  where `huh` errors at once instead of hanging — passing there proves nothing.
 - **Keep `go.mod`/`go.sum` tidy in every commit.** `go build`/`go test` ignore
   stale go.sum lines, so drift (typically a renovate bump that leaves the old
   version's hashes behind) passes CI, then the release job's `go mod tidy`

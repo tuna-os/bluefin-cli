@@ -85,62 +85,121 @@ func InstallTools(shell string, cfg *Config) {
 	}
 }
 
-func ensureHomebrew() error {
+// brewFallbackPaths are the per-platform prefixes Homebrew installs into. A
+// brew that is installed but not yet on PATH -- the state right after an
+// install, and in any shell that has not re-sourced its profile -- is found
+// here rather than by LookPath.
+var brewFallbackPaths = []string{
+	"/home/linuxbrew/.linuxbrew/bin/brew",
+	"/opt/homebrew/bin/brew",
+	"/usr/local/bin/brew",
+}
+
+// findBrew returns the directory holding brew, and whether it found one. A
+// brew already on PATH reports an empty directory: there is nothing to add.
+func findBrew() (dir string, found bool) {
 	if _, err := exec.LookPath("brew"); err == nil {
+		return "", true
+	}
+	for _, p := range brewFallbackPaths {
+		if _, err := os.Stat(p); err == nil {
+			return filepath.Dir(p), true
+		}
+	}
+	return "", false
+}
+
+// HomebrewAvailable reports whether this machine has Homebrew, on PATH or in
+// one of its install prefixes. Callers that are about to start work which
+// needs brew use it to settle the question up front -- in particular the TUI,
+// which has to decide whether to ask the user *before* it opens a runner that
+// cannot take input (tuna-os/bluefin-cli#273).
+func HomebrewAvailable() bool {
+	_, found := findBrew()
+	return found
+}
+
+// InstallHomebrew runs the upstream install script and puts the resulting brew
+// on PATH for this process. It never prompts: when the TUI owns the terminal it
+// runs the script with NONINTERACTIVE=1 and no stdin, because the script's own
+// "press RETURN to continue" would hang exactly as a prompt here would.
+func InstallHomebrew() error {
+	if runtime.GOOS == "windows" {
+		return fmt.Errorf("homebrew is not available on Windows; install shell tools with winget")
+	}
+
+	fmt.Println(infoStyle.Render("⬇️  Installing Homebrew..."))
+
+	cmd := exec.Command("/bin/bash", "-c", "curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | bash")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if env.TerminalOwned() {
+		cmd.Env = append(os.Environ(), "NONINTERACTIVE=1")
+	} else {
+		cmd.Stdin = os.Stdin
+	}
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to install homebrew: %w", err)
+	}
+
+	if err := addBrewToPath(); err != nil {
+		return err
+	}
+	fmt.Println(successStyle.Render("✓ Homebrew installed and added to PATH for this session."))
+	return nil
+}
+
+// addBrewToPath puts a just-installed brew on PATH for the rest of this
+// process, so the tool installs that follow can use it without a restart.
+func addBrewToPath() error {
+	dir, found := findBrew()
+	if !found {
+		return fmt.Errorf("homebrew installed but not found in expected locations")
+	}
+	if dir == "" {
 		return nil
+	}
+	if err := os.Setenv("PATH", os.Getenv("PATH")+string(os.PathListSeparator)+dir); err != nil {
+		return fmt.Errorf("failed to update PATH: %w", err)
+	}
+	return nil
+}
+
+func ensureHomebrew() error {
+	if dir, found := findBrew(); found {
+		if dir == "" {
+			return nil
+		}
+		return addBrewToPath()
 	}
 
 	if runtime.GOOS == "windows" {
 		return fmt.Errorf("homebrew not found on Windows; install shell tools with winget")
 	}
 
-	commonPaths := []string{"/home/linuxbrew/.linuxbrew/bin/brew", "/opt/homebrew/bin/brew", "/usr/local/bin/brew"}
-	for _, p := range commonPaths {
-		if _, err := os.Stat(p); err == nil {
-			path := os.Getenv("PATH")
-			if err := os.Setenv("PATH", path+string(os.PathListSeparator)+filepath.Dir(p)); err != nil {
-				return fmt.Errorf("failed to update PATH: %w", err)
-			}
-			return nil
-		}
+	fmt.Println(infoStyle.Render("Homebrew is missing. It is required to install enabled components."))
+
+	// Inside a TUI runner the keyboard belongs to Bubble Tea, so a confirm here
+	// would render nowhere and wait forever (tuna-os/bluefin-cli#273). The TUI
+	// asks on the menu thread instead, before it opens the runner; reaching
+	// this point means the user was already asked, or the caller is not the
+	// TUI. Either way, say what to do rather than block.
+	if env.TerminalOwned() {
+		return fmt.Errorf("homebrew is not installed; install it, then run 'bluefin-cli doctor' to check the rest")
 	}
 
-	fmt.Println(infoStyle.Render("Homebrew is missing. It is required to install enabled components."))
 	var install bool
-	err := huh.NewConfirm().
+	if err := huh.NewConfirm().
 		Title("Would you like to install Homebrew?").
 		Value(&install).
-		Run()
-	if err != nil {
+		Run(); err != nil {
 		return err
 	}
-
 	if !install {
 		return fmt.Errorf("homebrew installation declined")
 	}
 
-	fmt.Println(infoStyle.Render("⬇️  Installing Homebrew..."))
-
-	cmd := exec.Command("/bin/bash", "-c", "curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | bash")
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to install homebrew: %w", err)
-	}
-
-	for _, p := range commonPaths {
-		if _, err := os.Stat(p); err == nil {
-			path := os.Getenv("PATH")
-			if err := os.Setenv("PATH", path+string(os.PathListSeparator)+filepath.Dir(p)); err != nil {
-				return fmt.Errorf("failed to update PATH: %w", err)
-			}
-			fmt.Println(successStyle.Render("✓ Homebrew installed and added to PATH for this session."))
-			return nil
-		}
-	}
-
-	return fmt.Errorf("homebrew installed but not found in expected locations")
+	return InstallHomebrew()
 }
 
 // EnsureInstalled installs a single tool (matched by Binary in Tools) via

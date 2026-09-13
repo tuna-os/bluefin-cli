@@ -8,6 +8,8 @@ import (
 	"time"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/tuna-os/bluefin-cli/internal/env"
 )
 
 // --- RunnerScreen -------------------------------------------------------
@@ -186,5 +188,33 @@ func TestGameHighScorePersists(t *testing.T) {
 	g.advanceGame()
 	if saved != -1 {
 		t.Errorf("saveBest should not fire for a lower score, got %d", saved)
+	}
+}
+
+// TestRunnerHoldsTerminalDuringTask is the runner half of
+// tuna-os/bluefin-cli#273. A task runs while Bubble Tea still holds the
+// keyboard, so anything it calls must be able to see that the terminal is
+// taken and choose a non-interactive path instead of prompting into a
+// terminal that cannot deliver the keystrokes.
+func TestRunnerHoldsTerminalDuringTask(t *testing.T) {
+	if env.TerminalOwned() {
+		t.Fatal("the terminal was already held before the runner started")
+	}
+
+	var ownedInside bool
+	r := NewRunner("test", func() error {
+		ownedInside = env.TerminalOwned()
+		return nil
+	})
+	if cmd := r.Init(); cmd == nil {
+		t.Fatal("Init returned no command")
+	}
+	driveRunner(t, r)
+
+	if !ownedInside {
+		t.Error("the task saw a free terminal; a prompt from here would hang")
+	}
+	if env.TerminalOwned() {
+		t.Error("the runner did not release the terminal when the task finished")
 	}
 }
