@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+
+	"github.com/tuna-os/bluefin-cli/internal/pkgmanager"
 )
 
 // EnsureColdbrew makes coldbrew available, bootstrapping it via apk if it's
@@ -40,12 +42,12 @@ func EnsureColdbrew() bool {
 // it on first use when possible. Falls back to apk directly (needs root;
 // passwordless sudo is assumed since interactive password prompts have no
 // TTY to answer them from here) only if coldbrew can't be set up.
-func alpinePackageManager() string {
+func alpinePackageManager() pkgmanager.AlpineManager {
 	if EnsureColdbrew() {
-		return "coldbrew"
+		return pkgmanager.Coldbrew
 	}
-	if _, err := exec.LookPath("apk"); err == nil {
-		return "apk"
+	if pkgmanager.DetectAlpine() == pkgmanager.APK {
+		return pkgmanager.APK
 	}
 	return ""
 }
@@ -73,28 +75,6 @@ func installToolsAlpine(tools []Tool, cfg *Config) {
 	}
 }
 
-func installAlpinePkg(mgr, pkg string) error {
-	switch mgr {
-	case "coldbrew":
-		install := exec.Command("coldbrew", "install", pkg)
-		install.Stdout, install.Stderr = os.Stdout, os.Stderr
-		if err := install.Run(); err != nil {
-			return err
-		}
-		// wrap creates a real PATH-visible shim; without it the binary is
-		// only reachable via `coldbrew run <pkg>`, and our tool-detection
-		// (exec.LookPath) would never see it as installed.
-		wrap := exec.Command("coldbrew", "wrap", pkg)
-		wrap.Stdout, wrap.Stderr = os.Stdout, os.Stderr
-		return wrap.Run()
-	case "apk":
-		cmd := exec.Command("sudo", "apk", "add", pkg)
-		cmd.Stdin = nil
-		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("%w (needs passwordless sudo for apk; run manually with a password if this fails)", err)
-		}
-		return nil
-	}
-	return fmt.Errorf("unknown package manager %q", mgr)
+func installAlpinePkg(mgr pkgmanager.AlpineManager, pkg string) error {
+	return pkgmanager.InstallAlpine(mgr, pkg)
 }

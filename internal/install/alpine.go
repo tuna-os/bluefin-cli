@@ -2,9 +2,9 @@ package install
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
 	"strings"
+
+	"github.com/tuna-os/bluefin-cli/internal/pkgmanager"
 )
 
 // installBundleAlpine is the Alpine/musl code path for InstallBundle.
@@ -96,39 +96,11 @@ func installBundleAlpine(packages ...string) error {
 // alpinePackageManager picks the best available installer on Alpine-family
 // systems: coldbrew (rootless, sandboxed) when available, falling back to
 // apk (needs sudo). Returns "" if neither is available.
-func alpinePackageManager() string {
-	if _, err := exec.LookPath("coldbrew"); err == nil {
-		return "coldbrew"
-	}
-	if _, err := exec.LookPath("apk"); err == nil {
-		return "apk"
-	}
-	return ""
+func alpinePackageManager() pkgmanager.AlpineManager {
+	return pkgmanager.DetectAlpine()
 }
 
 // installAlpinePkg installs a single package via coldbrew or apk.
-func installAlpinePkg(mgr, pkg string) error {
-	switch mgr {
-	case "coldbrew":
-		install := exec.Command("coldbrew", "install", pkg)
-		install.Stdout = os.Stdout
-		install.Stderr = os.Stderr
-		if err := install.Run(); err != nil {
-			return err
-		}
-		wrap := exec.Command("coldbrew", "wrap", pkg)
-		wrap.Stdout = os.Stdout
-		wrap.Stderr = os.Stderr
-		return wrap.Run()
-	case "apk":
-		cmd := exec.Command("sudo", "apk", "add", pkg)
-		cmd.Stdin = nil
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("%w (needs passwordless sudo for apk; run manually with a password if this fails)", err)
-		}
-		return nil
-	}
-	return fmt.Errorf("unknown package manager %q", mgr)
+func installAlpinePkg(mgr pkgmanager.AlpineManager, pkg string) error {
+	return pkgmanager.InstallAlpine(mgr, pkg)
 }
