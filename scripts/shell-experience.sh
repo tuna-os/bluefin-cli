@@ -236,6 +236,31 @@ test_shell() {
                            || bad "$sh_name: the ls alias is defined but does not run (got '$got')"
     fi
 
+    # 4a-bis. The PowerShell init caches each tool's generated init, and where
+    #     it puts that cache is a correctness question, not a detail: with
+    #     LOCALAPPDATA unset (every non-Windows PowerShell) the path used to
+    #     resolve to the filesystem root, which a normal user cannot write --
+    #     so the cache failed and the tools never initialized. Running the
+    #     suite as root hid it completely, because root *can* write there and
+    #     merely littered /bluefin-cli instead. Asserted directly so the user
+    #     the suite happens to run as cannot change the answer.
+    if [ "$sh_name" = "pwsh" ]; then
+        # Read back the path shell.ps1 actually used, rather than re-deriving
+        # it here: a probe that recomputes the logic only ever tests its own
+        # copy of it and passes while the real one is broken.
+        got=$(run_in "$sh_name" 'if ($global:BluefinShellCacheDir) { $global:BluefinShellCacheDir }' 2>/dev/null | tr -d '\r')
+        if [ -z "$got" ]; then
+            skip "$sh_name: no tool needed the init cache, so its location is untested"
+        else
+            case "$got" in
+              "$SANDBOX"*|"$HOME"*|/tmp/*|/var/*)
+                ok "$sh_name: the init cache is under a writable user directory ($got)" ;;
+              *)
+                bad "$sh_name: the init cache resolved to '$got', which a normal user cannot write" ;;
+            esac
+        fi
+    fi
+
     # 4b. starship is the prompt, and the one integration whose absence a user
     #     notices immediately. It has no ash/dash target, so on those shells the
     #     contract is the opposite: it must be skipped deliberately rather than

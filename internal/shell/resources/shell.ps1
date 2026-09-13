@@ -36,18 +36,42 @@ function bluefin_init {
     function Invoke-CachedInit {
         param([string]$Exe)
 
-        $cacheDir = "$env:LOCALAPPDATA\bluefin-cli\shell-cache"
+        # PowerShell runs on Linux and macOS too, where LOCALAPPDATA does not
+        # exist. Interpolating it empty produced "\bluefin-cli\shell-cache",
+        # which is an absolute path at the filesystem root there: a normal user
+        # got "Access to the path '/bluefin-cli' is denied" printed at every
+        # shell start with zoxide and starship then never initializing, and a
+        # root shell quietly created /bluefin-cli instead. Join-Path keeps the
+        # separators right on each platform.
+        $cacheRoot = $env:LOCALAPPDATA
+        if (-not $cacheRoot) { $cacheRoot = $env:XDG_CACHE_HOME }
+        if (-not $cacheRoot) {
+            $home_ = if ($env:HOME) { $env:HOME } else { $env:USERPROFILE }
+            if ($home_) { $cacheRoot = Join-Path $home_ '.cache' }
+        }
+        if (-not $cacheRoot) { $cacheRoot = [System.IO.Path]::GetTempPath() }
+
+        $cacheDir = Join-Path (Join-Path $cacheRoot 'bluefin-cli') 'shell-cache'
+        # Exposed so the location can be inspected -- by a user debugging a
+        # stale cache, and by scripts/shell-experience.sh, which asserts it
+        # lands somewhere writable rather than re-deriving the path itself.
+        $global:BluefinShellCacheDir = $cacheDir
         if (-not (Test-Path $cacheDir)) {
-            $null = New-Item -ItemType Directory -Path $cacheDir -Force
+            $null = New-Item -ItemType Directory -Path $cacheDir -Force -ErrorAction SilentlyContinue
+        }
+        if (-not (Test-Path $cacheDir)) {
+            # Without a usable cache, still initialize the tool -- just without
+            # the startup saving. Failing to cache must not cost the feature.
+            return (& $Exe init powershell | Out-String)
         }
 
         $exeName = [System.IO.Path]::GetFileNameWithoutExtension($Exe)
         $exeMtime = (Get-Item $Exe).LastWriteTimeUtc.Ticks
-        $cacheFile = "$cacheDir\$exeName-$exeMtime.ps1"
+        $cacheFile = Join-Path $cacheDir "$exeName-$exeMtime.ps1"
 
         if (-not (Test-Path $cacheFile)) {
             # Remove stale cache files for this executable before writing the new one
-            Get-ChildItem "$cacheDir\$exeName-*.ps1" -ErrorAction SilentlyContinue | Remove-Item -Force
+            Get-ChildItem (Join-Path $cacheDir "$exeName-*.ps1") -ErrorAction SilentlyContinue | Remove-Item -Force
             & $Exe init powershell | Out-File $cacheFile -Encoding utf8
         }
 
