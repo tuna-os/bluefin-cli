@@ -118,8 +118,14 @@ var profilePushCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		tmp := filepath.Join(os.TempDir(), fmt.Sprintf("bluefin-profile-%d.json", os.Getpid()))
+		tmpFile, err := os.CreateTemp("", "bluefin-profile-*.json")
+		if err != nil {
+			return err
+		}
+		tmp := tmpFile.Name()
+		_ = tmpFile.Close()
 		if err := p.Save(tmp); err != nil {
+			_ = os.Remove(tmp)
 			return err
 		}
 		defer func() { _ = os.Remove(tmp) }()
@@ -133,11 +139,15 @@ var profilePushCmd = &cobra.Command{
 			return nil
 		}
 
-		named := filepath.Join(os.TempDir(), profileGistFile)
+		tmpDir, err := os.MkdirTemp("", "bluefin-profile-dir-*")
+		if err != nil {
+			return err
+		}
+		defer func() { _ = os.RemoveAll(tmpDir) }()
+		named := filepath.Join(tmpDir, profileGistFile)
 		if err := p.Save(named); err != nil {
 			return err
 		}
-		defer func() { _ = os.Remove(named) }()
 		out, err := exec.Command("gh", "gist", "create", "--desc", "bluefin-cli profile", named).CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("creating gist: %v\n%s", err, out)
@@ -172,8 +182,14 @@ var profilePullCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("fetching gist %s: %w", id, err)
 		}
-		tmp := filepath.Join(os.TempDir(), fmt.Sprintf("bluefin-profile-pull-%d.json", os.Getpid()))
+		pullFile, err := os.CreateTemp("", "bluefin-profile-pull-*.json")
+		if err != nil {
+			return err
+		}
+		tmp := pullFile.Name()
+		_ = pullFile.Close()
 		if err := os.WriteFile(tmp, out, 0o600); err != nil {
+			_ = os.Remove(tmp)
 			return err
 		}
 		defer func() { _ = os.Remove(tmp) }()
