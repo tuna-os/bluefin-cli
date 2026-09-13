@@ -56,6 +56,11 @@ run_in() {
       fish)  HOME=$SANDBOX fish -i -c "$BIN init fish 2>/dev/null | source; $_probe" ;;
       nu)    HOME=$SANDBOX $BIN init nu >"$SANDBOX/init.nu" 2>/dev/null
              HOME=$SANDBOX nu -c "source $SANDBOX/init.nu; $_probe" ;;
+      # Loaded through Invoke-Expression, which is what $PROFILE is documented
+      # to use -- the scoping rules differ from dot-sourcing, and that
+      # difference is exactly where this script was broken.
+      pwsh)  HOME=$SANDBOX $BIN init powershell >"$SANDBOX/init.ps1" 2>/dev/null
+             HOME=$SANDBOX pwsh -NoProfile -Command "Invoke-Expression (Get-Content '$SANDBOX/init.ps1' -Raw); $_probe" ;;
     esac
 }
 
@@ -65,6 +70,7 @@ probe_alias() {   # is <name> defined as an alias/function?
     case "$1" in
       fish) printf 'functions -q %s; and echo YES' "$2" ;;
       nu)   printf 'if (scope aliases | where name == "%s" | is-not-empty) { print "YES" }' "$2" ;;
+      pwsh) printf 'if (Get-Command %s -CommandType Function -EA SilentlyContinue) { "YES" }' "$2" ;;
       *)    printf 'alias %s >/dev/null 2>&1 && echo YES' "$2" ;;
     esac
 }
@@ -77,6 +83,7 @@ probe_var() {     # print the value of <name>
 }
 probe_cmd() {     # is <name> a defined command/function?
     case "$1" in
+      pwsh) printf 'if (Get-Command %s -EA SilentlyContinue) { "YES" }' "$2" ;;
       fish) printf 'functions -q %s; or type -q %s; and echo YES' "$2" "$2" ;;
       nu)   printf 'if (which %s | is-not-empty) { print "YES" }' "$2" ;;
       *)    printf 'command -v %s >/dev/null 2>&1 && echo YES' "$2" ;;
@@ -84,6 +91,7 @@ probe_cmd() {     # is <name> a defined command/function?
 }
 probe_prompt() { # YES when the shell's prompt is driven by starship
     case "$1" in
+      pwsh) printf 'if ((Get-Command prompt -EA SilentlyContinue).Definition -match "starship") { "YES" }' ;;
       *) printf 'case "$PS1$PROMPT$PROMPT_COMMAND" in *starship*) echo YES ;; esac' ;;
     esac
 }
@@ -109,7 +117,8 @@ uutils_enabled() {
 
 available() {
     case "$1" in
-      ash) command -v busybox >/dev/null 2>&1 ;;
+      ash)  command -v busybox >/dev/null 2>&1 ;;
+      pwsh) command -v pwsh >/dev/null 2>&1 ;;
       nu)  command -v nu >/dev/null 2>&1 ;;
       *)   command -v "$1" >/dev/null 2>&1 ;;
     esac
@@ -149,6 +158,9 @@ test_shell() {
 
     # 2. The init identifies the shell to itself, which is what the script uses
     #    to pick each tool's init target.
+    if [ "$sh_name" = "pwsh" ]; then
+        skip "$sh_name: BLING_SHELL is not part of the PowerShell contract"
+    else
     got=$(run_in "$sh_name" "$(probe_var "$sh_name" BLING_SHELL)" 2>/dev/null | tr -d '\r')
     want=$sh_name
     [ "$sh_name" = "dash" ] && want=ash
@@ -157,11 +169,16 @@ test_shell() {
     else
         bad "$sh_name: BLING_SHELL=$got, want $want"
     fi
+    fi
 
     # 3. An alias exists exactly when the tool backing it exists. A stale alias
     #    pointing at a missing binary is worse than no alias: it shadows the
     #    real command and fails on use.
-    for pair in "eza:ll" "eza:ls" "eza:l1" "ug:grep"; do
+    pairs="eza:ll eza:ls eza:l1 ug:grep"
+    # Ugrep declares UnsupportedShells powershell, so no grep alias is offered
+    # there, and the PowerShell script defines ll/ls only.
+    [ "$sh_name" = "pwsh" ] && pairs="eza:ll eza:ls"
+    for pair in $pairs; do
         tool=${pair%%:*}; name=${pair#*:}
         [ "$sh_name" = "nu" ] && [ "$name" = "l1" ] && continue   # nu keeps ll/ls only
         got=$(run_in "$sh_name" "$(probe_alias "$sh_name" "$name")" 2>/dev/null | tr -d '\r')
@@ -205,6 +222,17 @@ test_shell() {
                            || bad "$sh_name: zoxide is installed but did not initialize"
     fi
 
+    # 4a. PowerShell's aliases call an executable held in a variable, so being
+    #     defined is not the same as working: when that variable is out of
+    #     scope the function exists and runs `& $null`. The other shells
+    #     inline the command name, so only this one can fail that way -- and it
+    #     did, silently, until the executables moved to global scope.
+    if [ "$sh_name" = "pwsh" ] && have eza; then
+        got=$(run_in "$sh_name" 'try { $o = ls 2>&1; if ($LASTEXITCODE -eq 0 -or $o) { "YES" } } catch { "ERR" }' 2>/dev/null | tr -d '\r')
+        [ "$got" = "YES" ] && ok "$sh_name: the ls alias actually runs" \
+                           || bad "$sh_name: the ls alias is defined but does not run (got '$got')"
+    fi
+
     # 4b. starship is the prompt, and the one integration whose absence a user
     #     notices immediately. It has no ash/dash target, so on those shells the
     #     contract is the opposite: it must be skipped deliberately rather than
@@ -244,6 +272,10 @@ test_shell() {
     #    unreachable. `init` disables tools it cannot find, so the invariant is
     #    conditional: the directory is on PATH exactly when the generated script
     #    turned the tool on.
+    if [ "$sh_name" = "pwsh" ]; then
+        skip "$sh_name: uutils are not offered on PowerShell"
+        return
+    fi
     want_uutils=$(uutils_enabled "$sh_name")
     got=$(run_in "$sh_name" "$(probe_path "$sh_name")" 2>/dev/null)
     case "$got" in
@@ -302,7 +334,7 @@ test_double_load() {
     fi
 }
 
-SHELLS=${*:-"bash zsh ash dash fish nu"}
+SHELLS=${*:-"bash zsh ash dash fish nu pwsh"}
 for s in $SHELLS; do test_shell "$s"; done
 printf '\n── load-once guard ──\n'
 for s in $SHELLS; do test_double_load "$s"; done

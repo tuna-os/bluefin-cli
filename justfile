@@ -265,6 +265,10 @@ update-resources:
 shell-experience: build
     @./scripts/shell-experience.sh ./bluefin-cli
 
+# The PowerShell half, as it runs on Windows.
+shell-experience-pwsh: build
+    @pwsh -NoProfile -File scripts/shell-experience.ps1 ./bluefin-cli
+
 # Regenerate the embedded Homebrew-to-Winget package mapping on Windows.
 update-winget-mapping:
     pwsh -NoProfile -File scripts/winget/update-mapping.ps1

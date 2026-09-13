@@ -1,3 +1,11 @@
+# Note on scoping, which this file got wrong for a long time: PowerShell scopes
+# a `function` declared inside another function to that parent, and discards it
+# when the parent returns. Every user-facing function below was therefore gone
+# by the time bluefin_init finished, so ll, ls, cat, grep and sudo were never
+# actually defined for anyone. They are declared `global:` for that reason, and
+# the executables they call are held in global variables too -- a `$script:`
+# reference to a variable that was assigned locally reads as empty, so the
+# functions would have run `& $null` even if they had survived.
 function bluefin_init {
     function Get-BluefinExecutable {
         param([string]$Name)
@@ -93,31 +101,31 @@ function bluefin_init {
         Invoke-CachedInit $starshipExe
     }
 
-    $ezaExe = Get-BluefinExecutable "eza"
+    $global:BluefinEzaExe = Get-BluefinExecutable "eza"
     if ($env:BLUEFIN_SHELL_ENABLE_EZA -eq "1") {
-        if ($ezaExe) {
-            function ll { & $script:ezaExe -al --icons=auto --group-directories-first }
-            function ls { & $script:ezaExe --icons=auto --group-directories-first }
+        if ($global:BluefinEzaExe) {
+            function global:ll { & $global:BluefinEzaExe -al --icons=auto --group-directories-first }
+            function global:ls { & $global:BluefinEzaExe --icons=auto --group-directories-first }
         }
     }
 
-    $batExe = Get-BluefinExecutable "bat"
+    $global:BluefinBatExe = Get-BluefinExecutable "bat"
     if ($env:BLUEFIN_SHELL_ENABLE_BAT -eq "1") {
-        if ($batExe) {
-            function cat { & $script:batExe @Args }
+        if ($global:BluefinBatExe) {
+            function global:cat { & $global:BluefinBatExe @Args }
         }
     }
 
-    $ugrepExe = Get-BluefinExecutable "ug"
+    $global:BluefinUgrepExe = Get-BluefinExecutable "ug"
     if ($env:BLUEFIN_SHELL_ENABLE_UGREP -eq "1") {
-        if ($ugrepExe) {
-            function grep { & $script:ugrepExe @Args }
+        if ($global:BluefinUgrepExe) {
+            function global:grep { & $global:BluefinUgrepExe @Args }
         }
     }
 
-    $gsudoExe = Get-BluefinExecutable "gsudo"
-    if ($env:BLUEFIN_SHELL_ENABLE_GSUDO -eq "1" -and $gsudoExe) {
-        function sudo { & $script:gsudoExe @Args }
+    $global:BluefinGsudoExe = Get-BluefinExecutable "gsudo"
+    if ($env:BLUEFIN_SHELL_ENABLE_GSUDO -eq "1" -and $global:BluefinGsudoExe) {
+        function global:sudo { & $global:BluefinGsudoExe @Args }
     }
 
     $bluefinCliExe = Get-BluefinExecutable "bluefin-cli"
