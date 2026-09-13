@@ -25,7 +25,7 @@ By default this command also attempts to uninstall managed software:
 Use flags to keep software/modules/config as needed.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		opts := shell.UninstallOptions{
-			Shells:         []string{"powershell", "bash", "zsh", "fish"},
+			Shells:         append([]string{"powershell"}, shell.ManagedShells()...),
 			RemoveSoftware: uninstallRemoveSoftware,
 			RemoveModules:  uninstallRemoveModules,
 			RemoveConfig:   !uninstallKeepConfig,

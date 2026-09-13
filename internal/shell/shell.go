@@ -458,6 +458,9 @@ var shellShScript string
 //go:embed resources/shell.fish
 var shellFishScript string
 
+//go:embed resources/shell.nu
+var shellNuScript string
+
 //go:embed resources/shell.ps1
 var shellPowerShellScript string
 
@@ -531,37 +534,35 @@ func Toggle(shell string, enable bool) error {
 		return togglePowerShell(enable)
 	}
 
-	var configFile string
-	var rcLine string
-
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return err
 	}
 
-	switch shell {
-	case "bash":
-		configFile = filepath.Join(home, ".bashrc")
-		rcLine = fmt.Sprintf(`eval "$(bluefin-cli init bash)" %s`, shellMaker)
-	case "zsh":
-		configFile = filepath.Join(home, ".zshrc")
-		rcLine = fmt.Sprintf(`eval "$(bluefin-cli init zsh)" %s`, shellMaker)
-	case "fish":
-		configFile = filepath.Join(home, ".config/fish/config.fish")
-		rcLine = fmt.Sprintf(`bluefin-cli init fish | source %s`, shellMaker)
-	default:
-		return fmt.Errorf("unsupported shell: %s", shell)
+	spec, ok := LookupShell(shell)
+	if !ok {
+		return fmt.Errorf("unsupported shell: %s (supported: %s)", shell, strings.Join(ManagedShells(), ", "))
+	}
+	shell = spec.Name
+	configFile := spec.ConfigPath(home)
+	rcLine := spec.RCLine(home)
+
+	// Nushell cannot evaluate a string, so config.nu sources a file instead of
+	// piping `bluefin-cli init` into the shell. Render that file here, before
+	// the line that sources it is written.
+	if enable && spec.GeneratedInit != "" {
+		if err := writeGeneratedInit(spec, home); err != nil {
+			return err
+		}
 	}
 
 	content, err := os.ReadFile(configFile)
 	if err != nil {
 		if os.IsNotExist(err) && enable {
-			// Create if doesn't exist and we are enabling
-			// For fish, ensure dir exists
-			if shell == "fish" {
-				if err := os.MkdirAll(filepath.Dir(configFile), 0755); err != nil {
-					return err
-				}
+			// Create if it doesn't exist and we are enabling. fish and nushell
+			// both keep their config under ~/.config, which may be absent.
+			if err := spec.ensureRCDir(home); err != nil {
+				return err
 			}
 			content = []byte("")
 		} else if os.IsNotExist(err) && !enable {
@@ -600,6 +601,14 @@ func Toggle(shell string, enable bool) error {
 		if _, err := f.WriteString(prefix + rcLine + "\n"); err != nil {
 			return err
 		}
+		// ash has no rc file of its own: an interactive shell reads whatever
+		// $ENV names. Writing ~/.ashrc alone leaves it dormant, so point $ENV
+		// at it from ~/.profile too.
+		if shell == "ash" {
+			if err := ensureAshENV(home); err != nil {
+				return err
+			}
+		}
 		fmt.Println(successStyle.Render(fmt.Sprintf("✓ Enabled shell experience for %s", shell)))
 	} else {
 		if !hasLine {
@@ -622,6 +631,16 @@ func Toggle(shell string, enable bool) error {
 
 		if err := os.WriteFile(configFile, []byte(output), 0644); err != nil {
 			return err
+		}
+		if shell == "ash" {
+			if err := removeAshENV(home); err != nil {
+				return err
+			}
+		}
+		if path := spec.GeneratedInitPath(home); path != "" {
+			if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+				return err
+			}
 		}
 		fmt.Println(successStyle.Render(fmt.Sprintf("✓ Disabled shell experience for %s", shell)))
 	}
@@ -791,31 +810,22 @@ func Init(shell string, config *Config) (string, error) {
 		return result, nil
 	}
 
+	// Unknown shells still render the POSIX script, as they always have: an
+	// unrecognized name reaching `init` is far more likely to be a
+	// sh-compatible shell than anything else.
+	spec, ok := LookupShell(shell)
+	if !ok {
+		spec = Shell{Name: shell, Flavor: "posix"}
+	}
+
 	for _, tool := range tools {
-		enabled := config.IsEnabled(tool.Name)
-
-		if shell == "fish" {
-			fmt.Fprintf(&sb, "set -gx %s %d\n", tool.GetEnvVar(), boolToInt(enabled))
-		} else {
-			fmt.Fprintf(&sb, "export %s=%d\n", tool.GetEnvVar(), boolToInt(enabled))
-		}
+		sb.WriteString(spec.exportVar(tool.GetEnvVar(), boolToInt(config.IsEnabled(tool.Name))))
 	}
-
-	if shell == "fish" {
-		fmt.Fprintf(&sb, "set -gx BLUEFIN_SHELL_ENABLE_MOTD %d\n", boolToInt(config.IsEnabled("Motd")))
-		fmt.Fprintf(&sb, "set -gx BLING_SHELL %s\n", shell)
-	} else {
-		fmt.Fprintf(&sb, "export BLUEFIN_SHELL_ENABLE_MOTD=%d\n", boolToInt(config.IsEnabled("Motd")))
-		fmt.Fprintf(&sb, "export BLING_SHELL=\"%s\"\n", shell)
-	}
+	sb.WriteString(spec.exportVar("BLUEFIN_SHELL_ENABLE_MOTD", boolToInt(config.IsEnabled("Motd"))))
+	sb.WriteString(spec.exportString("BLING_SHELL", spec.Name))
 
 	sb.WriteString("\n")
-
-	if shell == "fish" {
-		sb.WriteString(shellFishScript)
-	} else {
-		sb.WriteString(shellShScript)
-	}
+	sb.WriteString(spec.script())
 
 	result := sb.String()
 	saveInitCache(shell, result)
@@ -824,28 +834,19 @@ func Init(shell string, config *Config) (string, error) {
 
 func CheckStatus() map[string]bool {
 	status := make(map[string]bool)
-	shells := []string{"bash", "zsh", "fish"}
 	home, _ := os.UserHomeDir()
 
-	for _, shell := range shells {
-		var configFile string
-		switch shell {
-		case "bash":
-			configFile = filepath.Join(home, ".bashrc")
-		case "zsh":
-			configFile = filepath.Join(home, ".zshrc")
-		case "fish":
-			configFile = filepath.Join(home, ".config/fish/config.fish")
-		}
-
-		content, err := os.ReadFile(configFile)
+	for _, spec := range registry {
+		content, err := os.ReadFile(spec.ConfigPath(home))
 		if err != nil {
-			status[shell] = false
+			status[spec.Name] = false
 			continue
 		}
 
-		status[shell] = strings.Contains(string(content), shellMaker) || strings.Contains(string(content), "# bluefin-cli bling")
+		status[spec.Name] = strings.Contains(string(content), shellMaker) || strings.Contains(string(content), blingMarker)
 	}
+	// Nushell is spelled both ways in the wild; report it under both.
+	status["nushell"] = status["nu"]
 
 	status["powershell"] = checkPowerShellStatus()
 	status["pwsh"] = status["powershell"]
@@ -901,11 +902,10 @@ func CheckDependencies() map[string]bool {
 // GetInstalledShells returns a list of shells that are available in the PATH
 func GetInstalledShells() []string {
 	var installed []string
-	shells := []string{"bash", "zsh", "fish"}
 
-	for _, s := range shells {
-		if _, err := exec.LookPath(s); err == nil {
-			installed = append(installed, s)
+	for _, spec := range registry {
+		if spec.IsInstalled() {
+			installed = append(installed, spec.Name)
 		}
 	}
 
@@ -918,4 +918,74 @@ func GetInstalledShells() []string {
 	}
 
 	return installed
+}
+
+// writeGeneratedInit renders the init script for a shell that sources a file
+// rather than evaluating a pipe, and writes it next to that shell's config.
+func writeGeneratedInit(spec Shell, home string) error {
+	path := spec.GeneratedInitPath(home)
+	if path == "" {
+		return nil
+	}
+	if err := spec.ensureRCDir(home); err != nil {
+		return err
+	}
+	cfg, err := LoadConfig(spec.Name)
+	if err != nil {
+		cfg = DefaultConfig(spec.Name)
+	}
+	script, err := Init(spec.Name, cfg)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, []byte(script), 0644)
+}
+
+// ensureAshENV points $ENV at ~/.ashrc from ~/.profile, which is what makes
+// an interactive ash read the rc file at all. It is a no-op once the line is
+// present.
+func ensureAshENV(home string) error {
+	profile := filepath.Join(home, ".profile")
+	content, err := os.ReadFile(profile)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	text := string(content)
+	if strings.Contains(text, ashENVLine) {
+		return nil
+	}
+	prefix := "\n"
+	if len(text) == 0 || strings.HasSuffix(text, "\n") {
+		prefix = ""
+	}
+	f, err := os.OpenFile(profile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = f.Close() }()
+	_, err = f.WriteString(prefix + ashENVLine + "\n")
+	return err
+}
+
+// removeAshENV takes the $ENV line back out of ~/.profile. Only lines
+// carrying both the export and the bluefin marker are touched, so a user's
+// own $ENV setup survives.
+func removeAshENV(home string) error {
+	profile := filepath.Join(home, ".profile")
+	content, err := os.ReadFile(profile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	var kept []string
+	for _, line := range strings.Split(string(content), "\n") {
+		if strings.Contains(line, shellMaker) && strings.Contains(line, "ENV=") {
+			continue
+		}
+		kept = append(kept, line)
+	}
+	output := strings.TrimRight(strings.Join(kept, "\n"), "\n") + "\n"
+	return os.WriteFile(profile, []byte(output), 0644)
 }

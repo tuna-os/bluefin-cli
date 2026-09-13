@@ -18,7 +18,7 @@ type UninstallOptions struct {
 func UninstallSetup(opts UninstallOptions) error {
 	shells := opts.Shells
 	if len(shells) == 0 {
-		shells = []string{"powershell", "bash", "zsh", "fish"}
+		shells = append([]string{"powershell"}, ManagedShells()...)
 	}
 
 	var failures []string

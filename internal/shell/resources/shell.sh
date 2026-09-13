@@ -71,6 +71,22 @@ if [ -z "$BLING_SHELL" ]; then
     fi
 fi
 
+# Not every prompt or history tool speaks every POSIX shell. ash (busybox --
+# the default on Alpine and postmarketOS) has no init target in atuin,
+# starship or carapace, so those are skipped there instead of being handed a
+# shell name they reject. zoxide does support it, under the name "posix".
+# Anything else keeps the shell's own name, exactly as before.
+ZOXIDE_TARGET="$BLING_SHELL"
+case "$BLING_SHELL" in
+    ash|dash|sh)
+        BLUEFIN_SHELL_HAS_NATIVE_INIT=0
+        ZOXIDE_TARGET="posix"
+        ;;
+    *)
+        BLUEFIN_SHELL_HAS_NATIVE_INIT=1
+        ;;
+esac
+
 if [ "${BLING_SHELL}" = "zsh" ]; then
     # Ensure compdef is available for zoxide/carapace
     if ! command -v compdef >/dev/null 2>&1; then
@@ -87,13 +103,13 @@ fi
 
 # Initialize atuin before starship to ensure proper command history capture
 # See: https://github.com/atuinsh/atuin/issues/2804 
-[ "$BLUEFIN_SHELL_ENABLE_ATUIN" -eq 1 ] && [ "$(command -v atuin)" ] && eval "$(atuin init ${BLING_SHELL} ${ATUIN_INIT_FLAGS})"
+[ "$BLUEFIN_SHELL_HAS_NATIVE_INIT" -eq 1 ] && [ "$BLUEFIN_SHELL_ENABLE_ATUIN" -eq 1 ] && [ "$(command -v atuin)" ] && eval "$(atuin init ${BLING_SHELL} ${ATUIN_INIT_FLAGS})"
 
-[ "$BLUEFIN_SHELL_ENABLE_STARSHIP" -eq 1 ] && [ "$(command -v starship)" ] && eval "$(starship init ${BLING_SHELL})"
+[ "$BLUEFIN_SHELL_HAS_NATIVE_INIT" -eq 1 ] && [ "$BLUEFIN_SHELL_ENABLE_STARSHIP" -eq 1 ] && [ "$(command -v starship)" ] && eval "$(starship init ${BLING_SHELL})"
 
-[ "$BLUEFIN_SHELL_ENABLE_ZOXIDE" -eq 1 ] && [ "$(command -v zoxide)" ] && eval "$(zoxide init ${BLING_SHELL})"
+[ "$BLUEFIN_SHELL_ENABLE_ZOXIDE" -eq 1 ] && [ "$(command -v zoxide)" ] && eval "$(zoxide init ${ZOXIDE_TARGET})"
 
-[ "$BLUEFIN_SHELL_ENABLE_CARAPACE" -eq 1 ] && [ "$(command -v carapace)" ] && eval "$(carapace _carapace ${BLING_SHELL})"
+[ "$BLUEFIN_SHELL_HAS_NATIVE_INIT" -eq 1 ] && [ "$BLUEFIN_SHELL_ENABLE_CARAPACE" -eq 1 ] && [ "$(command -v carapace)" ] && eval "$(carapace _carapace ${BLING_SHELL})"
 
 if [ "$BLUEFIN_SHELL_ENABLE_MOTD" -eq 1 ] && [ -n "$PS1" ] && [ -t 1 ] && [ "$(command -v bluefin-cli)" ]; then
     bluefin-cli motd show

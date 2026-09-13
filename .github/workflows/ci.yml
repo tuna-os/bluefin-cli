@@ -208,6 +208,66 @@ jobs:
     - name: Run unit tests
       run: go test -tags extra ./...
 
+  shell-syntax:
+    name: Generated init scripts parse
+    runs-on: ubuntu-24.04
+
+    # The POSIX, fish, ash and nushell init scripts are only ever executed on a
+    # user's machine, so a syntax error in one of them ships silently and costs
+    # that user their prompt. Each generated script is parsed here by the shell
+    # it targets -- parse only, nothing is sourced or run
+    # (tuna-os/bluefin-cli#260).
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+
+    - name: Set up Go
+      uses: actions/setup-go@v7
+      with:
+        go-version: '1.27'
+
+    - name: Install shells
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y dash busybox fish
+        # Nushell is not packaged in Ubuntu; take the release tarball.
+        NU_VERSION=0.108.0
+        curl -fsSL -o /tmp/nu.tar.gz \
+          "https://github.com/nushell/nushell/releases/download/${NU_VERSION}/nu-${NU_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+        sudo tar -xzf /tmp/nu.tar.gz -C /usr/local/bin --strip-components=1 \
+          "nu-${NU_VERSION}-x86_64-unknown-linux-gnu/nu"
+        nu --version
+
+    - name: Build binary
+      run: go build -o bluefin-cli .
+
+    - name: bash / zsh / ash parse the POSIX script
+      run: |
+        set -eux
+        ./bluefin-cli init bash > /tmp/init-bash.sh
+        ./bluefin-cli init ash  > /tmp/init-ash.sh
+        bash -n /tmp/init-bash.sh
+        dash -n /tmp/init-ash.sh
+        busybox ash -n /tmp/init-ash.sh
+
+    - name: fish parses the fish script
+      run: |
+        set -eux
+        ./bluefin-cli init fish > /tmp/init.fish
+        fish --no-execute /tmp/init.fish
+
+    - name: nushell parses the nu script
+      run: |
+        set -eux
+        ./bluefin-cli init nu > /tmp/init.nu
+        # `nu --ide-check` parses the file and reports diagnostics without
+        # running it; a parse error makes it emit a diagnostic line.
+        nu --ide-check 100 /tmp/init.nu | tee /tmp/nu-check.txt
+        if grep -q '"type": *"diagnostic"' /tmp/nu-check.txt; then
+          echo "::error::nushell reported a diagnostic for the generated init script"
+          exit 1
+        fi
+
   goreleaser-check:
     name: goreleaser config
     runs-on: ubuntu-24.04

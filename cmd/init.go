@@ -14,7 +14,7 @@ var (
 )
 
 var initCmd = &cobra.Command{
-	Use:   "init [bash|zsh|fish|powershell|pwsh]",
+	Use:   "init [bash|zsh|fish|ash|nu|powershell|pwsh]",
 	Short: "Generate shell initialization script",
 	Long: `Generate the shell initialization script for bluefin-cli.
 Add the following to your shell configuration file:
@@ -30,9 +30,19 @@ Fish (~/.config/fish/config.fish):
 
 PowerShell ($PROFILE):
   Invoke-Expression (& bluefin-cli init powershell)
+
+Ash (~/.ashrc, with ENV="$HOME/.ashrc" exported from ~/.profile):
+  eval "$(bluefin-cli init ash)"
+
+Nushell (~/.config/nushell/config.nu) — nushell cannot evaluate a string, so
+the script is saved to a file and sourced from there:
+  bluefin-cli init nu | save -f ~/.config/nushell/bluefin-cli.nu
+  source ~/.config/nushell/bluefin-cli.nu
+
+'bluefin-cli shell enable <shell>' wires any of these up for you.
 `,
 	Args:      cobra.ExactArgs(1),
-	ValidArgs: []string{"bash", "zsh", "fish", "powershell", "pwsh"},
+	ValidArgs: []string{"bash", "zsh", "fish", "ash", "nu", "nushell", "powershell", "pwsh"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		shellName := args[0]
 
