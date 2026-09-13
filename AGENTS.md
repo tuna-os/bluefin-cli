@@ -20,7 +20,12 @@ The repository produces two binaries from the same source:
   Nushell, and PowerShell. The user-facing command is wired in `cmd/shell.go`.
   `shells.go` holds the registry of managed shells: one entry per shell with
   its rc path, init line and syntax flavor. Add a shell there rather than in
-  the functions that read it.
+  the functions that read it. Installation backends are separate from
+  rendering: `installers.go` holds the shared entry points and the Homebrew
+  path, `windows_tools.go` the winget/PowerShell path, `install_alpine.go` the
+  coldbrew/apk path, and `shell.go` keeps only enablement, init rendering and
+  status. Do not name a new file with a `_windows`/`_linux`/`_darwin` suffix
+  unless you mean the GOOS build constraint that comes with it.
 - `internal/install/` handles packages, bundles, and wallpaper collections.
   Brewfiles and wallpaper metadata are embedded from
   `internal/install/resources/`; update them with `just update-resources`, which
