@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '0 0 * * 1' # Every Monday at 00:00 UTC
   workflow_dispatch: # Allow manual trigger
+# Least privilege by default: every job in this file starts read-only and
+# must widen its own `permissions:` block to do more.
+permissions:
+  contents: read
+
 
 jobs:
   update:

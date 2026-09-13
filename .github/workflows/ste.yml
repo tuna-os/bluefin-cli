@@ -33,7 +33,18 @@ on:
       - .ste-budget
       - .github/workflows/ste.yml
   workflow_dispatch:
+# Least privilege by default: every job in this file starts read-only and
+# must widen its own `permissions:` block to do more.
+permissions:
+  contents: read
+
 
 jobs:
   ste:
+    # The shared linter reports findings on the pull request, so it needs more
+    # than the read-only default this file sets. Still narrower than the
+    # implicit write-all a same-repo event would otherwise hand it.
+    permissions:
+      contents: read
+      pull-requests: write
     uses: tuna-os/.github/.github/workflows/ste-lint.yml@main

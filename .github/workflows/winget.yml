@@ -38,6 +38,7 @@ jobs:
           INPUT_ASSET_URL: ${{ inputs.asset_url }}
           EVENT_NAME: ${{ github.event_name }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
+          REPOSITORY: ${{ github.repository }}
         shell: pwsh
         run: |
           if ("$env:EVENT_NAME" -eq "release") {
@@ -50,16 +51,30 @@ jobs:
             throw "Version/tag is empty"
           }
 
+          # The tag reaches a command line and a URL further down, so pin its
+          # shape here rather than trusting the dispatcher (#270). Anything
+          # outside a plain semver-ish tag is rejected outright.
+          if ($tag -notmatch '^v?[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.\-]+)?$') {
+            throw "Refusing tag with unexpected characters: $tag"
+          }
+
           $version = $tag.TrimStart('v')
           if ([string]::IsNullOrWhiteSpace($version)) {
             throw "Normalized version is empty"
           }
 
-          $repo = "${{ github.repository }}"
+          $repo = $env:REPOSITORY
 
           $manualUrl = "$env:INPUT_ASSET_URL"
           if (-not [string]::IsNullOrWhiteSpace($manualUrl)) {
-            $assetUrl = $manualUrl
+            # An operator-supplied URL is still only a URL: require https and a
+            # well-formed absolute address before it becomes a wingetcreate arg.
+            $parsed = $null
+            if (-not [System.Uri]::TryCreate($manualUrl, [System.UriKind]::Absolute, [ref]$parsed) -or
+                $parsed.Scheme -ne 'https') {
+              throw "asset_url must be an absolute https URL"
+            }
+            $assetUrl = $parsed.AbsoluteUri
           } else {
             $assetUrl = "https://github.com/$repo/releases/download/$tag/bluefin-cli_${version}_windows_amd64.zip"
           }
@@ -75,8 +90,10 @@ jobs:
 
       - name: Wait for Release Assets
         shell: pwsh
+        env:
+          RESOLVED_ASSET_URL: ${{ steps.resolve.outputs.asset_url }}
         run: |
-          $url = "${{ steps.resolve.outputs.asset_url }}"
+          $url = $env:RESOLVED_ASSET_URL
           Write-Host "Waiting for asset to be available at: $url"
           $maxRetries = 10
           $retryCount = 0
@@ -103,10 +120,13 @@ jobs:
 
       - name: Submit update
         shell: pwsh
+        env:
+          RESOLVED_VERSION: ${{ steps.resolve.outputs.version }}
+          RESOLVED_ASSET_URL: ${{ steps.resolve.outputs.asset_url }}
         run: |
           $pkg = $env:PACKAGE_ID
-          $ver = "${{ steps.resolve.outputs.version }}"
-          $url = "${{ steps.resolve.outputs.asset_url }}"
+          $ver = $env:RESOLVED_VERSION
+          $url = $env:RESOLVED_ASSET_URL
           $token = $env:WINGET_TOKEN
 
           Write-Host "Submitting to winget-pkgs: $pkg $ver"

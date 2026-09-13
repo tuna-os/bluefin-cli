@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+	"time"
 
 	"charm.land/lipgloss/v2"
 	"github.com/spf13/viper"
@@ -143,10 +144,19 @@ func GetBrewfile(nameOrPath string) (string, func(), error) {
 	embeddedPath := "resources/brewfiles/" + bundle.File
 	data, err := EmbeddedBrewfiles.ReadFile(embeddedPath)
 	if err == nil {
-		tmpDir := os.TempDir()
-		brewfilePath := filepath.Join(tmpDir, bundle.File)
-		if err := os.WriteFile(brewfilePath, data, 0644); err != nil {
-			return "", func() {}, fmt.Errorf("failed to write embedded bundle to disk: %w", err)
+		f, err := os.CreateTemp("", "bluefin-embedded-*.Brewfile")
+		if err != nil {
+			return "", func() {}, fmt.Errorf("failed to create temp file for embedded bundle: %w", err)
+		}
+		brewfilePath := f.Name()
+		_, writeErr := f.Write(data)
+		closeErr := f.Close()
+		if writeErr == nil {
+			writeErr = closeErr
+		}
+		if writeErr != nil {
+			_ = os.Remove(brewfilePath)
+			return "", func() {}, fmt.Errorf("failed to write embedded bundle to disk: %w", writeErr)
 		}
 		fmt.Println(infoStyle.Render(fmt.Sprintf("📦 Using embedded %s bundle...", nameOrPath)))
 		return brewfilePath, func() { _ = os.Remove(brewfilePath) }, nil
@@ -159,12 +169,17 @@ func GetBrewfile(nameOrPath string) (string, func(), error) {
 	}
 
 	url := fmt.Sprintf("%s/%s/%s", viper.GetString("bundles.base_url"), path, bundle.File)
-	tmpDir := os.TempDir()
-	brewfilePath := filepath.Join(tmpDir, bundle.File)
+	f, err := os.CreateTemp("", "bluefin-download-*.Brewfile")
+	if err != nil {
+		return "", func() {}, fmt.Errorf("failed to create temp file for downloaded bundle: %w", err)
+	}
+	brewfilePath := f.Name()
+	_ = f.Close()
 
 	fmt.Println(infoStyle.Render(fmt.Sprintf("⬇️  Downloading %s bundle from %s...", nameOrPath, url)))
 
 	if err := downloadFile(url, brewfilePath); err != nil {
+		_ = os.Remove(brewfilePath)
 		return "", func() {}, fmt.Errorf("failed to download bundle: %w", err)
 	}
 
@@ -254,7 +269,8 @@ func ListBundles() {
 }
 
 func downloadFile(url, filepath string) error {
-	resp, err := http.Get(url)
+	client := &http.Client{Timeout: 5 * time.Minute}
+	resp, err := client.Get(url)
 	if err != nil {
 		return err
 	}

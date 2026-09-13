@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "30 7 * * *"
   workflow_dispatch:
+# Least privilege by default: every job in this file starts read-only and
+# must widen its own `permissions:` block to do more.
+permissions:
+  contents: read
+
 
 jobs:
   windows-automation-check:

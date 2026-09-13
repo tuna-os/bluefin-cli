@@ -6,16 +6,40 @@ on:
   pull_request:
     branches: [ main ]
 
-# Superseded runs waste the queue; only the newest per ref matters.
+# Superseded PR pushes waste the queue, so only the newest run per pull request
+# matters. Pushes to main are NOT cancelled (tuna-os/bluefin-cli#257): main runs
+# are the release gate and each commit needs its own verdict, so evicting an
+# in-flight run reports a real failure as "cancelled" and lets it through.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Least privilege by default: every job in this file starts read-only and
+# must widen its own `permissions:` block to do more.
+permissions:
+  contents: read
 
 jobs:
+  # bluefin-cli ships two binaries from mutually exclusive build tags: the
+  # standard one compiles `!extra`, bluefin-cli-plus compiles `extra`
+  # (tuna-os/bluefin-cli#264). Variant is a matrix dimension so each shipped
+  # artifact is built and tested as itself. Previously this job built a
+  # standard binary and then ran the suite with `-tags extra`, so the
+  # integration tests under ./test/ exec'd a standard binary while the
+  # in-process cmd package was compiled as extra -- a mix that describes
+  # neither released product.
   test:
-    name: Run Tests
+    name: Run Tests (${{ matrix.variant }})
     runs-on: ubuntu-24.04
-    
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: standard
+            tags: ''
+          - variant: extra
+            tags: extra
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v7
@@ -28,16 +52,17 @@ jobs:
     - name: Download dependencies
       run: go mod download
 
-    - name: Build binary for integration tests
-      run: go build -o bluefin-cli .
+    - name: Build ${{ matrix.variant }} binary for integration tests
+      run: go build ${{ matrix.tags && format('-tags {0}', matrix.tags) || '' }} -o bluefin-cli .
 
     - name: Run unit tests
-      run: go test -tags extra -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+      run: go test ${{ matrix.tags && format('-tags {0}', matrix.tags) || '' }} -v -race -coverprofile=coverage.txt -covermode=atomic ./...
       
     - name: Upload coverage
       uses: codecov/codecov-action@v7
       with:
         files: ./coverage.txt
+        flags: ${{ matrix.variant }}
         token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: false
 
@@ -66,9 +91,19 @@ jobs:
     - name: Run TUI state suite
       run: ./scripts/tui-state.sh ./bluefin-cli-smoke
 
+  # Same variant matrix as `test`: ./test/ execs the binary at the repo root,
+  # so each variant has to be exercised against its own build.
   integration-test:
-    name: Integration Tests
+    name: Integration Tests (${{ matrix.variant }})
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: standard
+            tags: ''
+          - variant: extra
+            tags: extra
 
     steps:
     - name: Checkout code
@@ -79,11 +114,11 @@ jobs:
       with:
         go-version: '1.27'
 
-    - name: Build binary
-      run: go build -tags extra -o bluefin-cli .
+    - name: Build ${{ matrix.variant }} binary
+      run: go build ${{ matrix.tags && format('-tags {0}', matrix.tags) || '' }} -o bluefin-cli .
 
     - name: Run integration tests
-      run: go test -v ./test/...
+      run: go test ${{ matrix.tags && format('-tags {0}', matrix.tags) || '' }} -v ./test/...
 
   container-test:
     name: Container-based Tests
