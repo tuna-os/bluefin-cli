@@ -440,7 +440,7 @@ func TestFedoraReleaseIsSupported(t *testing.T) {
 func sandboxHome(t *testing.T) string {
 	t.Helper()
 	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setTestHome(t, home)
 	t.Setenv("HOMEBREW_PREFIX", "")
 	configDir := filepath.Join(home, ".config", "bluefin-cli")
 	if err := os.MkdirAll(configDir, 0755); err != nil {
@@ -703,7 +703,7 @@ func TestDisableEnable_RoundTrip(t *testing.T) {
 
 func TestDisable_EnsureConfigDirError(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setTestHome(t, home)
 	t.Setenv("HOMEBREW_PREFIX", "")
 
 	// A plain file where the config directory needs to be makes
@@ -715,5 +715,20 @@ func TestDisable_EnsureConfigDirError(t *testing.T) {
 
 	if err := Disable(); err == nil {
 		t.Error("Disable() should return an error when the config directory cannot be created")
+	}
+}
+
+// setTestHome points os.UserHomeDir -- which env.GetConfigDir resolves the
+// config directory through -- at dir for the duration of the test.
+//
+// Setting HOME alone is not enough: on Windows os.UserHomeDir reads
+// %USERPROFILE% and ignores HOME, so a HOME-only sandbox either fails
+// outright or, worse, resolves to the real profile and writes the test's
+// state into the user's actual config directory.
+func setTestHome(t *testing.T, dir string) {
+	t.Helper()
+	t.Setenv("HOME", dir)
+	if runtime.GOOS == "windows" {
+		t.Setenv("USERPROFILE", dir)
 	}
 }

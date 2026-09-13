@@ -3,9 +3,24 @@ package shell
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
+
+// setTestHome points os.UserHomeDir at dir for the duration of the test.
+//
+// Setting HOME alone is not enough: on Windows os.UserHomeDir reads
+// %USERPROFILE% and ignores HOME entirely, so these tests failed the
+// windows job with "%userprofile% is not defined" while passing on Linux.
+// Both are set so the same test body works on either platform.
+func setTestHome(t *testing.T, dir string) {
+	t.Helper()
+	t.Setenv("HOME", dir)
+	if runtime.GOOS == "windows" {
+		t.Setenv("USERPROFILE", dir)
+	}
+}
 
 func TestNormalizeShell(t *testing.T) {
 	cases := map[string]string{
@@ -57,7 +72,7 @@ func TestManagedShells_IncludesAshAndNu(t *testing.T) {
 // `$env.NAME = "0|1"`; a POSIX `export` line is a parse error in nushell and
 // would break every startup.
 func TestInit_NuUsesNushellSyntax(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
+	setTestHome(t, t.TempDir())
 	script, err := Init("nu", DefaultConfig("nu"))
 	if err != nil {
 		t.Fatal(err)
@@ -78,7 +93,7 @@ func TestInit_NuUsesNushellSyntax(t *testing.T) {
 // TestInit_AshUsesPosixSyntaxAndScript ash shares the POSIX script but must
 // identify itself, so the script can skip the tools with no ash init target.
 func TestInit_AshUsesPosixSyntaxAndScript(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
+	setTestHome(t, t.TempDir())
 	script, err := Init("ash", DefaultConfig("ash"))
 	if err != nil {
 		t.Fatal(err)
@@ -97,7 +112,7 @@ func TestInit_AshUsesPosixSyntaxAndScript(t *testing.T) {
 // TestInit_AliasRendersCanonicalName `init sh` and `init nushell` must render
 // the same script as their canonical names rather than a third variant.
 func TestInit_AliasRendersCanonicalName(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
+	setTestHome(t, t.TempDir())
 	for alias, canonical := range map[string]string{"sh": "ash", "nushell": "nu"} {
 		viaAlias, err := Init(alias, DefaultConfig(alias))
 		if err != nil {
@@ -114,7 +129,7 @@ func TestInit_AliasRendersCanonicalName(t *testing.T) {
 // first and the feature silently does nothing.
 func TestToggle_AshWiresUpENV(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setTestHome(t, home)
 
 	if err := Toggle("ash", true); err != nil {
 		t.Fatalf("Toggle(ash, true): %v", err)
@@ -149,7 +164,7 @@ func TestToggle_AshWiresUpENV(t *testing.T) {
 // line bluefin-cli wrote, never a user's own $ENV setup.
 func TestToggle_AshPreservesUnrelatedProfileLines(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setTestHome(t, home)
 
 	userLine := `export ENV="$HOME/.my-own-rc"`
 	writeFile(t, filepath.Join(home, ".profile"), userLine+"\n")
@@ -171,7 +186,7 @@ func TestToggle_AshPreservesUnrelatedProfileLines(t *testing.T) {
 // sources a file which was never written breaks every nushell start.
 func TestToggle_NuRendersSourcedFile(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setTestHome(t, home)
 
 	if err := Toggle("nu", true); err != nil {
 		t.Fatalf("Toggle(nu, true): %v", err)
@@ -199,7 +214,7 @@ func TestToggle_NuRendersSourcedFile(t *testing.T) {
 // TestToggle_UnsupportedShellNamesTheSupportedOnes a typo should say what is
 // actually accepted rather than just rejecting the input.
 func TestToggle_UnsupportedShellNamesTheSupportedOnes(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
+	setTestHome(t, t.TempDir())
 	err := Toggle("elvish", true)
 	if err == nil {
 		t.Fatal("Toggle on an unsupported shell should fail")
