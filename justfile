@@ -255,41 +255,11 @@ fmt:
 gen-docs: build
     @./bluefin-cli docs --dest ./docs/commands
 
-# Update embedded resources (Brewfiles) from upstream
+# Update embedded resources (Brewfiles, wallpaper casks) from upstream.
+# Also rewrites internal/install/resources/PROVENANCE.json, which records the
+# upstream commit and a digest for every embedded file; CI holds the tree to it.
 update-resources:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    BASE_URL="https://raw.githubusercontent.com/projectbluefin/common/main/system_files"
-    DEFAULT_PATH="shared/usr/share/ublue-os/homebrew"
-    BLUEFIN_PATH="bluefin/usr/share/ublue-os/homebrew"
-    
-    mkdir -p internal/install/resources/brewfiles
-    
-    FILES=(
-        "ai-tools.Brewfile"
-        "cli.Brewfile"
-        "cncf.Brewfile"
-        "experimental-ide.Brewfile"
-        "fonts.Brewfile"
-        "ide.Brewfile"
-        "k8s-tools.Brewfile"
-    )
-    
-    echo "Updating common Brewfiles..."
-    for file in "${FILES[@]}"; do
-        echo "  -> $file"
-        curl -sSfL "$BASE_URL/$DEFAULT_PATH/$file" -o "internal/install/resources/brewfiles/$file"
-    done
-    
-    echo "Updating Bluefin-specific Brewfiles..."
-    echo "  -> full-desktop.Brewfile"
-    curl -sSfL "$BASE_URL/$BLUEFIN_PATH/full-desktop.Brewfile" -o "internal/install/resources/brewfiles/full-desktop.Brewfile"
-    echo "Updating wallpaper cask list from ublue-os/homebrew-tap..."
-    curl -sSfL "https://api.github.com/repos/ublue-os/homebrew-tap/contents/Casks" \
-        | python3 -c "import sys,json;entries=json.load(sys.stdin);casks=sorted(e['name'].removesuffix('.rb') for e in entries if e['type']=='file' and e['name'].endswith('.rb') and 'wallpaper' in e['name'].lower());print(json.dumps(casks,indent=2))" \
-        > internal/install/resources/wallpaper-casks.json
-    echo "  -> wallpaper-casks.json"
-    echo "Update complete!"
+    @python3 scripts/update-resources.py
 
 # Regenerate the embedded Homebrew-to-Winget package mapping on Windows.
 update-winget-mapping:

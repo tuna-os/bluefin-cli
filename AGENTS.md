@@ -23,7 +23,10 @@ The repository produces two binaries from the same source:
   the functions that read it.
 - `internal/install/` handles packages, bundles, and wallpaper collections.
   Brewfiles and wallpaper metadata are embedded from
-  `internal/install/resources/`; update them with `just update-resources`.
+  `internal/install/resources/`; update them with `just update-resources`, which
+  also rewrites `resources/PROVENANCE.json`. That manifest pins each embedded
+  file to an upstream commit and a digest, and `provenance_test.go` fails if the
+  tree and the manifest disagree -- so do not hand-edit an embedded resource.
 - `internal/tui/app/` implements the persistent screen stack, shared header and
   footer, command palette, and runners for external or streaming operations.
   Menus and actions are registered from `cmd/menu.go` and related `cmd/menu_*`
