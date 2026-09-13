@@ -330,6 +330,103 @@ jobs:
           exit 1
         fi
 
+  shell-experience:
+    name: Shell experience (behavioral)
+    runs-on: ubuntu-24.04
+
+    # The syntax job proves each generated init script parses. Parsing is a weak
+    # gate: `zoxide init posix` without a hook parses fine and then prints
+    # "PWD hooks are not supported on POSIX shells" over the user's first prompt
+    # with zoxide never loading, and a bare `return` parses fine and then errors
+    # at the top level of the `eval` that .bashrc actually uses. Both shipped.
+    #
+    # This job starts each shell for real, evaluates the init the way that
+    # shell's documented rc line does, and asserts the experience the user
+    # gets: the aliases exist, the integrations loaded, PATH carries the uutils
+    # directories when they are enabled, and nothing was printed on the way.
+    #
+    # The tools are really installed, so the assertions test the loaded path
+    # rather than the absent one.
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+
+    - name: Set up Go
+      uses: actions/setup-go@v7
+      with:
+        go-version: '1.27'
+
+    - name: Install shells and the tools the experience wires up
+      run: |
+        set -eux
+        sudo apt-get update
+        sudo apt-get install -y zsh fish dash busybox eza bat fzf zoxide ugrep
+        # PowerShell is a first-class target (`init powershell`). The Windows
+        # job below covers the paths that only exist on Windows.
+        PWSH_VERSION=7.4.6
+        curl -fsSL -o /tmp/pwsh.tar.gz \
+          "https://github.com/PowerShell/PowerShell/releases/download/v${PWSH_VERSION}/powershell-${PWSH_VERSION}-linux-x64.tar.gz"
+        sudo mkdir -p /opt/pwsh && sudo tar -xzf /tmp/pwsh.tar.gz -C /opt/pwsh
+        sudo chmod +x /opt/pwsh/pwsh && sudo ln -sf /opt/pwsh/pwsh /usr/local/bin/pwsh
+        # Nushell is not packaged for Ubuntu; take the release tarball.
+        NU_VERSION=0.108.0
+        curl -fsSL -o /tmp/nu.tar.gz \
+          "https://github.com/nushell/nushell/releases/download/${NU_VERSION}/nu-${NU_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+        sudo tar -xzf /tmp/nu.tar.gz -C /usr/local/bin --strip-components=1 \
+          "nu-${NU_VERSION}-x86_64-unknown-linux-gnu/nu"
+        # starship has no Ubuntu package either, and it is the one integration
+        # with a prompt hook in every shell.
+        curl -fsSL https://starship.rs/install.sh | sudo sh -s -- --yes >/dev/null
+        for t in zsh fish dash busybox eza fzf zoxide ug nu starship pwsh; do
+          command -v "$t" >/dev/null || { echo "::error::$t did not install"; exit 1; }
+        done
+
+    - name: Build binary
+      run: go build -o bluefin-cli .
+
+    - name: Assert the shell experience in every shell
+      run: ./scripts/shell-experience.sh ./bluefin-cli
+
+  shell-experience-windows:
+    name: Shell experience (PowerShell on Windows)
+    runs-on: windows-2025
+
+    # PowerShell is the shell bluefin-cli ships for Windows, and shell.ps1's
+    # executable lookup probes LOCALAPPDATA, the WinGet Links directory and
+    # ProgramFiles -- paths that exist nowhere else. The Linux leg covers the
+    # scoping rules; this one covers the lookup finding anything at all.
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+
+    - name: Set up Go
+      uses: actions/setup-go@v7
+      with:
+        go-version: '1.27'
+
+    - name: Install the tools the experience wires up
+      shell: pwsh
+      # A tool that fails to install is a skipped assertion rather than a red
+      # job: the point here is the Windows lookup path, and a flaky package
+      # feed should not be able to fail the build.
+      run: |
+        choco install eza zoxide -y --no-progress 2>&1 | Out-Null
+        foreach ($t in @('eza', 'zoxide')) {
+          if (Get-Command $t -ErrorAction SilentlyContinue) {
+            "$t installed"
+          } else {
+            "::warning::$t unavailable on this runner; its assertions will skip"
+          }
+        }
+
+    - name: Build binary
+      shell: pwsh
+      run: go build -o bluefin-cli.exe .
+
+    - name: Assert the PowerShell experience
+      shell: pwsh
+      run: ./scripts/shell-experience.ps1 ./bluefin-cli.exe
+
   docs-current:
     name: docs/commands is current
     runs-on: ubuntu-24.04

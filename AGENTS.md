@@ -57,6 +57,23 @@ just gen-docs                 # regenerate docs/commands
 Use `just --list` for the complete recipe list. Podman is required by the
 container-based recipes.
 
+Three shell suites sit under `scripts/`, and they check different things:
+`tui-smoke.sh` asserts what appears on screen, `tui-state.sh` asserts what
+lands in config files, and `shell-experience.sh` starts each supported shell
+and asserts the experience the init script produces -- the aliases, the
+prompt, PATH, and that startup stays silent. Run it with
+`scripts/shell-experience.sh <binary> [shell ...]`; it covers bash, zsh, ash,
+dash, fish, nushell and pwsh, and skips any shell that is not installed, so it
+is useful locally with only bash. `shell-experience.ps1` runs the PowerShell
+half on Windows, where shell.ps1's executable lookup probes paths that exist
+nowhere else.
+
+Two scoping rules have already cost this repo silent breakage, and both are
+easy to reintroduce: nushell's `alias` is parse-time, so one written inside an
+`if` is scoped away (hence the generated aliases in `nu_aliases.go`), and
+PowerShell scopes a `function` declared inside a function to its parent, so
+the user-facing ones in `shell.ps1` must be `global:`.
+
 ## Change guidelines
 
 - Put shared behavior in the relevant `internal/` package, and keep the

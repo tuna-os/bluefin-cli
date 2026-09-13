@@ -1,3 +1,11 @@
+# Note on scoping, which this file got wrong for a long time: PowerShell scopes
+# a `function` declared inside another function to that parent, and discards it
+# when the parent returns. Every user-facing function below was therefore gone
+# by the time bluefin_init finished, so ll, ls, cat, grep and sudo were never
+# actually defined for anyone. They are declared `global:` for that reason, and
+# the executables they call are held in global variables too -- a `$script:`
+# reference to a variable that was assigned locally reads as empty, so the
+# functions would have run `& $null` even if they had survived.
 function bluefin_init {
     function Get-BluefinExecutable {
         param([string]$Name)
@@ -28,18 +36,42 @@ function bluefin_init {
     function Invoke-CachedInit {
         param([string]$Exe)
 
-        $cacheDir = "$env:LOCALAPPDATA\bluefin-cli\shell-cache"
+        # PowerShell runs on Linux and macOS too, where LOCALAPPDATA does not
+        # exist. Interpolating it empty produced "\bluefin-cli\shell-cache",
+        # which is an absolute path at the filesystem root there: a normal user
+        # got "Access to the path '/bluefin-cli' is denied" printed at every
+        # shell start with zoxide and starship then never initializing, and a
+        # root shell quietly created /bluefin-cli instead. Join-Path keeps the
+        # separators right on each platform.
+        $cacheRoot = $env:LOCALAPPDATA
+        if (-not $cacheRoot) { $cacheRoot = $env:XDG_CACHE_HOME }
+        if (-not $cacheRoot) {
+            $home_ = if ($env:HOME) { $env:HOME } else { $env:USERPROFILE }
+            if ($home_) { $cacheRoot = Join-Path $home_ '.cache' }
+        }
+        if (-not $cacheRoot) { $cacheRoot = [System.IO.Path]::GetTempPath() }
+
+        $cacheDir = Join-Path (Join-Path $cacheRoot 'bluefin-cli') 'shell-cache'
+        # Exposed so the location can be inspected -- by a user debugging a
+        # stale cache, and by scripts/shell-experience.sh, which asserts it
+        # lands somewhere writable rather than re-deriving the path itself.
+        $global:BluefinShellCacheDir = $cacheDir
         if (-not (Test-Path $cacheDir)) {
-            $null = New-Item -ItemType Directory -Path $cacheDir -Force
+            $null = New-Item -ItemType Directory -Path $cacheDir -Force -ErrorAction SilentlyContinue
+        }
+        if (-not (Test-Path $cacheDir)) {
+            # Without a usable cache, still initialize the tool -- just without
+            # the startup saving. Failing to cache must not cost the feature.
+            return (& $Exe init powershell | Out-String)
         }
 
         $exeName = [System.IO.Path]::GetFileNameWithoutExtension($Exe)
         $exeMtime = (Get-Item $Exe).LastWriteTimeUtc.Ticks
-        $cacheFile = "$cacheDir\$exeName-$exeMtime.ps1"
+        $cacheFile = Join-Path $cacheDir "$exeName-$exeMtime.ps1"
 
         if (-not (Test-Path $cacheFile)) {
             # Remove stale cache files for this executable before writing the new one
-            Get-ChildItem "$cacheDir\$exeName-*.ps1" -ErrorAction SilentlyContinue | Remove-Item -Force
+            Get-ChildItem (Join-Path $cacheDir "$exeName-*.ps1") -ErrorAction SilentlyContinue | Remove-Item -Force
             & $Exe init powershell | Out-File $cacheFile -Encoding utf8
         }
 
@@ -93,31 +125,31 @@ function bluefin_init {
         Invoke-CachedInit $starshipExe
     }
 
-    $ezaExe = Get-BluefinExecutable "eza"
+    $global:BluefinEzaExe = Get-BluefinExecutable "eza"
     if ($env:BLUEFIN_SHELL_ENABLE_EZA -eq "1") {
-        if ($ezaExe) {
-            function ll { & $script:ezaExe -al --icons=auto --group-directories-first }
-            function ls { & $script:ezaExe --icons=auto --group-directories-first }
+        if ($global:BluefinEzaExe) {
+            function global:ll { & $global:BluefinEzaExe -al --icons=auto --group-directories-first }
+            function global:ls { & $global:BluefinEzaExe --icons=auto --group-directories-first }
         }
     }
 
-    $batExe = Get-BluefinExecutable "bat"
+    $global:BluefinBatExe = Get-BluefinExecutable "bat"
     if ($env:BLUEFIN_SHELL_ENABLE_BAT -eq "1") {
-        if ($batExe) {
-            function cat { & $script:batExe @Args }
+        if ($global:BluefinBatExe) {
+            function global:cat { & $global:BluefinBatExe @Args }
         }
     }
 
-    $ugrepExe = Get-BluefinExecutable "ug"
+    $global:BluefinUgrepExe = Get-BluefinExecutable "ug"
     if ($env:BLUEFIN_SHELL_ENABLE_UGREP -eq "1") {
-        if ($ugrepExe) {
-            function grep { & $script:ugrepExe @Args }
+        if ($global:BluefinUgrepExe) {
+            function global:grep { & $global:BluefinUgrepExe @Args }
         }
     }
 
-    $gsudoExe = Get-BluefinExecutable "gsudo"
-    if ($env:BLUEFIN_SHELL_ENABLE_GSUDO -eq "1" -and $gsudoExe) {
-        function sudo { & $script:gsudoExe @Args }
+    $global:BluefinGsudoExe = Get-BluefinExecutable "gsudo"
+    if ($env:BLUEFIN_SHELL_ENABLE_GSUDO -eq "1" -and $global:BluefinGsudoExe) {
+        function global:sudo { & $global:BluefinGsudoExe @Args }
     }
 
     $bluefinCliExe = Get-BluefinExecutable "bluefin-cli"

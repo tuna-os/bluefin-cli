@@ -11,24 +11,11 @@
 # plain, long-stable nushell: it is generated once and then parsed on every
 # shell start, where a syntax error costs the user their prompt.
 
-# ls aliases
-if $env.BLUEFIN_SHELL_ENABLE_EZA == "1" and (which eza | is-not-empty) {
-    alias ll = eza -l --icons=auto --group-directories-first
-    alias ls = eza
-    alias l1 = eza -1
-}
-
-# ugrep for grep
-if $env.BLUEFIN_SHELL_ENABLE_UGREP == "1" and (which ug | is-not-empty) {
-    alias grep = ug
-    alias egrep = ug -E
-    alias fgrep = ug -F
-}
-
-# bat for cat
-if $env.BLUEFIN_SHELL_ENABLE_BAT == "1" and (which bat | is-not-empty) {
-    alias cat = bat --style=plain --pager=never
-}
+# The aliases are not here on purpose. Nushell's `alias` is a parse-time
+# keyword, so one written inside an `if` belongs to that block's scope and is
+# gone when the block ends -- these same aliases lived in conditionals here and
+# defined nothing at all. `bluefin-cli init nu` now emits the ones that apply
+# above this point, at the top level. See internal/shell/nu_aliases.go.
 
 # Homebrew prefix, resolved the same way shell.sh resolves it.
 if ($env.HOMEBREW_PREFIX? | is-empty) {
