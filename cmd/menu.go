@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -127,6 +128,57 @@ func currentShellName() string {
 	return name
 }
 
+// runWithHomebrew runs task in a RunnerScreen, first settling the question of
+// Homebrew if the task will need it.
+//
+// Tool installation needs brew, and the old code asked for it from inside the
+// runner -- where Bubble Tea still holds the keyboard, so the confirm rendered
+// nowhere and the runner span forever (tuna-os/bluefin-cli#273). The decision
+// belongs here on the menu thread, where a form screen can own input; the
+// install itself then runs inside the same runner as the task, so its output
+// lands in one log.
+//
+// A failed or declined install is not fatal: the shell configuration still
+// applies, and InstallTools reports the tools it had to skip.
+func runWithHomebrew(title string, task func() error) tea.Cmd {
+	if !homebrewConfirmNeeded() {
+		return app.Push(app.NewRunner(title, task))
+	}
+
+	var install bool
+	build := func() *huh.Form {
+		install = false
+		return huh.NewForm(huh.NewGroup(
+			huh.NewConfirm().
+				Title("Install Homebrew?").
+				Description("Homebrew is missing, and bluefin-cli needs it to install the tools you enabled.\nAnswer no to configure the shell and skip the tools.").
+				Value(&install),
+		)).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap())
+	}
+
+	return app.Push(app.NewForm("Homebrew", build, func(aborted bool) tea.Cmd {
+		wanted := !aborted && install
+		return app.Push(app.NewRunner(title, func() error {
+			if wanted {
+				if err := shell.InstallHomebrew(); err != nil {
+					fmt.Println("Homebrew install failed, continuing without it:", err)
+				}
+			}
+			return task()
+		}))
+	}))
+}
+
+// homebrewConfirmNeeded reports whether this machine would hit the missing-brew
+// path. Windows installs through winget and Alpine through apk, so neither ever
+// asks.
+func homebrewConfirmNeeded() bool {
+	if runtime.GOOS == "windows" || env.IsAlpine() {
+		return false
+	}
+	return !shell.HomebrewAvailable()
+}
+
 func shellMenuScreen() app.Screen {
 	items := func() []app.MenuItem {
 		current := currentShellName()
@@ -153,9 +205,12 @@ func shellMenuScreen() app.Screen {
 			if enabled {
 				verb = "Disabling"
 			}
-			return app.Push(app.NewRunner(verb+" "+current, func() error {
-				return shell.Toggle(current, !enabled)
-			}))
+			task := func() error { return shell.Toggle(current, !enabled) }
+			if enabled {
+				// Disabling only rewrites the rc file; it never installs.
+				return app.Push(app.NewRunner(verb+" "+current, task))
+			}
+			return runWithHomebrew(verb+" "+current, task)
 		case "components":
 			return app.Push(componentsFormScreen())
 		case "motd":
@@ -215,10 +270,10 @@ func componentsFormScreen() app.Screen {
 			return app.Toast("Error: "+err.Error(), true)
 		}
 		return tea.Sequence(
-			app.Push(app.NewRunner("Installing tools", func() error {
+			runWithHomebrew("Installing tools", func() error {
 				shell.InstallTools(current, newCfg)
 				return nil
-			})),
+			}),
 			app.Toast("Components saved.", false),
 		)
 	})
