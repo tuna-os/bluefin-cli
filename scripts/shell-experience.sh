@@ -25,6 +25,12 @@ ok()   { printf 'ok   %s\n' "$1"; }
 bad()  { printf 'FAIL %s\n' "$1"; fail=1; }
 skip() { printf 'skip %s\n' "$1"; }
 
+# Interactive fish and zsh's compinit both warn when TERM is unset, which it is
+# on a CI runner. That is the harness's environment, not anything the init
+# script did, so a terminal type is supplied rather than letting it show up as
+# a startup-noise failure.
+export TERM=${TERM:-xterm-256color}
+
 # Each shell gets its own sandbox HOME so a real config never leaks in.
 SANDBOX=$(mktemp -d)
 trap 'rm -rf "$SANDBOX"' EXIT
@@ -122,7 +128,9 @@ test_shell() {
     #    catches a tool rejecting the arguments we hand it: zoxide's POSIX
     #    complaint and bash's `return` error both showed up here and nowhere
     #    else, because both leave exit status 0.
-    err=$(run_in "$sh_name" "true" 2>&1 >/dev/null)
+    noop=true
+    [ "$sh_name" = "nu" ] && noop=ignore   # `true` is a value in nushell and prints
+    err=$(run_in "$sh_name" "$noop" 2>&1 >/dev/null)
     if [ -n "$err" ]; then
         bad "$sh_name: startup wrote to stderr: $err"
     else
@@ -132,7 +140,7 @@ test_shell() {
     #    stdout matters just as much and is easy to miss: zoxide's POSIX
     #    complaint goes to stdout, so a stderr-only check calls it quiet while
     #    the user gets a warning printed over their first prompt.
-    out=$(run_in "$sh_name" "true" 2>/dev/null)
+    out=$(run_in "$sh_name" "$noop" 2>/dev/null)
     if [ -n "$out" ]; then
         bad "$sh_name: startup wrote to stdout: $out"
     else
@@ -168,12 +176,33 @@ test_shell() {
 
     # 4. zoxide is the one integration every supported shell can load, so it is
     #    the check that the tool-init section ran rather than silently failing.
-    if have zoxide; then
+    if ! have zoxide; then
+        skip "$sh_name: zoxide not installed"
+    elif [ "$sh_name" = "nu" ]; then
+        # Nushell cannot source a runtime-computed path, so the integrations are
+        # written into its vendor autoload directory, which nushell reads at
+        # startup: they go live on the next shell rather than this one. Both
+        # halves of that contract are asserted, because "not yet available" is
+        # only correct if the file was in fact written.
+        got=$(run_in "$sh_name" 'if (($nu.data-dir | path join "vendor" "autoload" "zoxide.nu") | path exists) { print "YES" }' 2>/dev/null | tr -d '\r')
+        [ "$got" = "YES" ] && ok "$sh_name: zoxide written to the vendor autoload directory" \
+                           || bad "$sh_name: zoxide is installed but no autoload script was written"
+
+        # Whether nushell then *loads* that directory is nushell's business and
+        # only happens in a real REPL -- `nu -c` skips vendor autoloads
+        # entirely -- so the assertion stops at the boundary bluefin-cli owns:
+        # the file exists and contains a real zoxide init rather than an empty
+        # file from a failed command.
+        autoload=$(run_in "$sh_name" 'print ($nu.data-dir | path join "vendor" "autoload" "zoxide.nu")' 2>/dev/null | tr -d '\r')
+        if [ -s "$autoload" ] && grep -q "zoxide" "$autoload" 2>/dev/null; then
+            ok "$sh_name: the zoxide autoload script has real content"
+        else
+            bad "$sh_name: the zoxide autoload script is empty or does not mention zoxide"
+        fi
+    else
         got=$(run_in "$sh_name" "$(probe_cmd "$sh_name" __zoxide_z)" 2>/dev/null | tr -d '\r')
         [ "$got" = "YES" ] && ok "$sh_name: zoxide initialized" \
                            || bad "$sh_name: zoxide is installed but did not initialize"
-    else
-        skip "$sh_name: zoxide not installed"
     fi
 
     # 4b. starship is the prompt, and the one integration whose absence a user

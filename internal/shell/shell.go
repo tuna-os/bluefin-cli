@@ -336,6 +336,13 @@ func Init(shell string, config *Config) (string, error) {
 	sb.WriteString(spec.exportVar("BLUEFIN_SHELL_ENABLE_MOTD", boolToInt(config.IsEnabled("Motd"))))
 	sb.WriteString(spec.exportString("BLING_SHELL", spec.Name))
 
+	// Nushell aliases cannot be conditional at runtime, so they are resolved
+	// here and emitted at the top level rather than inside the script's `if`
+	// blocks, where nushell would scope them away.
+	if spec.Flavor == "nu" {
+		sb.WriteString(renderNuAliases(config))
+	}
+
 	sb.WriteString("\n")
 	sb.WriteString(spec.script())
 
