@@ -25,11 +25,14 @@ ok()   { printf 'ok   %s\n' "$1"; }
 bad()  { printf 'FAIL %s\n' "$1"; fail=1; }
 skip() { printf 'skip %s\n' "$1"; }
 
-# Interactive fish and zsh's compinit both warn when TERM is unset, which it is
-# on a CI runner. That is the harness's environment, not anything the init
-# script did, so a terminal type is supplied rather than letting it show up as
-# a startup-noise failure.
-export TERM=${TERM:-xterm-256color}
+# The main pass runs against a capable terminal so the prompt and completion
+# assertions have something to assert. This is set unconditionally, not with a
+# ${TERM:-...} default: a CI runner exports TERM=dumb rather than leaving it
+# unset, so a default never applies and the whole suite silently ran in the
+# degraded mode instead of the normal one.
+#
+# TERM=dumb is then covered deliberately, by test_dumb_terminal below.
+export TERM=xterm-256color
 
 # Each shell gets its own sandbox HOME so a real config never leaks in.
 SANDBOX=$(mktemp -d)
@@ -334,10 +337,36 @@ test_double_load() {
     fi
 }
 
+# A dumb terminal cannot draw a prompt, and this is where people actually hit
+# that: Emacs' M-x shell, several editor terminals, and CI. starship exits with
+# a red error there rather than staying quiet, and a bare compinit aborts, so
+# both used to print on every shell start. The contract is that startup stays
+# silent and the parts that do not need a terminal -- the aliases -- still work.
+test_dumb_terminal() {
+    sh_name=$1
+    available "$sh_name" || return
+    case "$sh_name" in bash|zsh) ;; *) return ;; esac
+
+    err=$(TERM=dumb run_in "$sh_name" "true" 2>&1 >/dev/null)
+    if [ -n "$err" ]; then
+        bad "$sh_name: TERM=dumb startup wrote to stderr: $err"
+    else
+        ok "$sh_name: TERM=dumb startup is quiet"
+    fi
+
+    if have eza; then
+        got=$(TERM=dumb run_in "$sh_name" "$(probe_alias "$sh_name" ls)" 2>/dev/null | tr -d '\r')
+        [ "$got" = "YES" ] && ok "$sh_name: TERM=dumb still gets the aliases" \
+                           || bad "$sh_name: TERM=dumb lost the aliases as well as the prompt"
+    fi
+}
+
 SHELLS=${*:-"bash zsh ash dash fish nu pwsh"}
 for s in $SHELLS; do test_shell "$s"; done
 printf '\n── load-once guard ──\n'
 for s in $SHELLS; do test_double_load "$s"; done
+printf '\n── dumb terminal ──\n'
+for s in $SHELLS; do test_dumb_terminal "$s"; done
 
 printf '\n'
 if [ "$fail" -eq 0 ]; then

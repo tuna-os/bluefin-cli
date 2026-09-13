@@ -87,6 +87,17 @@ fi
 # "PWD hooks are not supported on POSIX shells", printing that at every shell
 # start and leaving zoxide unloaded. Anything else keeps the shell's own name
 # and zoxide's default hook, exactly as before.
+# A dumb terminal cannot draw a prompt, and starship says so loudly: it exits
+# with "Under a 'dumb' terminal (TERM=dumb)" printed in red, on every single
+# shell start. Emacs' M-x shell sets TERM=dumb, as do a number of editor
+# terminals and CI runners, so this is a real place people live rather than an
+# edge case. Prompt and completion tools are skipped there; the aliases and
+# PATH still apply, which is the part that works without a capable terminal.
+BLUEFIN_SHELL_HAS_TERMINAL=1
+case "${TERM:-dumb}" in
+    dumb|"") BLUEFIN_SHELL_HAS_TERMINAL=0 ;;
+esac
+
 ZOXIDE_TARGET="$BLING_SHELL"
 ZOXIDE_HOOK_ARGS=""
 case "$BLING_SHELL" in
@@ -101,9 +112,16 @@ case "$BLING_SHELL" in
 esac
 
 if [ "${BLING_SHELL}" = "zsh" ]; then
-    # Ensure compdef is available for zoxide/carapace
+    # Ensure compdef is available for zoxide/carapace.
+    #
+    # -i matters: a bare compinit that finds a group-writable directory on
+    # fpath stops to ask the user what to do, on every shell start, and when it
+    # cannot ask -- a non-interactive shell -- it prints "not interactive and
+    # can't open terminal" and aborts, leaving no completions at all. -i skips
+    # those directories silently, which is what the shell frameworks do, and
+    # keeps the insecure ones out rather than loading them.
     if ! command -v compdef >/dev/null 2>&1; then
-        autoload -Uz compinit && compinit
+        autoload -Uz compinit && compinit -i
     fi
 fi
 
@@ -118,7 +136,7 @@ fi
 # See: https://github.com/atuinsh/atuin/issues/2804 
 [ "$BLUEFIN_SHELL_HAS_NATIVE_INIT" -eq 1 ] && [ "$BLUEFIN_SHELL_ENABLE_ATUIN" -eq 1 ] && [ "$(command -v atuin)" ] && eval "$(atuin init ${BLING_SHELL} ${ATUIN_INIT_FLAGS})"
 
-[ "$BLUEFIN_SHELL_HAS_NATIVE_INIT" -eq 1 ] && [ "$BLUEFIN_SHELL_ENABLE_STARSHIP" -eq 1 ] && [ "$(command -v starship)" ] && eval "$(starship init ${BLING_SHELL})"
+[ "$BLUEFIN_SHELL_HAS_NATIVE_INIT" -eq 1 ] && [ "$BLUEFIN_SHELL_HAS_TERMINAL" -eq 1 ] && [ "$BLUEFIN_SHELL_ENABLE_STARSHIP" -eq 1 ] && [ "$(command -v starship)" ] && eval "$(starship init ${BLING_SHELL})"
 
 [ "$BLUEFIN_SHELL_ENABLE_ZOXIDE" -eq 1 ] && [ "$(command -v zoxide)" ] && eval "$(zoxide init ${ZOXIDE_TARGET} ${ZOXIDE_HOOK_ARGS})"
 
