@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest in contributing! This project is part of the [TunaOS](https://tunaos.org) ecosystem.
+Thanks for your interest in this project! This project is part of the [TunaOS](https://tunaos.org) ecosystem.
 
 ## Getting Started
 
@@ -8,7 +8,7 @@ Thanks for your interest in contributing! This project is part of the [TunaOS](h
 2. Install Go 1.26.0 or later (see the `go` directive in `go.mod`) and
    [`just`](https://just.systems/). Install
    Podman if you want to use the container-based recipes.
-3. Open an issue to discuss your change before submitting a PR.
+3. Open an issue to discuss your change before you submit a PR.
 
 ## Build and validate
 
@@ -32,7 +32,7 @@ just test
 ```
 
 If a change affects commands or flags, regenerate the command reference and
-include the resulting Markdown changes:
+include the new Markdown in your PR:
 
 ```bash
 just gen-docs

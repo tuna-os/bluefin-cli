@@ -38,13 +38,13 @@ The repository produces two binaries from the same source:
   files.
 - `internal/config/`, `internal/profile/`, and `internal/update/` own persisted
   configuration, portable profiles, and checksum-verified self-update.
-- `docs/commands/` is generated command reference. Regenerate it with
+- `docs/commands/` holds the generated command reference. Regenerate it with
   `just gen-docs` after changing commands or flags.
 
 ## Development workflow
 
-The module requires Go 1.26.0 or later -- the `go` directive in `go.mod` is the
-source of truth for this number. CI currently runs Go 1.27.
+The module needs Go 1.26.0 or later -- the `go` directive in `go.mod` is the
+source of truth for this number. CI now runs Go 1.27.
 
 ```bash
 just build                    # build standard and plus binaries
@@ -59,14 +59,14 @@ container-based recipes.
 
 ## Change guidelines
 
-- Put shared behavior in the relevant `internal/` package and keep Cobra
-  command functions small.
-- Test both the standard and `extra` build-tag paths when changing conditional
-  features. Stubs for the standard build live in `cmd/extra_stubs.go`.
+- Put shared behavior in the relevant `internal/` package, and keep the
+  functions for each Cobra command small.
+- Test both the standard and `extra` build-tag paths after a change to a
+  conditional feature. Stubs for the standard build live in `cmd/extra_stubs.go`.
 - Add TUI destinations as `app.Screen` implementations or registered
   `app.Action` values. Use the existing runner/external-process bridge for
   commands that must temporarily own the terminal.
-- Do not edit generated command pages by hand. Change the Cobra definition and
-  run `just gen-docs`. CI fails if regenerating produces a diff.
-- Update embedded package data with `just update-resources`; do not add runtime
-  downloads for resources that are intended to ship with the binary.
+- Do not edit the generated command pages by hand. Change the Cobra definition and
+  run `just gen-docs`. CI fails if a regeneration makes a diff.
+- Update the embedded package data with `just update-resources`. Do not add a
+  runtime download for a resource that must ship in the binary.
