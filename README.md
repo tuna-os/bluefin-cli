@@ -141,7 +141,7 @@ go install github.com/tuna-os/bluefin-cli@latest
 ### Build from Source (Any OS)
 
 **Prerequisites:**
-- Go 1.25 or later
+- Go 1.26.0 or later
 
 ```bash
 git clone https://github.com/tuna-os/bluefin-cli.git
@@ -215,15 +215,25 @@ To enable the shell experience:
 
 ```bash
 bluefin-cli shell bash on
-# or
-
 bluefin-cli shell zsh on
-# or
-
 bluefin-cli shell fish on
+bluefin-cli shell ash on      # busybox ash (Alpine, postmarketOS)
+bluefin-cli shell nu on       # Nushell
+bluefin-cli shell powershell on
 ```
 
 Or use the interactive menu: `bluefin-cli menu` -> "Shell Experience".
+
+Two shells need a word of explanation:
+
+- **ash** has no rc file by convention -- an interactive ash reads whatever
+  `$ENV` names. Enabling writes `~/.ashrc` and exports `ENV` from `~/.profile`
+  so that file is actually read. atuin, starship and carapace have no ash
+  support and are skipped there; the rest work as they do anywhere else.
+- **Nushell** cannot evaluate a string, so the init script is written to
+  `~/.config/nushell/bluefin-cli.nu` and `config.nu` sources it. Re-run
+  `bluefin-cli shell nu on` after changing your tool configuration to
+  regenerate it.
 
 Features:
 - **eza**: Modern replacement for `ls`
@@ -232,7 +242,7 @@ Features:
 - **zoxide**: Smarter `cd`
 - **atuin**: Shell history sync
 - **starship**: Cross-shell prompt
-- **uutils**: Rust rewrite of coreutilsl
+- **uutils**: Rust rewrite of coreutils
 
 #### MOTD - Message of the Day
 
@@ -350,9 +360,9 @@ bluefin-cli starship install
 
 ## 🔧 What Gets Configured
 
-### Bling Tools
+### Shell Experience Tools
 
-The bling command configures these modern CLI tools:
+The shell command configures these modern CLI tools:
 
 - **eza**: Modern replacement for `ls` with icons and colors
 - **bat**: `cat` clone with syntax highlighting
@@ -363,7 +373,7 @@ The bling command configures these modern CLI tools:
 
 ### Shell Aliases
 
-When bling is enabled in your shell:
+When the shell experience is enabled in your shell:
 
 ```bash
 ll      # eza -l --icons=auto --group-directories-first
@@ -420,7 +430,7 @@ This project consolidates and modernizes functionality from:
 
 ### Prerequisites
 
-- Go 1.25.8 or later (the CI jobs currently validate with Go 1.27)
+- Go 1.26.0 or later, matching the `go` directive in `go.mod` (the CI jobs validate with Go 1.27)
 - Podman (for containerized testing)
 - just (for running recipes)
 
@@ -454,7 +464,7 @@ go test -tags extra -race ./...
 
 ### Interactive Development
 
-Launch shells with bling pre-configured:
+Launch shells with the shell experience pre-configured:
 
 ```bash
 just bash   # Test in bash

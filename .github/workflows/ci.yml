@@ -268,6 +268,34 @@ jobs:
           exit 1
         fi
 
+  docs-current:
+    name: docs/commands is current
+    runs-on: ubuntu-24.04
+
+    # docs/commands is generated from the cobra command tree, and kept drifting
+    # out of date because nothing checked it (tuna-os/bluefin-cli#238, #244,
+    # #246). It is generated from the extra variant, which is the superset of
+    # both command trees.
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+
+    - name: Set up Go
+      uses: actions/setup-go@v7
+      with:
+        go-version: '1.27'
+
+    - name: Regenerate and diff
+      run: |
+        go build -tags extra -o bluefin-cli .
+        ./bluefin-cli docs --dest ./docs/commands
+        if ! git diff --quiet -- docs/commands; then
+          echo "::error::docs/commands is out of date — run 'just gen-docs' and commit the result"
+          git diff --stat -- docs/commands
+          git diff -- docs/commands
+          exit 1
+        fi
+
   goreleaser-check:
     name: goreleaser config
     runs-on: ubuntu-24.04

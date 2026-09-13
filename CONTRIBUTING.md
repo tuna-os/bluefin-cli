@@ -5,7 +5,8 @@ Thanks for your interest in contributing! This project is part of the [TunaOS](h
 ## Getting Started
 
 1. Fork the repo and clone it locally.
-2. Install Go 1.25.8 or later and [`just`](https://just.systems/). Install
+2. Install Go 1.26.0 or later (see the `go` directive in `go.mod`) and
+   [`just`](https://just.systems/). Install
    Podman if you want to use the container-based recipes.
 3. Open an issue to discuss your change before submitting a PR.
 

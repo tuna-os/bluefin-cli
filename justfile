@@ -83,10 +83,10 @@ shell: build-container build
         bluefin-cli-dev \
         bash
 
-# Open shell in container with bling already enabled (for manual testing)
-shell-with-bling: build-container build
+# Open shell in container with the shell experience already enabled (manual testing)
+shell-with-experience: build-container build
     #!/usr/bin/env bash
-    echo "Setting up container with bling enabled..."
+    echo "Setting up container with the shell experience enabled..."
     podman run --rm -it \
         -v "$(pwd):/workspace:Z" \
         -w /workspace \
@@ -94,26 +94,26 @@ shell-with-bling: build-container build
         bluefin-cli-dev \
         bash -c 'mkdir -p ~/.config/fish && \
                  touch ~/.bashrc ~/.zshrc ~/.config/fish/config.fish && \
-                 ./bluefin-cli bling bash on && \
-                 ./bluefin-cli bling zsh on && \
-                 ./bluefin-cli bling fish on && \
+                 ./bluefin-cli shell enable bash && \
+                 ./bluefin-cli shell enable zsh && \
+                 ./bluefin-cli shell enable fish && \
                  ./bluefin-cli motd toggle bash on && \
                  echo "" && \
-                 echo "=== Bling has been enabled ===" && \
+                 echo "=== Shell experience has been enabled ===" && \
                  echo "Binary: ./bluefin-cli" && \
                  echo "Configs: ~/.bashrc, ~/.zshrc, ~/.config/fish/config.fish" && \
-                 echo "Bling scripts: ~/.local/share/bluefin-cli/bling/" && \
+                 echo "Init script: bluefin-cli init bash" && \
                  echo "" && \
                  echo "Try: ./bluefin-cli status" && \
                  echo "     cat ~/.bashrc" && \
-                 echo "     cat ~/.local/share/bluefin-cli/bling/bling.sh" && \
+                 echo "     ./bluefin-cli init bash" && \
                  echo "" && \
                  bash'
 
-# Open bash with bling enabled and sourced
+# Open bash with the shell experience enabled and sourced
 bash: build-container build
     #!/usr/bin/env bash
-    echo "Launching bash with bling enabled..."
+    echo "Launching bash with the shell experience enabled..."
     podman run --rm -it \
         -v "$(pwd):/workspace:Z" \
         -w /workspace \
@@ -122,14 +122,14 @@ bash: build-container build
         bluefin-cli-dev \
         bash -c 'mkdir -p ~/.config/fish && \
                  touch ~/.bashrc ~/.zshrc ~/.config/fish/config.fish && \
-                 ./bluefin-cli bling bash on > /dev/null 2>&1 && \
-                 echo "✓ Bling enabled - Tools: starship=$(command -v starship), eza=$(command -v eza)" && \
+                 ./bluefin-cli shell enable bash > /dev/null 2>&1 && \
+                 echo "✓ Shell experience enabled - Tools: starship=$(command -v starship), eza=$(command -v eza)" && \
                  exec bash'
 
-# Open zsh with bling enabled and sourced
+# Open zsh with the shell experience enabled and sourced
 zsh: build-container build
     #!/usr/bin/env bash
-    echo "Launching zsh with bling enabled..."
+    echo "Launching zsh with the shell experience enabled..."
     podman run --rm -it \
         -v "$(pwd):/workspace:Z" \
         -w /workspace \
@@ -137,17 +137,17 @@ zsh: build-container build
         -e SHELL=/bin/zsh \
         -e PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
         bluefin-cli-dev \
-        bash -c 'mkdir -p ~/.config/fish ~/.local/share/bluefin-cli/bling && \
-                 rm -f ~/.zshrc ~/.local/share/bluefin-cli/bling/bling.sh && \
+        bash -c 'mkdir -p ~/.config/fish && \
+                 rm -f ~/.zshrc && \
                  touch ~/.bashrc ~/.zshrc ~/.config/fish/config.fish && \
-                 ./bluefin-cli bling zsh on > /dev/null 2>&1 && \
-                 echo "✓ Bling enabled - Tools: starship=$(command -v starship), eza=$(command -v eza)" && \
+                 ./bluefin-cli shell enable zsh > /dev/null 2>&1 && \
+                 echo "✓ Shell experience enabled - Tools: starship=$(command -v starship), eza=$(command -v eza)" && \
                  ZDOTDIR=/root exec zsh'
 
-# Open fish with bling enabled and sourced
+# Open fish with the shell experience enabled and sourced
 fish: build-container build
     #!/usr/bin/env bash
-    echo "Launching fish with bling enabled..."
+    echo "Launching fish with the shell experience enabled..."
     podman run --rm -it \
         -v "$(pwd):/workspace:Z" \
         -w /workspace \
@@ -156,12 +156,12 @@ fish: build-container build
         bluefin-cli-dev \
         bash -c 'mkdir -p ~/.config/fish && \
                  touch ~/.bashrc ~/.zshrc ~/.config/fish/config.fish && \
-                 ./bluefin-cli bling fish on > /dev/null 2>&1 && \
+                 ./bluefin-cli shell enable fish > /dev/null 2>&1 && \
                  exec fish'
 
-# Inspect what files were created by bling
-inspect-bling: build-container build
-    @echo "Inspecting bling files in container..."
+# Inspect what the shell experience writes into a shell's config
+inspect-shell: build-container build
+    @echo "Inspecting shell experience files in container..."
     podman run --rm \
         -v "$(pwd):/workspace:Z" \
         -w /workspace \
@@ -169,9 +169,9 @@ inspect-bling: build-container build
         bluefin-cli-dev \
         bash -c 'mkdir -p ~/.config/fish && \
                  touch ~/.bashrc ~/.zshrc ~/.config/fish/config.fish && \
-                 ./bluefin-cli bling bash on && \
-                 ./bluefin-cli bling zsh on && \
-                 ./bluefin-cli bling fish on && \
+                 ./bluefin-cli shell enable bash && \
+                 ./bluefin-cli shell enable zsh && \
+                 ./bluefin-cli shell enable fish && \
                  echo "=== Shell Configs ===" && \
                  echo "" && \
                  echo "--- ~/.bashrc ---" && \
@@ -183,13 +183,13 @@ inspect-bling: build-container build
                  echo "--- ~/.config/fish/config.fish ---" && \
                  cat ~/.config/fish/config.fish && \
                  echo "" && \
-                 echo "=== Bling Scripts ===" && \
+                 echo "=== Generated init scripts ===" && \
                  echo "" && \
-                 echo "--- bling.sh (first 50 lines) ---" && \
-                 head -50 ~/.local/share/bluefin-cli/bling/bling.sh && \
+                 echo "--- init bash (first 50 lines) ---" && \
+                 ./bluefin-cli init bash | head -50 && \
                  echo "" && \
-                 echo "--- bling.fish (first 30 lines) ---" && \
-                 head -30 ~/.local/share/bluefin-cli/bling/bling.fish'
+                 echo "--- init fish (first 30 lines) ---" && \
+                 ./bluefin-cli init fish | head -30'
 
 # Show what MOTD looks like
 inspect-motd: build-container build

@@ -19,6 +19,16 @@ var docsCmd = &cobra.Command{
 			return fmt.Errorf("failed to create docs directory: %w", err)
 		}
 
+		// Without this, cobra stamps "Auto generated ... on <date>" into the
+		// footer of every page, so any regeneration is a whole-tree diff whose
+		// real content change is buried in 40-odd date bumps. That churn is why
+		// the docs kept drifting and being re-reported as stale
+		// (tuna-os/bluefin-cli#238, #244, #246): nobody could see at a glance
+		// whether a regeneration had actually changed anything. With the tag
+		// off, `docs --dest` is deterministic, and CI can simply check that
+		// regenerating produces no diff.
+		rootCmd.DisableAutoGenTag = true
+
 		fmt.Printf("Generating documentation in %s...\n", docsDest)
 		if err := doc.GenMarkdownTree(rootCmd, docsDest); err != nil {
 			return fmt.Errorf("failed to generate markdown: %w", err)

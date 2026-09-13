@@ -16,8 +16,11 @@ The repository produces two binaries from the same source:
 
 - `cmd/` defines Cobra commands and assembles TUI destinations. Keep argument
   parsing and command wiring here; place reusable behavior under `internal/`.
-- `internal/shell/` manages the shell experience for Bash, Zsh, Fish, and
-  PowerShell. The user-facing command is wired in `cmd/shell.go`.
+- `internal/shell/` manages the shell experience for Bash, Zsh, Fish, ash,
+  Nushell, and PowerShell. The user-facing command is wired in `cmd/shell.go`.
+  `shells.go` holds the registry of managed shells: one entry per shell with
+  its rc path, init line and syntax flavor. Add a shell there rather than in
+  the functions that read it.
 - `internal/install/` handles packages, bundles, and wallpaper collections.
   Brewfiles and wallpaper metadata are embedded from
   `internal/install/resources/`; update them with `just update-resources`.
@@ -32,7 +35,8 @@ The repository produces two binaries from the same source:
 
 ## Development workflow
 
-The module requires Go 1.25.8 or later. CI currently runs Go 1.27.
+The module requires Go 1.26.0 or later -- the `go` directive in `go.mod` is the
+source of truth for this number. CI currently runs Go 1.27.
 
 ```bash
 just build                    # build standard and plus binaries
@@ -55,6 +59,6 @@ container-based recipes.
   `app.Action` values. Use the existing runner/external-process bridge for
   commands that must temporarily own the terminal.
 - Do not edit generated command pages by hand. Change the Cobra definition and
-  run `just gen-docs`.
+  run `just gen-docs`. CI fails if regenerating produces a diff.
 - Update embedded package data with `just update-resources`; do not add runtime
   downloads for resources that are intended to ship with the binary.
