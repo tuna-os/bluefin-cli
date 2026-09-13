@@ -1,6 +1,7 @@
 package install
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -99,11 +100,26 @@ func TestProvenanceDigestsMatchCommittedResources(t *testing.T) {
 		}
 		sum := sha256.Sum256(data)
 		got := digestAlgPrefix + hex.EncodeToString(sum[:])
-		if got != entry.SHA256 {
-			t.Errorf("%s has digest %s, but PROVENANCE.json records %s — "+
-				"the resource was changed without `just update-resources`, or the manifest is stale",
-				rel, got, entry.SHA256)
+		if got == entry.SHA256 {
+			continue
 		}
+
+		// Before blaming the content, check the most likely cause: git
+		// rewriting line endings at checkout. Without .gitattributes marking
+		// these paths -text, a Windows checkout turns every LF into CRLF and
+		// all nine digests mismatch at once, which reads like mass corruption
+		// rather than the one-line configuration problem it is.
+		normalized := sha256.Sum256(bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n")))
+		if digestAlgPrefix+hex.EncodeToString(normalized[:]) == entry.SHA256 {
+			t.Errorf("%s matches its recorded digest only after CRLF→LF normalization — "+
+				"git rewrote its line endings at checkout. .gitattributes must mark this path -text "+
+				"so the embedded bytes stay identical on every platform", rel)
+			continue
+		}
+
+		t.Errorf("%s has digest %s, but PROVENANCE.json records %s — "+
+			"the resource was changed without `just update-resources`, or the manifest is stale",
+			rel, got, entry.SHA256)
 	}
 }
 
