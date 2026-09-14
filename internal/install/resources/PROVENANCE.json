@@ -10,61 +10,61 @@
     "source_commit is resolved by the updater from the GitHub API; it is empty for",
     "entries last written before the manifest existed."
   ],
-  "generated_at": "",
+  "generated_at": "2026-09-13T23:58:59Z",
   "resources": {
     "brewfiles/ai-tools.Brewfile": {
       "source_repo": "projectbluefin/common",
       "source_ref": "main",
-      "source_commit": "",
+      "source_commit": "fbbb193b221efdca793933f1869adc54697aff7a",
       "source_path": "system_files/shared/usr/share/ublue-os/homebrew/ai-tools.Brewfile",
-      "sha256": "sha256:07244235496f3e7efe8b90b08e470b14914ee5c556ffca3eb2f5fecba0a025bc"
+      "sha256": "sha256:9e31f58838b7ce7d9ba60d74b9f4f5928b025ab1ca60a37f64ef1c84da26395b"
     },
     "brewfiles/cli.Brewfile": {
       "source_repo": "projectbluefin/common",
       "source_ref": "main",
-      "source_commit": "",
+      "source_commit": "fbbb193b221efdca793933f1869adc54697aff7a",
       "source_path": "system_files/shared/usr/share/ublue-os/homebrew/cli.Brewfile",
       "sha256": "sha256:65b0657375707febc5967882402c5d4dc5528dbec06074a1b5f203d60ea313d5"
     },
     "brewfiles/cncf.Brewfile": {
       "source_repo": "projectbluefin/common",
       "source_ref": "main",
-      "source_commit": "",
+      "source_commit": "fbbb193b221efdca793933f1869adc54697aff7a",
       "source_path": "system_files/shared/usr/share/ublue-os/homebrew/cncf.Brewfile",
       "sha256": "sha256:4ec1665e20779d160e0eaecc44feec2d28e47a751081cb10170566c7cd4abb03"
     },
     "brewfiles/experimental-ide.Brewfile": {
       "source_repo": "projectbluefin/common",
       "source_ref": "main",
-      "source_commit": "",
+      "source_commit": "fbbb193b221efdca793933f1869adc54697aff7a",
       "source_path": "system_files/shared/usr/share/ublue-os/homebrew/experimental-ide.Brewfile",
-      "sha256": "sha256:98ff865bce3275ba9f83f12e00db7c36e9e40a57d1e54efebe310b8290fefac4"
+      "sha256": "sha256:fa3b18f3a03781668679ce14003f9ca3a784913d002bcfb7d9316b06c70b45bb"
     },
     "brewfiles/fonts.Brewfile": {
       "source_repo": "projectbluefin/common",
       "source_ref": "main",
-      "source_commit": "",
+      "source_commit": "fbbb193b221efdca793933f1869adc54697aff7a",
       "source_path": "system_files/shared/usr/share/ublue-os/homebrew/fonts.Brewfile",
       "sha256": "sha256:301d5661e14a35905011beef7d3eb32c547f227fa5adca96a6a671c53aabb050"
     },
     "brewfiles/full-desktop.Brewfile": {
       "source_repo": "projectbluefin/common",
       "source_ref": "main",
-      "source_commit": "",
+      "source_commit": "fbbb193b221efdca793933f1869adc54697aff7a",
       "source_path": "system_files/bluefin/usr/share/ublue-os/homebrew/full-desktop.Brewfile",
-      "sha256": "sha256:2af371e2d9ad814e15507a5f4a940a896b393b06e6943bce73e8dffec8bfeaeb"
+      "sha256": "sha256:282d791f78be957b8781e0727b75b7c31ab94bbdf625d63216a9dca878e124b7"
     },
     "brewfiles/ide.Brewfile": {
       "source_repo": "projectbluefin/common",
       "source_ref": "main",
-      "source_commit": "",
+      "source_commit": "fbbb193b221efdca793933f1869adc54697aff7a",
       "source_path": "system_files/shared/usr/share/ublue-os/homebrew/ide.Brewfile",
       "sha256": "sha256:ef8dabf44a6d4bdf3985998377fc846a366e2d63693f98e60eb1639e2618d872"
     },
     "brewfiles/k8s-tools.Brewfile": {
       "source_repo": "projectbluefin/common",
       "source_ref": "main",
-      "source_commit": "",
+      "source_commit": "fbbb193b221efdca793933f1869adc54697aff7a",
       "source_path": "system_files/shared/usr/share/ublue-os/homebrew/k8s-tools.Brewfile",
       "sha256": "sha256:7c07ca3430d4cc88b2d16cbb7e0c8f89b6681b225ba210727e641df04c0f6542"
     },
