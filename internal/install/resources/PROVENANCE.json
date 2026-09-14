@@ -10,7 +10,7 @@
     "source_commit is resolved by the updater from the GitHub API; it is empty for",
     "entries last written before the manifest existed."
   ],
-  "generated_at": "2026-09-13T23:58:59Z",
+  "generated_at": "2026-09-14T01:48:18Z",
   "resources": {
     "brewfiles/ai-tools.Brewfile": {
       "source_repo": "projectbluefin/common",
@@ -71,10 +71,10 @@
     "wallpaper-casks.json": {
       "source_repo": "ublue-os/homebrew-tap",
       "source_ref": "main",
-      "source_commit": "",
+      "source_commit": "52112017cee76dcc618dbc373931e1ddb880db08",
       "source_path": "Casks",
       "derivation": "filtered listing of Casks/*.rb whose name contains 'wallpaper'",
-      "sha256": "sha256:1f6cb9a1a2b185fdc927945dc37253e403ad8a3d2028d6aa4aac8cf3d06d3977"
+      "sha256": "sha256:9945df4dcc2f9a8ced0eebcb9b34008dd08b0ea7b9c572203c8bdd400959fc54"
     }
   }
 }
