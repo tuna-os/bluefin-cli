@@ -1,3 +1,10 @@
+//go:build !windows
+
+// These tests put POSIX shell stubs on PATH to assert the exact commands the
+// Alpine backend runs. A `#!/bin/sh` stub is not executable on Windows, and
+// neither coldbrew nor sudo apk exists there -- installToolsWindows handles
+// that platform through winget -- so the file is Unix-only rather than
+// skipped at runtime.
 package pkgmanager
 
 import (
