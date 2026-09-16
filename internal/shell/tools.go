@@ -15,6 +15,7 @@ type Tool struct {
 	ApkPkg            string          // Alpine/apk package name (Alpine, postmarketOS); see GetApkPkg for the fallback order
 	Default           bool            // Whether enabled by default
 	ShellDefaults     map[string]bool // Per-shell default overrides
+	SupportedShells   map[string]bool // Optional allowlist for shell-specific tools
 	UnsupportedShells map[string]bool // Shells where this tool should not be managed
 }
 
@@ -51,13 +52,9 @@ func (t Tool) GetApkPkg() string {
 }
 
 func (t Tool) SupportsShell(shell string) bool {
-	if len(t.UnsupportedShells) == 0 {
-		return true
-	}
-
-	normalized := strings.ToLower(strings.TrimSpace(shell))
-	if normalized == "pwsh" {
-		normalized = "powershell"
+	normalized := NormalizeShell(shell)
+	if len(t.SupportedShells) > 0 {
+		return t.SupportedShells[normalized]
 	}
 
 	return !t.UnsupportedShells[normalized]
@@ -76,7 +73,7 @@ func ToolsForShell(shell string) []Tool {
 // Tools is the list of managed tools
 var Tools = []Tool{
 	{Name: "Eza", Description: "Modern, maintained replacement for ls", Binary: "eza", Pkg: "eza-community.eza", BrewPkg: "eza", ApkPkg: "eza", Default: true},
-	{Name: "Gsudo", Description: "sudo for Windows (run commands elevated)", Binary: "gsudo", Pkg: "gerardog.gsudo", Default: true, UnsupportedShells: map[string]bool{"bash": true, "zsh": true, "fish": true}},
+	{Name: "Gsudo", Description: "sudo for Windows (run commands elevated)", Binary: "gsudo", Pkg: "gerardog.gsudo", Default: true, SupportedShells: map[string]bool{"powershell": true}},
 	{Name: "Fzf", Description: "Command-line fuzzy finder", Binary: "fzf", Pkg: "junegunn.fzf", BrewPkg: "fzf", ApkPkg: "fzf", Default: true},
 	{Name: "Ugrep", Description: "Ultra fast grep with interactive mode", Binary: "ug", Pkg: "ugrep", ApkPkg: "ugrep", Default: true, UnsupportedShells: map[string]bool{"powershell": true}},
 	{Name: "Bat", Description: "A cat clone with wings", Binary: "bat", Pkg: "sharkdp.bat", BrewPkg: "bat", ApkPkg: "bat", Default: true},
