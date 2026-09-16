@@ -323,3 +323,17 @@ func TestWindowsCandidatesUsesTheRealMapping(t *testing.T) {
 		t.Errorf("windowsCandidates(\"bat\") = %v, want it to include sharkdp.bat", got)
 	}
 }
+
+func TestMergeBrewfilesCleanupOnError(t *testing.T) {
+	nonExistent := "/nonexistent/path/that/does/not/exist.Brewfile"
+	mergedPath, _, err := MergeBrewfiles([]string{nonExistent})
+	if err == nil {
+		t.Fatal("expected error for non-existent brewfile, got nil")
+	}
+	if mergedPath != "" {
+		if _, statErr := os.Stat(mergedPath); !os.IsNotExist(statErr) {
+			t.Errorf("expected merged temp file %s to be removed on error", mergedPath)
+		}
+	}
+}
+
