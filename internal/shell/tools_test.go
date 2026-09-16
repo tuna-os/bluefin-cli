@@ -79,6 +79,30 @@ func TestToolSupportsShell_Unsupported(t *testing.T) {
 	}
 }
 
+func TestGsudoOnlySupportsPowerShell(t *testing.T) {
+	var gsudo Tool
+	for _, tool := range Tools {
+		if tool.Name == "Gsudo" {
+			gsudo = tool
+			break
+		}
+	}
+	if gsudo.Name == "" {
+		t.Fatal("Gsudo is no longer in Tools")
+	}
+
+	for _, shell := range append(ManagedShells(), "dash", "sh", "nushell") {
+		if gsudo.SupportsShell(shell) {
+			t.Errorf("Gsudo should not support %s", shell)
+		}
+	}
+	for _, shell := range []string{"powershell", "pwsh"} {
+		if !gsudo.SupportsShell(shell) {
+			t.Errorf("Gsudo should support %s", shell)
+		}
+	}
+}
+
 func TestToolSupportsShell_PartialUnsupported(t *testing.T) {
 	// Ugrep doesn't support powershell but supports others
 	tool := Tool{
