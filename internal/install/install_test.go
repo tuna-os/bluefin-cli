@@ -336,4 +336,3 @@ func TestMergeBrewfilesCleanupOnError(t *testing.T) {
 		}
 	}
 }
-
