@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"regexp"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -33,6 +35,9 @@ var docsCmd = &cobra.Command{
 		if err := doc.GenMarkdownTree(rootCmd, docsDest); err != nil {
 			return fmt.Errorf("failed to generate markdown: %w", err)
 		}
+		if err := codeCommandLinks(docsDest); err != nil {
+			return fmt.Errorf("failed to format command links: %w", err)
+		}
 
 		fmt.Println("Documentation generated successfully!")
 		return nil
@@ -42,4 +47,31 @@ var docsCmd = &cobra.Command{
 func init() {
 	docsCmd.Flags().StringVarP(&docsDest, "dest", "d", "./docs/commands", "Destination directory for generated docs")
 	rootCmd.AddCommand(docsCmd)
+}
+
+// seeAlsoEntry matches a SEE ALSO entry that cobra writes, such as
+// "* [bluefin-cli shell](bluefin-cli_shell.md)\t - Toggle ...".
+var seeAlsoEntry = regexp.MustCompile("(?m)^\\* \\[([^\\]`]+)\\]\\(([^)]+)\\)\t - ")
+
+// codeCommandLinks sets each command name in a SEE ALSO list as inline code,
+// and puts an em dash between the name and its summary. A command name is a
+// symbol, not prose. Without this, the STE check (.github/workflows/ste.yml)
+// reads "bluefin-cli shell - Toggle" as one long noun cluster, and reports it
+// again on every page that links to that command.
+func codeCommandLinks(dir string) error {
+	files, err := filepath.Glob(filepath.Join(dir, "*.md"))
+	if err != nil {
+		return err
+	}
+	for _, file := range files {
+		data, err := os.ReadFile(file)
+		if err != nil {
+			return err
+		}
+		out := seeAlsoEntry.ReplaceAll(data, []byte("* [`$1`]($2) — "))
+		if err := os.WriteFile(file, out, 0644); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -50,7 +50,7 @@ var profileExportCmd = &cobra.Command{
 
 var profileImportCmd = &cobra.Command{
 	Use:   "import <file>",
-	Short: "Apply a previously exported setup to this machine",
+	Short: "Apply an exported setup to this machine",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		p, err := profile.Load(args[0])

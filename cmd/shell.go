@@ -12,8 +12,8 @@ import (
 
 var shellCmd = &cobra.Command{
 	Use:   "shell [shell] [on|off]",
-	Short: "Toggle shell experience enhancements",
-	Long: `Enable or disable shell experience enhancements (modern aliases and tool initialization).
+	Short: "Turn the shell experience on or off",
+	Long: `Enable or disable the shell experience (modern aliases and tool setup).
 	
 The Shell Experience provides:
   - Modern ls replacement with eza (ll, ls aliases)
@@ -39,8 +39,8 @@ The Shell Experience provides:
 
 var shellConfigCmd = &cobra.Command{
 	Use:   "config",
-	Short: "Configure individual shell experience tools",
-	Long:  `Enable or disable specific shell experience components interactively.`,
+	Short: "Configure each tool of the shell experience",
+	Long:  `Enable or disable each part of the shell experience in a form.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return launchFlow(app.Push(componentsFormScreen()))
 	},
@@ -54,7 +54,7 @@ func init() {
 
 	// Generate dynamic long description
 	var sb strings.Builder
-	sb.WriteString("Enable or disable shell experience enhancements (modern aliases and tool initialization).\n\nThe Shell Experience provides:\n")
+	sb.WriteString("Enable or disable the shell experience (modern aliases and tool setup).\n\nThe Shell Experience provides:\n")
 	for _, tool := range describedTools {
 		fmt.Fprintf(&sb, "  - %s: %s\n", tool.Name, tool.Description)
 	}

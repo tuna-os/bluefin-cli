@@ -7,12 +7,12 @@ Install tool bundles
 Install predefined bundles or custom Brewfiles.
 
 Available bundles:
-  ai               - AI tools (Goose, Codex, Gemini, Ramalama, etc.)
-  cli              - CLI essentials (gh, chezmoi, etc.)
-  cncf             - Cloud Native Computing Foundation tools.
-  experimental-ide - Experimental IDE tools.
-  ide              - IDE tools: VS Code, JetBrains Toolbox, etc.
-  k8s              - Kubernetes tools: kubectl, k9s, kubectx, etc.
+  ai:               AI tools (Goose, Codex, Gemini, Ramalama, etc.)
+  cli:              CLI essentials (gh, chezmoi, etc.)
+  cncf:             Cloud Native Computing Foundation tools.
+  experimental-ide: Experimental IDE tools.
+  ide:              IDE tools: VS Code, JetBrains Toolbox, etc.
+  k8s:              Kubernetes tools: kubectl, k9s, kubectx, etc.
   
 Or provide a path to a local Brewfile.
 
@@ -28,7 +28,7 @@ bluefin-cli install [bundle] [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli](bluefin-cli.md)	 - A powerful CLI tool for managing Homebrew and shell customization
-* [bluefin-cli install list](bluefin-cli_install_list.md)	 - List available bundles
-* [bluefin-cli install wallpapers](bluefin-cli_install_wallpapers.md)	 - Install wallpaper casks from ublue-os/tap
+* [`bluefin-cli`](bluefin-cli.md) — A CLI tool to manage Homebrew and customize your shell
+* [`bluefin-cli install list`](bluefin-cli_install_list.md) — List the available bundles
+* [`bluefin-cli install wallpapers`](bluefin-cli_install_wallpapers.md) — Install wallpaper casks from ublue-os/tap
 

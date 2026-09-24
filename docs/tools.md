@@ -3,7 +3,7 @@
 The Bluefin CLI allows you to install various tools and configurations. Below is a comprehensive list of what's available.
 
 ## Shell Experience Tools
-These are modern shell replacements and enhancements that are managed via the `shell` command.
+The `shell` command manages these modern replacements and additions for your shell.
 
 | Tool | Description |
 |------|-------------|
@@ -19,7 +19,7 @@ These are modern shell replacements and enhancements that are managed via the `s
 You can install these bundles using `bluefin-cli install <bundle>`.
 
 ### AI Tools (`ai`)
-- [AI Tools List](ai.md)
+- [List of AI tools](ai.md)
 
 ### Artwork (`artwork`)
 - `aurora-wallpapers`
@@ -29,6 +29,7 @@ You can install these bundles using `bluefin-cli install <bundle>`.
 - `framework-wallpapers`
 
 ### CLI Essentials (`cli`)
+<!-- ste-disable: each entry quotes the upstream project's own one-line description verbatim, as cncf.md does -->
 - [atuin](https://atuin.sh/): Improved shell history for zsh, bash, fish and nushell
 - [bat](https://github.com/sharkdp/bat): Clone of cat(1) with syntax highlighting and Git integration
 - [bash-preexec](https://github.com/rcaloras/bash-preexec): Preexec and precmd functions for Bash (like Zsh)
@@ -51,9 +52,10 @@ You can install these bundles using `bluefin-cli install <bundle>`.
 - [ugrep](https://ugrep.com/): Ultra fast grep with query UI, fuzzy search, archive search, and more
 - [yq](https://github.com/mikefarah/yq): Process YAML, JSON, XML, CSV and properties documents from the CLI
 - [zoxide](https://github.com/ajeetdsouza/zoxide): Shell extension to navigate your filesystem faster
+<!-- ste-enable -->
 
 ### CNCF Tools (`cncf`)
-- [CNCF Tools List](cncf.md)
+- [List of CNCF tools](cncf.md)
 
 ### Experimental IDE (`experimental-ide`)
 *Note: These are experimental casks.*
@@ -90,6 +92,7 @@ You can install these bundles using `bluefin-cli install <bundle>`.
 - `jetbrains-toolbox-linux`
 
 ### Kubernetes Tools (`k8s`)
+<!-- ste-disable: each entry quotes the upstream project's own one-line description verbatim, as cncf.md does -->
 - [kind](https://kind.sigs.k8s.io/): Run local Kubernetes cluster in Docker
 - [cdk8s](https://cdk8s.io/): Define k8s native apps and abstractions using object-oriented programming
 - [k0sctl](https://github.com/k0sproject/k0sctl): Bootstrapping and management tool for k0s kubernetes clusters
@@ -102,6 +105,7 @@ You can install these bundles using `bluefin-cli install <bundle>`.
 - [kubectx](https://github.com/ahmetb/kubectx): Tool that can switch between kubectl contexts easily and create aliases
 - [pack](https://github.com/buildpacks/pack): A CLI for building apps using Cloud Native Buildpacks
 - [syft](https://github.com/anchore/syft): CLI for generating a Software Bill of Materials from container images
+<!-- ste-enable -->
 
 ### Full GNOME Desktop (`full-desktop`)
-- [GNOME Tools List](gnome.md)
+- [List of GNOME tools](gnome.md)

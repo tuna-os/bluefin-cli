@@ -29,7 +29,7 @@ var (
 
 var sunsetCmd = &cobra.Command{
 	Use:   "sunset",
-	Short: "Manage solar-based theme and wallpaper switching",
+	Short: "Change the theme and wallpaper at sunrise and sunset",
 	Long:  `Automatically switch between light and dark themes and different wallpapers based on sunrise and sunset times for your location.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Handle WSL Delegation

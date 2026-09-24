@@ -14,6 +14,6 @@ bluefin-cli terminal [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli](bluefin-cli.md)	 - A powerful CLI tool for managing Homebrew and shell customization
-* [bluefin-cli terminal setup](bluefin-cli_terminal_setup.md)	 - Non-interactive full setup: install + pin + config
+* [`bluefin-cli`](bluefin-cli.md) — A CLI tool to manage Homebrew and customize your shell
+* [`bluefin-cli terminal setup`](bluefin-cli_terminal_setup.md) — Do the full setup with no prompts: install + pin + config
 

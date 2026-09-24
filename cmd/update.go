@@ -15,7 +15,7 @@ var updateCmd = &cobra.Command{
 	Long: `Check for and install the latest bluefin-cli release.
 
 Binaries installed via a package manager (Homebrew, Winget, Scoop) are not
-self-updated; this command tells you the right upgrade command instead.`,
+self-updated. For those, this command tells you the upgrade command to use.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		checkOnly, _ := cmd.Flags().GetBool("check")
 		return runUpdate(checkOnly)

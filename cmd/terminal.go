@@ -23,7 +23,7 @@ var terminalCmd = &cobra.Command{
 
 var terminalSetupCmd = &cobra.Command{
 	Use:   "setup",
-	Short: "Non-interactive full setup: install + pin + config",
+	Short: "Do the full setup with no prompts: install + pin + config",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := terminal.InstallGhostty(); err != nil {
 			return err

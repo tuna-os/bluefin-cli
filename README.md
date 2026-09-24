@@ -19,7 +19,7 @@ your development environment. Its TUIs use the [Charm](https://charm.sh/) librar
 - **⬆ Self-Update**: `bluefin-cli update` for script installs — sha256-verified against the release checksums. For a package-manager install, it tells you the correct upgrade command
 - **🏠 My Brewfile**: one file describes your machine's packages — `brew`/`cask` lines plus `winget`/`scoop`/`choco` on Windows. `bluefin-cli brewfile dump` records the installed packages. `add`/`remove` edit that file, and `install` applies all of it. The TUI does the same from Install Apps → My Brewfile, one package at a time. Extra recipes in `~/.config/bluefin-cli/bundles/*.Brewfile` appear alongside the curated bundles
 - **📦 Profiles**: `bluefin-cli profile export > setup.json` on one machine, `profile import setup.json` on another — shells, tools, and theme replayed exactly
-- **🦕 A fully native TUI**: a persistent shell with breadcrumbs, a fuzzy filter (`/`), a `ctrl+p` command palette, and a dot-matrix dino in the header. It also hides a surprise.
+- **🦕 A fully native TUI**: a persistent shell with breadcrumbs and a fuzzy filter (`/`). It also has a `ctrl+p` command palette and a dot-matrix dino in the header. It also hides a surprise.
 
 ## 🚀 Installation
 
@@ -34,8 +34,8 @@ your development environment. Its TUIs use the [Charm](https://charm.sh/) librar
 curl -fsSL https://raw.githubusercontent.com/tuna-os/bluefin-cli/main/install.sh | sh
 ```
 
-> **Status (2026-08-14):** the script downloads the binary from GitHub release
-> assets, which are published since v0.10.6 ([#141](https://github.com/tuna-os/bluefin-cli/issues/141), closed).
+> **Status (2026-08-14):** the script downloads the binary from the assets of a
+> GitHub release. Each release has these assets since v0.10.6 ([#141](https://github.com/tuna-os/bluefin-cli/issues/141), closed).
 
 ### One-liner (Windows PowerShell)
 
@@ -50,12 +50,12 @@ bluefin-cli shell powershell on
 ```
 
 > **Status (2026-08-14):** same as the Linux/macOS one-liner — the script
-> downloads from GitHub release assets, which are published since v0.10.6
-> ([#141](https://github.com/tuna-os/bluefin-cli/issues/141), closed).
+> downloads from the assets of a GitHub release. Each release has these assets
+> since v0.10.6 ([#141](https://github.com/tuna-os/bluefin-cli/issues/141), closed).
 
 ### Homebrew (Linux / macOS)
 
-The formula is published automatically by GoReleaser to the
+GoReleaser automatically publishes the formula to the
 [`tuna-os/homebrew-tap`](https://github.com/tuna-os/homebrew-tap) tap on every
 release ([#15](https://github.com/tuna-os/bluefin-cli/issues/15)):
 
@@ -64,8 +64,8 @@ brew tap tuna-os/tap
 brew install bluefin-cli
 ```
 
-> **Status (2026-08-14):** the `bluefin-cli` formula has not been published by
-> the release pipeline yet — only `corral-vm.rb` ships in the tuna-os tap
+> **Status (2026-08-14):** the release pipeline has not published the
+> `bluefin-cli` formula yet — only `corral-vm.rb` ships in the tuna-os tap
 > (see [#141](https://github.com/tuna-os/bluefin-cli/issues/141)). Until it
 > appears, use `ublue-os/homebrew-experimental-tap` below.
 
@@ -83,11 +83,11 @@ brew install bluefin-cli
 winget install --id Hanthor.BluefinCLI --exact
 ```
 
-> **Status (2026-08-14):** `Hanthor.BluefinCLI` **v0.8.1 is published** in the
-> winget repository (microsoft/winget-pkgs#407090, merged 08-14) but predates
-> the current v0.10.6 release line — **installable, though not yet current**
-> ([#141](https://github.com/tuna-os/bluefin-cli/issues/141), closed — release
-> publishing works; a newer manifest submission is pending).
+> **Status (2026-08-14):** the winget repository has `Hanthor.BluefinCLI`
+> **v0.8.1** (microsoft/winget-pkgs#407090, merged 08-14). That version is
+> older than the current v0.10.6 release line. You **can install it, but it is
+> not yet current** ([#141](https://github.com/tuna-os/bluefin-cli/issues/141),
+> closed — the release pipeline works, but nobody has submitted a newer manifest yet).
 
 ### Chocolatey (Windows)
 
@@ -95,10 +95,10 @@ winget install --id Hanthor.BluefinCLI --exact
 choco install bluefin-cli
 ```
 
-> **Status (2026-08-14):** no `bluefin-cli` package has been published to the
-> Chocolatey community repository yet — **not available**
-> ([#141](https://github.com/tuna-os/bluefin-cli/issues/141), closed — release
-> publishing now works, the Choco manifest is still pending).
+> **Status (2026-08-14):** the Chocolatey community repository has no
+> `bluefin-cli` package yet — **not available**. The release pipeline now works
+> ([#141](https://github.com/tuna-os/bluefin-cli/issues/141), closed), but the
+> Choco manifest is not there yet.
 
 ### Scoop (Windows)
 
@@ -107,10 +107,10 @@ scoop bucket add tuna-os https://github.com/tuna-os/scoop-bucket
 scoop install bluefin-cli
 ```
 
-> **Status (2026-08-14):** `tuna-os/scoop-bucket` has no manifests yet — the
-> manifest is published by the release pipeline and is currently pending
-> ([#141](https://github.com/tuna-os/bluefin-cli/issues/141), closed — release
-> publishing now works, the Scoop manifest is still pending).
+> **Status (2026-08-14):** `tuna-os/scoop-bucket` has no manifests yet. The
+> release pipeline publishes the manifest, but it has not done so yet. The
+> pipeline now works ([#141](https://github.com/tuna-os/bluefin-cli/issues/141),
+> closed), but the Scoop manifest is not there yet.
 
 ### deb / rpm (Debian, Ubuntu, Fedora, openSUSE…)
 
@@ -157,17 +157,17 @@ Maintainers: semantic-release gives a version to each qualified merge to
 channels. `.github/workflows/winget.yml` is a manual fallback, to submit a
 Winget version again.
 
-A Scoop release needs the `SCOOP_BUCKET_TOKEN` repository secret (a fine-grained PAT with write access to `tuna-os/scoop-bucket`), without which the Scoop manifest upload step is safely skipped during release workflows. See [docs/release-publishing.md](docs/release-publishing.md) for details.
+A Scoop release needs the `SCOOP_BUCKET_TOKEN` repository secret (a fine-grained PAT with write access to `tuna-os/scoop-bucket`). Without it, a release workflow does not upload the Scoop manifest. For more data, see [`docs/release-publishing.md`](docs/release-publishing.md).
 
-A Homebrew tap release needs the `HOMEBREW_TAP_TOKEN` repository secret (a fine-grained PAT with write access to `tuna-os/homebrew-tap`), without which the formula upload step is safely skipped during release workflows. See [docs/release-publishing.md](docs/release-publishing.md) for details.
+A Homebrew tap release needs the `HOMEBREW_TAP_TOKEN` repository secret (a fine-grained PAT with write access to `tuna-os/homebrew-tap`). Without it, a release workflow does not upload the formula. For more data, see [`docs/release-publishing.md`](docs/release-publishing.md).
 
-Homebrew release process: when semantic-release determines that a merge to
-`main` warrants a release, it invokes GoReleaser, which publishes the binary
-formula to `tuna-os/homebrew-tap` (requires the `HOMEBREW_TAP_TOKEN` secret).
-External taps that build from source, such as
-`ublue-os/homebrew-experimental-tap`, must be synced manually — bump `url` and
-`sha256` in [`contrib/homebrew/bluefin-cli.rb`](contrib/homebrew/bluefin-cli.rb)
-and open a PR in that tap.
+Homebrew release process: when semantic-release finds that a merge to `main`
+needs a release, it calls GoReleaser. GoReleaser publishes the binary formula
+to `tuna-os/homebrew-tap` (this needs the `HOMEBREW_TAP_TOKEN` secret).
+A maintainer must sync the external taps that build from source, such as
+`ublue-os/homebrew-experimental-tap`, by hand. Bump `url` and `sha256` in
+[`contrib/homebrew/bluefin-cli.rb`](contrib/homebrew/bluefin-cli.rb), and open
+a PR in that tap.
 
 ## 📖 Usage
 
@@ -396,10 +396,10 @@ grep    # ugrep (if installed)
 - [AI tools](docs/ai.md) and [CNCF tools](docs/cncf.md): Details for the curated
   bundle categories.
 
-Maintainers can find package-channel credentials and release verification in
-[Release publishing](docs/release-publishing.md). The
-[Winget workflow](.github/workflows/winget.yml) is the manual fallback for
-re-submitting the Windows package; GoReleaser handles the normal release path.
+Maintainers can find the credentials of each package channel, and how to
+verify a release, in [`docs/release-publishing.md`](docs/release-publishing.md).
+The [Winget workflow](.github/workflows/winget.yml) is the manual fallback to
+submit the Windows package again. GoReleaser does the normal release.
 
 ## 🏗️ Project Structure
 
@@ -432,8 +432,8 @@ This project consolidates and modernizes functionality from:
 ### Prerequisites
 
 - Go 1.26.0 or later, matching the `go` directive in `go.mod` (the CI jobs validate with Go 1.27)
-- Podman (for containerized testing)
-- just (for running recipes)
+- Podman (for the tests in containers)
+- [`just`](https://just.systems/) (to run the recipes)
 
 ### Building
 
@@ -444,8 +444,8 @@ just build
 `just build` creates both variants:
 
 - `bluefin-cli`: the standard CLI
-- `bluefin-cli-plus`: the standard CLI plus features selected by the `extra`
-  build tag, including wallpapers, fonts, and sunset automation
+- `bluefin-cli-plus`: the standard CLI, plus the features that the `extra`
+  build tag adds. These include wallpapers, fonts, and sunset automation
 
 ### Testing
 
@@ -477,9 +477,9 @@ just fish   # Test in fish
 
 This project uses:
 
-- [Cobra](https://github.com/spf13/cobra) - CLI framework
-- [Huh](https://charm.land/huh/v2) - Forms and prompts
-- [Lipgloss](https://charm.land/lipgloss/v2) - Style definitions
+- [Cobra](https://github.com/spf13/cobra): the CLI framework
+- [Huh](https://charm.land/huh/v2): forms and prompts
+- [Lipgloss](https://charm.land/lipgloss/v2): definitions of styles
 
 ## 🤝 Contributing
 
@@ -493,20 +493,20 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📄 License
 
-This project is licensed under the Apache License 2.0 - see the LICENSE file for details.
+This project uses the Apache License 2.0. For more data, see the LICENSE file.
 
 ## 🙏 Acknowledgments
 
-- [Universal Blue](https://universal-blue.org/) - For the original bluefin-cli and ublue-bling
-- [Charm](https://charm.sh/) - For the amazing TUI libraries
+- [Universal Blue](https://universal-blue.org/): for the original bluefin-cli and ublue-bling
+- [Charm](https://charm.sh/): for the excellent TUI libraries
 - The Homebrew community
 
 ## 🔗 Related Projects
 
-- [ublue-os/packages](https://github.com/ublue-os/packages) - Original package implementations
-- [Starship](https://starship.rs/) - Cross-shell prompt
-- [Homebrew](https://brew.sh/) - Package manager for macOS and Linux
+- [ublue-os/packages](https://github.com/ublue-os/packages): the original packages
+- [Starship](https://starship.rs/): a prompt for many shells
+- [Homebrew](https://brew.sh/): a package manager for macOS and Linux
 
 ---
 
-Part of the [TunaOS](https://tunaos.org) ecosystem. [Docs](https://tunaos.org) · [Contributing](CONTRIBUTING.md)
+Part of the [TunaOS](https://tunaos.org) ecosystem. [Docs](https://tunaos.org) · [How to contribute](CONTRIBUTING.md)

@@ -1,6 +1,6 @@
 ## bluefin-cli terminal setup
 
-Non-interactive full setup: install + pin + config
+Do the full setup with no prompts: install + pin + config
 
 ```
 bluefin-cli terminal setup [flags]
@@ -14,5 +14,5 @@ bluefin-cli terminal setup [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli terminal](bluefin-cli_terminal.md)	 - Set up a great terminal: install Ghostty, pin it, theme it
+* [`bluefin-cli terminal`](bluefin-cli_terminal.md) — Set up a great terminal: install Ghostty, pin it, theme it
 
