@@ -1,8 +1,8 @@
 # Bluefin CLI roadmap
 
-**Last updated:** 2026-08-22
+**Last updated:** 2026-09-16
 
-**Current release line:** v0.10.x
+**Current release line:** v0.11.x
 
 **Planning issue:** [#196](https://github.com/tuna-os/bluefin-cli/issues/196)
 
@@ -13,10 +13,12 @@ work should be tracked in linked GitHub issues.
 
 ## Current baseline
 
-The project currently ships:
+The project currently ships (v0.11.3):
 
 - a persistent native TUI with fuzzy filtering and a command palette;
 - shell setup, curated application bundles, wallpapers, and Starship themes;
+- shared Alpine package backend support and refreshed embedded Brewfiles (#277, #278);
+- interactive shell configuration and prompt runner fixes (#275);
 - portable setup profiles and a cross-platform Brewfile workflow;
 - self-update and diagnostics;
 - release assets for Linux, macOS, and Windows, including deb and rpm packages;
