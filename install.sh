@@ -44,12 +44,32 @@ else
   bin_dir="$HOME/.local/bin"
 fi
 
-url="https://github.com/$REPO/releases/download/$tag/${BINARY}_${version}_${os}_${arch}.tar.gz"
+archive="${BINARY}_${version}_${os}_${arch}.tar.gz"
+url="https://github.com/$REPO/releases/download/$tag/$archive"
+checksum_url="https://github.com/$REPO/releases/download/$tag/checksums.txt"
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
 echo "Downloading $BINARY $tag ($os/$arch)..."
 curl -fsSL "$url" -o "$tmp/bluefin-cli.tar.gz"
+
+if curl -fsSL "$checksum_url" -o "$tmp/checksums.txt" 2>/dev/null; then
+  expected_sha=$(grep "  ${archive}$" "$tmp/checksums.txt" | awk '{print $1}')
+  if [ -n "$expected_sha" ]; then
+    if command -v sha256sum >/dev/null 2>&1; then
+      actual_sha=$(sha256sum "$tmp/bluefin-cli.tar.gz" | awk '{print $1}')
+    elif command -v shasum >/dev/null 2>&1; then
+      actual_sha=$(shasum -a 256 "$tmp/bluefin-cli.tar.gz" | awk '{print $1}')
+    else
+      actual_sha=""
+    fi
+    if [ -n "$actual_sha" ] && [ "$actual_sha" != "$expected_sha" ]; then
+      echo "error: checksum verification failed for $archive" >&2
+      exit 1
+    fi
+  fi
+fi
+
 tar -xzf "$tmp/bluefin-cli.tar.gz" -C "$tmp"
 
 [ -f "$tmp/$BINARY" ] || { echo "error: $BINARY not found in archive" >&2; exit 1; }
