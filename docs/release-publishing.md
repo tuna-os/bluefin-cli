@@ -13,8 +13,8 @@ An organization administrator should create a fine-grained GitHub token with:
 - repository access restricted to `tuna-os/homebrew-tap`;
 - repository permission `Contents: Read and write`.
 
-Store the token in the `tuna-os/bluefin-cli` repository as the Actions secret
-named exactly:
+Store the token in the `tuna-os/bluefin-cli` repository as an Actions secret,
+with exactly this name:
 
 ```text
 HOMEBREW_TAP_TOKEN
@@ -31,9 +31,9 @@ the Homebrew publisher. The generated formula should land
 in `tuna-os/homebrew-tap` under `Formula/` on `main`.
 
 Without the secret, releases intentionally remain green and publish the other
-configured channels; the Homebrew publisher is skipped. This makes the setting
-safe to test in forks and pull requests without exposing or requiring the
-organization credential.
+configured channels. Only the Homebrew publisher does not run. Thus you can
+safely test the setting in forks and pull requests. They do not need the
+organization credential, and they cannot expose it.
 
 ## Scoop
 
@@ -50,8 +50,8 @@ An organization administrator should create a fine-grained GitHub token with:
 - repository access restricted to `tuna-os/scoop-bucket`;
 - repository permission `Contents: Read and write`.
 
-Store the token in the `tuna-os/bluefin-cli` repository as the Actions secret
-named exactly:
+Store the token in the `tuna-os/bluefin-cli` repository as an Actions secret,
+with exactly this name:
 
 ```text
 SCOOP_BUCKET_TOKEN
@@ -68,6 +68,6 @@ the Scoop publisher. The generated manifest should land
 in `tuna-os/scoop-bucket` on `main`.
 
 Without the secret, releases intentionally remain green and publish the other
-configured channels; the Scoop publisher is skipped. This makes the setting
-safe to test in forks and pull requests without exposing or requiring the
-organization credential.
+configured channels. Only the Scoop publisher does not run. Thus you can
+safely test the setting in forks and pull requests. They do not need the
+organization credential, and they cannot expose it.
