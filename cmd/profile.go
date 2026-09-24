@@ -2,15 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
-	"path"
-	"path/filepath"
-	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"github.com/tuna-os/bluefin-cli/internal/config"
 	"github.com/tuna-os/bluefin-cli/internal/profile"
 	"github.com/tuna-os/bluefin-cli/internal/tui"
 )
@@ -104,60 +97,27 @@ var profileDiffCmd = &cobra.Command{
 	},
 }
 
-// profileGistFile is the filename used inside the sync gist.
-const profileGistFile = "bluefin-profile.json"
-
 var profilePushCmd = &cobra.Command{
 	Use:   "push",
 	Short: "Sync this machine's profile to a private GitHub gist (via gh)",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if _, err := exec.LookPath("gh"); err != nil {
-			return fmt.Errorf("profile sync uses the GitHub CLI — install gh and run 'gh auth login'")
+		client, err := profile.NewGitHubCLIClient()
+		if err != nil {
+			return err
 		}
 		p, err := profile.Export(currentShellName())
 		if err != nil {
 			return err
 		}
-		tmpFile, err := os.CreateTemp("", "bluefin-profile-*.json")
+		sync := profile.NewSync(client, profile.ConfigSyncIDStore{})
+		wasConfigured := profile.ConfigSyncIDStore{}.Get() != ""
+		id, err := sync.Push(p)
 		if err != nil {
 			return err
 		}
-		tmp := tmpFile.Name()
-		_ = tmpFile.Close()
-		defer func() { _ = os.Remove(tmp) }()
-		if err := p.Save(tmp); err != nil {
-			return err
-		}
-
-		if id := viper.GetString("profile.gist_id"); id != "" {
-			out, err := exec.Command("gh", "gist", "edit", id, "--filename", profileGistFile, tmp).CombinedOutput()
-			if err != nil {
-				return fmt.Errorf("updating gist %s: %v\n%s", id, err, out)
-			}
+		if wasConfigured {
 			fmt.Println(tui.SuccessStyle.Render("✓ Profile pushed to gist " + id))
 			return nil
-		}
-
-		// gh names the gist file after the file on disk, so the basename has to
-		// stay profileGistFile — randomize the parent directory instead.
-		tmpDir, err := os.MkdirTemp("", "bluefin-profile-")
-		if err != nil {
-			return err
-		}
-		defer func() { _ = os.RemoveAll(tmpDir) }()
-		named := filepath.Join(tmpDir, profileGistFile)
-		if err := p.Save(named); err != nil {
-			return err
-		}
-		out, err := exec.Command("gh", "gist", "create", "--desc", "bluefin-cli profile", named).CombinedOutput()
-		if err != nil {
-			return fmt.Errorf("creating gist: %v\n%s", err, out)
-		}
-		url := strings.TrimSpace(string(out))
-		id := path.Base(url)
-		viper.Set("profile.gist_id", id)
-		if err := config.Save(); err != nil {
-			return err
 		}
 		fmt.Println(tui.SuccessStyle.Render("✓ Profile pushed to new private gist " + id + " (saved in config)"))
 		return nil
@@ -169,41 +129,20 @@ var profilePullCmd = &cobra.Command{
 	Short: "Fetch and apply the synced profile from its gist",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if _, err := exec.LookPath("gh"); err != nil {
-			return fmt.Errorf("profile sync uses the GitHub CLI — install gh and run 'gh auth login'")
+		client, err := profile.NewGitHubCLIClient()
+		if err != nil {
+			return err
 		}
-		id := viper.GetString("profile.gist_id")
+		id := ""
 		if len(args) > 0 {
 			id = args[0]
 		}
-		if id == "" {
-			return fmt.Errorf("no gist configured — run 'profile push' first or pass a gist id")
-		}
-		out, err := exec.Command("gh", "gist", "view", id, "--filename", profileGistFile, "--raw").Output()
-		if err != nil {
-			return fmt.Errorf("fetching gist %s: %w", id, err)
-		}
-		pullFile, err := os.CreateTemp("", "bluefin-profile-pull-*.json")
-		if err != nil {
-			return err
-		}
-		tmp := pullFile.Name()
-		_ = pullFile.Close()
-		defer func() { _ = os.Remove(tmp) }()
-		if err := os.WriteFile(tmp, out, 0o600); err != nil {
-			return err
-		}
-
-		p, err := profile.Load(tmp)
+		p, err := profile.NewSync(client, profile.ConfigSyncIDStore{}).Fetch(id)
 		if err != nil {
 			return err
 		}
 		if err := p.Apply(); err != nil {
 			return err
-		}
-		if len(args) > 0 && viper.GetString("profile.gist_id") == "" {
-			viper.Set("profile.gist_id", id)
-			_ = config.Save()
 		}
 		fmt.Println(tui.SuccessStyle.Render("✓ Profile pulled and applied."))
 		return nil
