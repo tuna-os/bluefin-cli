@@ -1,10 +1,10 @@
 # Bluefin CLI roadmap
 
-**Last updated:** 2026-08-22
+**Last updated:** 2026-09-18
 
-**Current release line:** v0.10.x
+**Current release line:** v0.11.x
 
-**Planning issue:** [#196](https://github.com/tuna-os/bluefin-cli/issues/196)
+**Planning issue:** [#291](https://github.com/tuna-os/bluefin-cli/issues/291)
 
 Bluefin CLI is a cross-platform environment setup and customization tool in the
 [TunaOS](https://tunaos.org) ecosystem. This roadmap describes outcomes and
@@ -16,14 +16,15 @@ work should be tracked in linked GitHub issues.
 The project currently ships:
 
 - a persistent native TUI with fuzzy filtering and a command palette;
-- shell setup, curated application bundles, wallpapers, and Starship themes;
-- portable setup profiles and a cross-platform Brewfile workflow;
-- self-update and diagnostics;
+- multi-shell setup (bash, zsh, fish, ash, nushell), curated application bundles, wallpapers, and Starship themes;
+- shared Alpine package manager backend and cross-platform Brewfile workflow;
+- runner prompt hang safeguards and PowerShell gsudo privilege boundaries;
+- portable setup profiles, self-update, and diagnostics;
 - release assets for Linux, macOS, and Windows, including deb and rpm packages;
 - CI across Linux, macOS, and Windows, plus scheduled Windows validation.
 
 The release pipeline and direct-download path are operational. Package-manager
-availability is incomplete and remains the clearest adoption gap.
+availability across Homebrew and Scoop remains the active Q4 adoption focus.
 
 ## Near term: make distribution dependable
 
