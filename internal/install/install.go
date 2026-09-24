@@ -207,12 +207,15 @@ func MergeBrewfiles(paths []string) (string, func(), error) {
 	for _, p := range paths {
 		content, err := os.ReadFile(p)
 		if err != nil {
+			_ = os.Remove(mergedPath)
 			return "", func() {}, err
 		}
 		if _, err := f.Write(content); err != nil {
+			_ = os.Remove(mergedPath)
 			return "", func() {}, err
 		}
 		if _, err := f.WriteString("\n"); err != nil {
+			_ = os.Remove(mergedPath)
 			return "", func() {}, err
 		}
 	}
