@@ -16,12 +16,12 @@ var installCmd = &cobra.Command{
 	Long: `Install predefined bundles or custom Brewfiles.
 
 Available bundles:
-  ai               - AI tools (Goose, Codex, Gemini, Ramalama, etc.)
-  cli              - CLI essentials (gh, chezmoi, etc.)
-  cncf             - Cloud Native Computing Foundation tools.
-  experimental-ide - Experimental IDE tools.
-  ide              - IDE tools: VS Code, JetBrains Toolbox, etc.
-  k8s              - Kubernetes tools: kubectl, k9s, kubectx, etc.
+  ai:               AI tools (Goose, Codex, Gemini, Ramalama, etc.)
+  cli:              CLI essentials (gh, chezmoi, etc.)
+  cncf:             Cloud Native Computing Foundation tools.
+  experimental-ide: Experimental IDE tools.
+  ide:              IDE tools: VS Code, JetBrains Toolbox, etc.
+  k8s:              Kubernetes tools: kubectl, k9s, kubectx, etc.
   
 Or provide a path to a local Brewfile.`,
 	Args: cobra.MaximumNArgs(1),
@@ -36,7 +36,7 @@ Or provide a path to a local Brewfile.`,
 
 var installListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List available bundles",
+	Short: "List the available bundles",
 	Long:  `Show all available bundles with descriptions.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		install.ListBundles()
@@ -75,8 +75,8 @@ var installWallpapersCmd = &cobra.Command{
 
 var installWallpapersCleanupCmd = &cobra.Command{
 	Use:   "cleanup",
-	Short: "Clean wallpaper sync artifacts",
-	Long:  "Remove Bluefin CLI wallpaper sync artifacts. In WSL this removes generated Windows themes, copied wallpaper folders, helper scripts, scheduled tasks, and state. Use --all to also uninstall known wallpaper casks and remove local wallpaper folders.",
+	Short: "Clean up the files of the wallpaper sync",
+	Long:  "Remove the files that the wallpaper sync of Bluefin CLI made. In WSL this removes generated Windows themes, copied wallpaper folders, helper scripts, scheduled tasks, and state. Use --all to also uninstall the known casks of wallpapers and remove local wallpaper folders.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		all, _ := cmd.Flags().GetBool("all")
 		if err := install.CleanupWallpapers(all); err != nil {

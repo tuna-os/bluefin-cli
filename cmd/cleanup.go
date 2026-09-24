@@ -10,9 +10,9 @@ import (
 
 var cleanupCmd = &cobra.Command{
 	Use:   "cleanup",
-	Short: "Uninstall Bluefin shell setup and managed tools (alias for uninstall)",
-	Long: `Remove Bluefin shell initialization setup across all supported shells.
-By default, this command also attempts to uninstall managed software and modules.`,
+	Short: "Uninstall the Bluefin shell setup and its tools (alias for uninstall)",
+	Long: `Remove the Bluefin shell setup from all supported shells.
+By default, this command also tries to uninstall the software and modules it manages.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		opts := shell.UninstallOptions{
 			Shells:         append([]string{"powershell"}, shell.ManagedShells()...),

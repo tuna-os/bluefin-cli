@@ -71,8 +71,8 @@ var motdShowCmd = &cobra.Command{
 
 var motdConfigCmd = &cobra.Command{
 	Use:   "config",
-	Short: "Configure MOTD settings",
-	Long:  `Interactively configure MOTD theme and settings.`,
+	Short: "Configure the settings of the MOTD",
+	Long:  `Configure the theme and settings of the MOTD in a form.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) > 0 {
 			return motd.SetTheme(args[0])

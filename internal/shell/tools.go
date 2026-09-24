@@ -78,11 +78,11 @@ var Tools = []Tool{
 	{Name: "Ugrep", Description: "Ultra fast grep with interactive mode", Binary: "ug", Pkg: "ugrep", ApkPkg: "ugrep", Default: true, UnsupportedShells: map[string]bool{"powershell": true}},
 	{Name: "Bat", Description: "A cat clone with wings", Binary: "bat", Pkg: "sharkdp.bat", BrewPkg: "bat", ApkPkg: "bat", Default: true},
 	{Name: "Atuin", Description: "Magical shell history", Binary: "atuin", Pkg: "atuin", ApkPkg: "atuin", Default: false, ShellDefaults: map[string]bool{"zsh": true, "fish": true}},
-	{Name: "Starship", Description: "The minimal, blazing-fast, and infinitely customizable prompt", Binary: "starship", Pkg: "Starship.Starship", BrewPkg: "starship", ApkPkg: "starship", Default: true},
+	{Name: "Starship", Description: "A minimal, fast, and customizable prompt", Binary: "starship", Pkg: "Starship.Starship", BrewPkg: "starship", ApkPkg: "starship", Default: true},
 	{Name: "Zoxide", Description: "A smarter cd command", Binary: "zoxide", Pkg: "ajeetdsouza.zoxide", BrewPkg: "zoxide", ApkPkg: "zoxide", Default: true},
 	{Name: "UutilsCoreutils", Description: "Rust rewrite of GNU coreutils", Binary: "ucat", Pkg: "uutils-coreutils", BrewPkg: "uutils-coreutils", ApkPkg: "uutils-coreutils", Default: true, UnsupportedShells: map[string]bool{"powershell": true}},
 	{Name: "UutilsFindutils", Description: "Rust rewrite of GNU findutils", Binary: "ufind", Pkg: "uutils-findutils", BrewPkg: "uutils-findutils", ApkPkg: "uutils-findutils", Default: true, UnsupportedShells: map[string]bool{"powershell": true}},
 	{Name: "UutilsDiffutils", Description: "Rust rewrite of GNU diffutils", Binary: "udiffutils", Pkg: "uutils-diffutils", BrewPkg: "uutils-diffutils", ApkPkg: "uutils-diffutils", Default: true, UnsupportedShells: map[string]bool{"powershell": true}},
-	{Name: "Carapace", Description: "Multi-shell multi-command argument completer", Binary: "carapace", Pkg: "rsteube.carapace", BrewPkg: "carapace", Default: false},
+	{Name: "Carapace", Description: "Argument completion for many shells and commands", Binary: "carapace", Pkg: "rsteube.carapace", BrewPkg: "carapace", Default: false},
 	{Name: "Glow", Description: "Terminal markdown renderer for MOTD", Binary: "glow", Pkg: "charmbracelet.glow", BrewPkg: "glow", Default: true},
 }

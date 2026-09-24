@@ -14,5 +14,5 @@ bluefin-cli sunset setup [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli sunset](bluefin-cli_sunset.md)	 - Manage solar-based theme and wallpaper switching
+* [`bluefin-cli sunset`](bluefin-cli_sunset.md) — Change the theme and wallpaper at sunrise and sunset
 

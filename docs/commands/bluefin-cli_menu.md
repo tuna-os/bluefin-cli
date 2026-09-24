@@ -1,6 +1,6 @@
 ## bluefin-cli menu
 
-Open the interactive Bluefin main menu
+Open the main menu of Bluefin
 
 ```
 bluefin-cli menu [flags]
@@ -14,5 +14,5 @@ bluefin-cli menu [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli](bluefin-cli.md)	 - A powerful CLI tool for managing Homebrew and shell customization
+* [`bluefin-cli`](bluefin-cli.md) — A CLI tool to manage Homebrew and customize your shell
 

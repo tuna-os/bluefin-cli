@@ -1,6 +1,6 @@
 ## bluefin-cli profile import
 
-Apply a previously exported setup to this machine
+Apply an exported setup to this machine
 
 ```
 bluefin-cli profile import <file> [flags]
@@ -14,5 +14,5 @@ bluefin-cli profile import <file> [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli profile](bluefin-cli_profile.md)	 - Export or import your bluefin-cli setup
+* [`bluefin-cli profile`](bluefin-cli_profile.md) — Export or import your bluefin-cli setup
 
