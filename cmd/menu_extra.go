@@ -114,7 +114,7 @@ func sunsetFlow() tea.Cmd {
 							return err
 						}
 						fmt.Println("Configuration updated and feature enabled!")
-						return runSunset(cfg)
+						return sunset.Apply(cfg, sunset.NewThemeOperator(), nil)
 					}))
 				})
 				return app.PushMsg{Screen: screen}
