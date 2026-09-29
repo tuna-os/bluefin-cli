@@ -1,7 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "local>tuna-os/.github",
     "local>tuna-os/.github"
   ],
   "postUpgradeTasks": {
