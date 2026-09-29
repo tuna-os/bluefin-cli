@@ -1,10 +1,10 @@
 ## bluefin-cli motd config
 
-Configure MOTD settings
+Configure the settings of the MOTD
 
 ### Synopsis
 
-Interactively configure MOTD theme and settings.
+Configure the theme and settings of the MOTD in a form.
 
 ```
 bluefin-cli motd config [flags]
@@ -18,5 +18,5 @@ bluefin-cli motd config [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli motd](bluefin-cli_motd.md)	 - Manage Message of the Day
+* [`bluefin-cli motd`](bluefin-cli_motd.md) — Manage Message of the Day
 

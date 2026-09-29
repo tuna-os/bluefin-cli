@@ -30,5 +30,5 @@ bluefin-cli completion fish [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli completion](bluefin-cli_completion.md)	 - Generate the autocompletion script for the specified shell
+* [`bluefin-cli completion`](bluefin-cli_completion.md) — Generate the autocompletion script for the specified shell
 

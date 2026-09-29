@@ -1,11 +1,11 @@
 ## bluefin-cli cleanup
 
-Uninstall Bluefin shell setup and managed tools (alias for uninstall)
+Uninstall the Bluefin shell setup and its tools (alias for uninstall)
 
 ### Synopsis
 
-Remove Bluefin shell initialization setup across all supported shells.
-By default, this command also attempts to uninstall managed software and modules.
+Remove the Bluefin shell setup from all supported shells.
+By default, this command also tries to uninstall the software and modules it manages.
 
 ```
 bluefin-cli cleanup [flags]
@@ -19,5 +19,5 @@ bluefin-cli cleanup [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli](bluefin-cli.md)	 - A powerful CLI tool for managing Homebrew and shell customization
+* [`bluefin-cli`](bluefin-cli.md) — A CLI tool to manage Homebrew and customize your shell
 

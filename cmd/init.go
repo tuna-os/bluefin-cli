@@ -15,7 +15,7 @@ var (
 
 var initCmd = &cobra.Command{
 	Use:   "init [bash|zsh|fish|ash|nu|powershell|pwsh]",
-	Short: "Generate shell initialization script",
+	Short: "Generate the init script for a shell",
 	Long: `Generate the shell initialization script for bluefin-cli.
 Add the following to your shell configuration file:
 
@@ -34,8 +34,8 @@ PowerShell ($PROFILE):
 Ash (~/.ashrc, with ENV="$HOME/.ashrc" exported from ~/.profile):
   eval "$(bluefin-cli init ash)"
 
-Nushell (~/.config/nushell/config.nu) — nushell cannot evaluate a string, so
-the script is saved to a file and sourced from there:
+Nushell (~/.config/nushell/config.nu) — nushell cannot evaluate a string.
+Save the script to a file, and source that file:
   bluefin-cli init nu | save -f ~/.config/nushell/bluefin-cli.nu
   source ~/.config/nushell/bluefin-cli.nu
 

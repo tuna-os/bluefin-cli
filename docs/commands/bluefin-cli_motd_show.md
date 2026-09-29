@@ -18,5 +18,5 @@ bluefin-cli motd show [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli motd](bluefin-cli_motd.md)	 - Manage Message of the Day
+* [`bluefin-cli motd`](bluefin-cli_motd.md) — Manage Message of the Day
 

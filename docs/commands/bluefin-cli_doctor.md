@@ -1,6 +1,6 @@
 ## bluefin-cli doctor
 
-Diagnose common problems with your Bluefin CLI setup
+Find common problems in your setup of Bluefin CLI
 
 ```
 bluefin-cli doctor [flags]
@@ -16,5 +16,5 @@ bluefin-cli doctor [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli](bluefin-cli.md)	 - A powerful CLI tool for managing Homebrew and shell customization
+* [`bluefin-cli`](bluefin-cli.md) — A CLI tool to manage Homebrew and customize your shell
 

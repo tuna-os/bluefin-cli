@@ -3,21 +3,27 @@
 **Status**: accepted (2026-07)
 
 ## Context
-The menu system grew organically as independent huh `form.Run()` calls that
-cleared and took over the terminal; navigation state, headers, and theming
-were rebuilt ad hoc per flow, and drill-down/back behavior was inconsistent.
+The menus grew one at a time, as separate huh `form.Run()` calls. Each call
+cleared the terminal and took control of it. Each flow built its own
+navigation state, headers, and themes, and drill-down/back behavior was not
+consistent.
 
 ## Decision
-One long-lived bubbletea v2 program (`internal/tui/app`) hosts a stack of
-`Screen`s (k9s-style push/pop). Every interactive flow renders inside it via
-four wrappers: MenuScreen (lists), FormScreen (embedded huh v2 forms),
-TextScreen (read-only, scrollable), RunnerScreen (tasks that print — output
-is captured by swapping os.Stdout to a pipe; the renderer keeps its own fd).
-Interactive CLI commands (`bluefin-cli fonts`…) launch the same shell at the
-right screen, so there is exactly one UI codepath. `RunExternal` (tea.Exec)
-survives only for launching genuinely external interactive programs.
+A single program (`internal/tui/app`, bubbletea v2) stays open for the whole
+session. It hosts a stack of `Screen`s (k9s-style push/pop). Every
+interactive flow renders inside it through one of four wrappers:
+
+- MenuScreen (lists).
+- FormScreen (huh v2 forms, embedded).
+- TextScreen (read-only, scrollable).
+- RunnerScreen (tasks that print). It captures the output: it swaps
+  os.Stdout for a pipe, and the renderer keeps its own fd.
+
+Interactive CLI commands (`bluefin-cli fonts`…) open the same shell at the
+correct screen. Thus the UI has only one path through the code. `RunExternal`
+(tea.Exec) stays only to start interactive programs that are truly external.
 
 ## Consequences
-Consistent chrome, theming, and keybindings everywhere; flows are unit-
-testable as models (no pty). Anything that prints or blocks MUST go through
+The chrome, themes, and keybindings are the same everywhere. Unit tests can
+test flows as models (no pty). Anything that prints or blocks MUST go through
 RunnerScreen — synchronous capture deadlocks (glow terminal queries).

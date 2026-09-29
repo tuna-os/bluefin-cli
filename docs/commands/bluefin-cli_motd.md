@@ -18,8 +18,8 @@ bluefin-cli motd [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli](bluefin-cli.md)	 - A powerful CLI tool for managing Homebrew and shell customization
-* [bluefin-cli motd config](bluefin-cli_motd_config.md)	 - Configure MOTD settings
-* [bluefin-cli motd show](bluefin-cli_motd_show.md)	 - Display the MOTD
-* [bluefin-cli motd toggle](bluefin-cli_motd_toggle.md)	 - Toggle MOTD for shells
+* [`bluefin-cli`](bluefin-cli.md) — A CLI tool to manage Homebrew and customize your shell
+* [`bluefin-cli motd config`](bluefin-cli_motd_config.md) — Configure the settings of the MOTD
+* [`bluefin-cli motd show`](bluefin-cli_motd_show.md) — Display the MOTD
+* [`bluefin-cli motd toggle`](bluefin-cli_motd_toggle.md) — Toggle MOTD for shells
 

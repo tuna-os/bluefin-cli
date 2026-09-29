@@ -1,6 +1,6 @@
 ## bluefin-cli install list
 
-List available bundles
+List the available bundles
 
 ### Synopsis
 
@@ -18,5 +18,5 @@ bluefin-cli install list [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli install](bluefin-cli_install.md)	 - Install tool bundles
+* [`bluefin-cli install`](bluefin-cli_install.md) — Install tool bundles
 

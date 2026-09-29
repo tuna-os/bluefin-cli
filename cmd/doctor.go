@@ -23,7 +23,7 @@ import (
 
 var doctorCmd = &cobra.Command{
 	Use:   "doctor",
-	Short: "Diagnose common problems with your Bluefin CLI setup",
+	Short: "Find common problems in your setup of Bluefin CLI",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if bench, _ := cmd.Flags().GetBool("bench"); bench {
 			return runBench()

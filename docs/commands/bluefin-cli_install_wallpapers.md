@@ -20,6 +20,6 @@ bluefin-cli install wallpapers [cask...] [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli install](bluefin-cli_install.md)	 - Install tool bundles
-* [bluefin-cli install wallpapers cleanup](bluefin-cli_install_wallpapers_cleanup.md)	 - Clean wallpaper sync artifacts
+* [`bluefin-cli install`](bluefin-cli_install.md) — Install tool bundles
+* [`bluefin-cli install wallpapers cleanup`](bluefin-cli_install_wallpapers_cleanup.md) — Clean up the files of the wallpaper sync
 

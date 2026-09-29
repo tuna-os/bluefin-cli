@@ -1,6 +1,6 @@
 ## bluefin-cli brewfile dump
 
-Capture currently installed packages into the file
+Write the installed packages into the file
 
 ```
 bluefin-cli brewfile dump [flags]
@@ -15,5 +15,5 @@ bluefin-cli brewfile dump [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli brewfile](bluefin-cli_brewfile.md)	 - Manage your machine's package file (brew/cask + winget/scoop/choco)
+* [`bluefin-cli brewfile`](bluefin-cli_brewfile.md) — Manage your machine's package file (brew/cask + winget/scoop/choco)
 

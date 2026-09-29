@@ -1,6 +1,6 @@
 ## bluefin-cli starship install
 
-Install Starship prompt
+Install the Starship prompt
 
 ### Synopsis
 
@@ -18,5 +18,5 @@ bluefin-cli starship install [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli starship](bluefin-cli_starship.md)	 - Manage Starship prompt themes
+* [`bluefin-cli starship`](bluefin-cli_starship.md) — Manage the themes of the Starship prompt
 

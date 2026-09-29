@@ -14,5 +14,5 @@ bluefin-cli profile export [file] [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli profile](bluefin-cli_profile.md)	 - Export or import your bluefin-cli setup
+* [`bluefin-cli profile`](bluefin-cli_profile.md) — Export or import your bluefin-cli setup
 

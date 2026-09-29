@@ -90,7 +90,7 @@ var brewfileSearchCmd = &cobra.Command{
 
 var brewfileDumpCmd = &cobra.Command{
 	Use:   "dump",
-	Short: "Capture currently installed packages into the file",
+	Short: "Write the installed packages into the file",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return install.DumpBrewfile(brewfileTarget(cmd))
 	},

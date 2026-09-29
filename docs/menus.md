@@ -2,7 +2,7 @@
 
 The interactive menu is a persistent TUI shell (`internal/tui/app`): a stack
 of screens with a breadcrumb header, contextual footer, and a command palette.
-This page maps the current flows and how they are tested.
+This page maps the current flows and shows how the tests cover them.
 
 ## Navigation model
 
@@ -54,45 +54,47 @@ graph TD
 ```
 
 The `ctrl+p` palette lists every leaf destination above (Status, each install
-category, Wallpapers, Fonts, Starship, Sunset) — one fuzzy search reaches
-anything in the tree.
+category, Wallpapers, Fonts, Starship, Sunset). With one fuzzy search, you
+can get to any item in the tree.
 
 ## How this is tested
 
 Three layers, run by CI and `just` recipes:
 
 1. **Model tests** (`internal/tui/app/app_test.go`): synchronous, deterministic
-   tests of navigation state — push/pop, cursor movement, filtering, palette,
-   help overlay — plus a direct render assertion on the composed frame.
+   tests of the navigation state. They cover push/pop, cursor movement, the
+   filter, the palette and the help overlay. One test also checks the render
+   of the composed frame.
 2. **Menu wiring tests** (`cmd/menu_test.go`): every menu item and bundle
-   category must resolve to an action, so a menu entry can never silently lead
-   nowhere.
-3. **End-to-end smoke** (`scripts/tui-smoke.sh`, `just tui-smoke`): drives the
-   real binary in a tmux pane — sends actual keystrokes, captures the screen,
-   and asserts rendering, drill-down, filter, palette, help, and quit.
+   category must resolve to an action. Thus no entry in a menu can lead
+   nowhere without a warning.
+3. **End-to-end smoke** (`scripts/tui-smoke.sh`, `just tui-smoke`): runs the
+   real binary in a tmux pane. It sends real keystrokes and captures the
+   screen. Then it checks the render, drill-down, filter, palette, help, and
+   quit.
 
 ## Native screens & extras
 
-- Every flow renders natively inside the shell: selection UIs are
-  `app.FormScreen`, read-only views are `app.TextScreen`, and printing tasks
-  (brew installs, MOTD, doctor) run in `app.RunnerScreen`, which captures
-  their stdout into a scrolling log with a spinner and elapsed time. The only
+- Every flow renders natively inside the shell. Selection UIs are
+  `app.FormScreen`, and read-only views are `app.TextScreen`. Tasks that print
+  output (brew installs, MOTD, doctor) run in `app.RunnerScreen`. It captures
+  their stdout into a log that scrolls, with a spinner and the elapsed time. The only
   terminal handover left is the WSL→Windows sunset delegation
   (`app.RunExternal`), which launches another interactive program.
 - `bluefin-cli doctor` — environment diagnostics with fix hints.
 - `bluefin-cli theme <flavor>` — pin a Catppuccin flavor (latte, frappe,
   macchiato, mocha) or `auto` to follow the terminal background.
-- `bluefin-cli update` — self-update for script installs, now verified
-  against the release's `checksums.txt`; the menu also checks for updates in
-  the background and shows a toast.
+- `bluefin-cli update` — self-update for script installs. It verifies the
+  download against the release's `checksums.txt`. The menu also checks for
+  updates in the background and shows a toast.
 - 🦕 **Dino Run** — hidden runner mini-game on the half-block pixel canvas:
   `ctrl+p` → "Dino Run", or the hidden `bluefin-cli dino` command. Space
   jumps kelp, stay down under fish; high score persists.
-- 👻 **Terminal Setup** — install the platform's best terminal (Ghostty on
-  macOS/Linux via brew, WezTerm on Windows via winget), pin to the macOS
+- 👻 **Terminal Setup** — install the best terminal for the platform (Ghostty
+  on macOS/Linux via brew, WezTerm on Windows via winget). Pin it to the macOS
   Dock, and write a Catppuccin auto light/dark config with your Nerd Font.
 - 🏠 **My Brewfile** — one package file for every OS (brew/cask +
-  winget/scoop/choco): dump from installed, search-to-add across managers,
-  remove entries, install everything. Also `bluefin-cli brewfile`.
+  winget/scoop/choco). Dump the installed packages, search all managers and
+  add, remove entries, and install everything. Also `bluefin-cli brewfile`.
 - 📦 **Profiles** — `profile export/import/diff/push/pull` replay a whole
   setup (shells, tools, flavor) across machines, synced via a private gist.

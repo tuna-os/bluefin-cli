@@ -1,15 +1,15 @@
 ## bluefin-cli countme
 
-Manage anonymous usage counting
+Manage the anonymous count of installs
 
 ### Synopsis
 
 bluefin-cli participates in Fedora's countme protocol to report
 anonymous install counts alongside native Bluefin Linux installs.
 
-Each week, a single GET request is sent to Fedora's mirror infrastructure
+Each week, bluefin-cli sends a single GET request to Fedora's mirrors,
 with a User-Agent that identifies the platform (mac, wsl, powershell).
-No personal data, IP addresses, or machine identifiers are transmitted.
+It sends no personal data, no IP addresses, and no machine identifiers.
 The aggregate data is publicly available at:
   https://data-analysis.fedoraproject.org/csv-reports/countme/totals.csv
 
@@ -33,5 +33,5 @@ bluefin-cli countme [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli](bluefin-cli.md)	 - A powerful CLI tool for managing Homebrew and shell customization
+* [`bluefin-cli`](bluefin-cli.md) — A CLI tool to manage Homebrew and customize your shell
 
