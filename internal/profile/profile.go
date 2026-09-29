@@ -59,16 +59,24 @@ func Export(currentShell string) (*Profile, error) {
 
 // Save writes the profile as indented JSON; path "-" writes to stdout.
 func (p *Profile) Save(path string) error {
-	data, err := json.MarshalIndent(p, "", "  ")
+	data, err := p.Marshal()
 	if err != nil {
 		return err
 	}
-	data = append(data, '\n')
 	if path == "-" || path == "" {
 		_, err = os.Stdout.Write(data)
 		return err
 	}
 	return os.WriteFile(path, data, 0o644)
+}
+
+// Marshal returns the canonical portable profile document.
+func (p *Profile) Marshal() ([]byte, error) {
+	data, err := json.MarshalIndent(p, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	return append(data, '\n'), nil
 }
 
 // Load reads a profile document.
@@ -77,6 +85,11 @@ func Load(path string) (*Profile, error) {
 	if err != nil {
 		return nil, err
 	}
+	return Parse(data)
+}
+
+// Parse validates a profile document received from any storage or transport.
+func Parse(data []byte) (*Profile, error) {
 	var p Profile
 	if err := json.Unmarshal(data, &p); err != nil {
 		return nil, fmt.Errorf("parsing profile: %w", err)
