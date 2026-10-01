@@ -58,20 +58,20 @@ func RunFixes(opts FixOptions) {
 	current := o.CurrentShell
 	status := o.CheckStatus()
 	if status == nil || !status[current] {
-		fmt.Fprintln(o.Output, "fix: enabling shell integration for "+current)
+		_, _ = fmt.Fprintln(o.Output, "fix: enabling shell integration for "+current)
 		if err := o.ToggleShell(current, true); err != nil {
-			fmt.Fprintln(o.Output, "  failed: "+err.Error())
+			_, _ = fmt.Fprintln(o.Output, "  failed: "+err.Error())
 		}
 	}
 	if o.IsAlpine() && !o.CommandExists("coldbrew") {
-		fmt.Fprintln(o.Output, "fix: setting up coldbrew")
+		_, _ = fmt.Fprintln(o.Output, "fix: setting up coldbrew")
 		_ = o.EnsureColdbrew()
 	}
 	for _, tool := range []string{"eza", "fzf", "starship"} {
 		if !o.CommandExists(tool) {
-			fmt.Fprintln(o.Output, "fix: installing "+tool)
+			_, _ = fmt.Fprintln(o.Output, "fix: installing "+tool)
 			if err := o.EnsureInstalled(tool); err != nil {
-				fmt.Fprintf(o.Output, "  failed: %v\n", err)
+				_, _ = fmt.Fprintf(o.Output, "  failed: %v\n", err)
 			}
 		}
 	}
