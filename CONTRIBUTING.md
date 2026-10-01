@@ -25,6 +25,12 @@ go test ./...
 go test -tags extra -race ./...
 ```
 
+Run linting (required by CI):
+
+```bash
+just lint
+```
+
 For the containerized integration suite, run:
 
 ```bash
