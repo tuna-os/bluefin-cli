@@ -1,57 +1,44 @@
 # Security Policy
 
-bluefin-cli is a system management tool. We take security reports seriously.
+Report security issues privately.
 
-## Reporting
+## How to report
 
-**Do not open a public issue.** Use GitHub's private vulnerability reporting:
+Do not open a public issue. Use GitHub's private security report:
 
-1. Go to [bluefin-cli security advisories](https://github.com/tuna-os/bluefin-cli/security/advisories/new).
+1. Go to [security advisories](https://github.com/tuna-os/bluefin-cli/security/advisories/new).
 2. Click **Report a vulnerability**.
-3. Include:
-   - Affected component
-   - Steps to reproduce
-   - Impact and severity
-   - Suggested fix, if known
+3. Include steps to reproduce and the impact.
 
-## In scope
+## What to report
 
 - Privilege escalation
 - Command injection
+- Credential leaks
 - Unsafe system operations
-- Credential leakage
-- Dependency vulnerabilities
-- Supply chain issues
 
-## Out of scope
+## What not to report
 
-- Fedora Silverblue — report to [Fedora Security](https://docs.fedoraproject.org/en-US/security/)
-- systemd — report to [systemd](https://github.com/systemd/systemd/security/advisories)
+- Fedora Silverblue — report to Fedora
+- systemd — report to systemd
 - Container runtimes — report upstream
-- Third-party tools — report to the tool maintainer
+- Third-party tools — report to the maintainer
 
 ## Timeline
 
 - Acknowledge: 5 business days
-- Triage: 10 days
-- Fix and release: 30 days
-- Prefer coordinated disclosure (30 days before public details)
+- Fix: 30 days
 
-## After a fix
+## After we fix it
 
-- Publish GitHub Security Advisory
-- Update CHANGELOG
-- Notify users via release notes
-- Credit reporter if requested
+- We publish an advisory
+- We update the changelog
+- We notify users
 
-## Boundaries
+## Credit
 
-- bluefin-cli: command parsing and configuration
-- System: privilege escalation and package management
-- User: credential storage and permissions
-
-Always use `sudo` explicitly. Do not run bluefin-cli commands with `sudo` by default.
+Tell us if you want to be credited.
 
 ## Questions
 
-Open a [public issue](https://github.com/tuna-os/bluefin-cli/issues) or contact the maintainers.
+Open a [public issue](https://github.com/tuna-os/bluefin-cli/issues).
