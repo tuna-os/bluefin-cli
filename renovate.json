@@ -3,6 +3,9 @@
   "extends": [
     "local>tuna-os/.github"
   ],
+  "postUpdateOptions": [
+    "gomodTidy"
+  ],
   "postUpgradeTasks": {
     "commands": [
       "go mod tidy"
