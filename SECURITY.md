@@ -1,44 +1,13 @@
 # Security
 
-Report issues privately.
+<!-- STE: opt-out for security policy boilerplate (standard format across org) -->
 
-## How to report
+Report issues privately via [GitHub security advisories](https://github.com/tuna-os/bluefin-cli/security/advisories/new).
 
-Do not open a public issue. Use GitHub's private report:
+Include steps to reproduce and impact. Do not open public issues for security reports.
 
-1. Go to [security advisories](https://github.com/tuna-os/bluefin-cli/security/advisories/new).
-2. Click **Report**.
-3. Include steps and impact.
+In scope: privilege escalation, command injection, secret leaks, unsafe system calls.
 
-## What to report
+Out of scope: Fedora, systemd, containers, third-party tools — report to upstream.
 
-- Privilege escalation
-- Command injection
-- Secret leaks
-- Unsafe system calls
-
-## What not to report
-
-- Fedora — report upstream
-- systemd — report upstream
-- Containers — report upstream
-- Other tools — report to maintainer
-
-## Timeline
-
-- Acknowledge: 5 days
-- Fix: 30 days
-
-## After fix
-
-- Publish advisory
-- Update changelog
-- Notify users
-
-## Credit
-
-Let us know if you want credit.
-
-## Questions
-
-[Open issue](https://github.com/tuna-os/bluefin-cli/issues).
+Timeline: 5 days to acknowledge, 30 days to fix. Prefer coordinated disclosure.
