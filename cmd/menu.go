@@ -26,6 +26,8 @@ import (
 	"github.com/tuna-os/bluefin-cli/internal/update"
 )
 
+var paletteOnce sync.Once
+
 var menuCmd = &cobra.Command{
 	Use:   "menu",
 	Short: "Open the interactive Bluefin main menu",
