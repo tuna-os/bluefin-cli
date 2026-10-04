@@ -30,12 +30,12 @@ var (
 )
 
 // Show prints the status report to stdout, sized to the terminal.
-func Show() error {
+func Show(version string) error {
 	width, _, err := term.GetSize(os.Stdout.Fd())
 	if err != nil || width <= 0 {
 		width = 80
 	}
-	out, err := Render(width)
+	out, err := Render(width, version)
 	if err != nil {
 		return err
 	}
@@ -43,12 +43,9 @@ func Show() error {
 	return nil
 }
 
-// AppVersion is stamped by cmd at startup so the report can show it.
-var AppVersion = "dev"
-
-// Render builds the status report for the given width. Two columns need
+// Render builds the status report for the given width and version. Two columns need
 // ~76 cells; narrower widths stack vertically so the columns can't overlap.
-func Render(width int) (string, error) {
+func Render(width int, version string) (string, error) {
 
 	// --- Left Column ---
 	var leftCol string
@@ -254,6 +251,6 @@ func Render(width int) (string, error) {
 	}
 
 	head := titleStyle.Render("Bluefin CLI Status") + "  " +
-		labelStyle.Render("v"+AppVersion+" · flavor "+viper.GetString("ui.flavor"))
+		labelStyle.Render("v"+version+" · flavor "+viper.GetString("ui.flavor"))
 	return head + "\n\n" + formatted, nil
 }
