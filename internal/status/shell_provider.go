@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"charm.land/lipgloss/v2"
-	"github.com/charmbracelet/x/term"
 	"github.com/tuna-os/bluefin-cli/internal/shell"
 )
 
