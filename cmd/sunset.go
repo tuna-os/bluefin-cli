@@ -5,11 +5,7 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"runtime"
-	"strings"
-	"time"
 
 	"charm.land/huh/v2"
 	"github.com/spf13/cobra"
@@ -34,7 +30,11 @@ var sunsetCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Handle WSL Delegation
 		if env.IsWSL() {
-			return handleWSLDelegation()
+			return sunset.DelegateToWindowsCLI(
+				append([]string{"sunset"}, os.Args[2:]...),
+				sunset.RunnerIO{Stdout: os.Stdout, Stderr: os.Stderr, Stdin: os.Stdin},
+				nil,
+			)
 		}
 
 		// Non-Windows guard (native Linux)
@@ -74,105 +74,18 @@ var sunsetCmd = &cobra.Command{
 			fmt.Println("Configuration updated.")
 		}
 
-		return runSunset(cfg)
+		return sunset.Apply(cfg, sunset.NewThemeOperator(), nil)
 	},
-}
-
-func handleWSLDelegation() error {
-	winExe := findWindowsCLI()
-	if winExe == "" {
-		fmt.Println("WSL detected. Solar theme switching requires the Windows version of Bluefin CLI.")
-		fmt.Println("Please install bluefin-cli.exe in Windows and ensure it is in your Windows PATH.")
-		fmt.Println("\nYou can download it from the GitHub releases page.")
-		return nil
-	}
-
-	fmt.Printf("Delegating sunset command to Windows CLI: %s\n", winExe)
-
-	// Reconstruct the command for the Windows side
-	args := []string{"sunset"}
-	args = append(args, os.Args[2:]...)
-
-	// In WSL, running .exe works directly if it's in the Windows path or referenced by full path
-	command := exec.Command(winExe, args...)
-	command.Stdout = os.Stdout
-	command.Stderr = os.Stderr
-	command.Stdin = os.Stdin
-	return command.Run()
-}
-
-func findWindowsCLI() string {
-	// Try looking in PATH first
-	if path, err := exec.LookPath("bluefin-cli.exe"); err == nil {
-		return path
-	}
-
-	// Try common locations if not in PATH
-	localAppData := strings.TrimSpace(os.Getenv("LOCALAPPDATA"))
-	if localAppData != "" {
-		// Check for wine path style if env is not translated properly,
-		// but usually in WSL it is if configured.
-		// However, WSL often has LOCALAPPDATA translated.
-		candidate := filepath.Join(localAppData, "Microsoft", "WinGet", "Links", "bluefin-cli.exe")
-		if _, err := os.Stat(candidate); err == nil {
-			return candidate
-		}
-	}
-
-	return ""
-}
-
-func runSunset(cfg *sunset.Config) error {
-	if !cfg.Enabled {
-		fmt.Println("Sunset theme switching is disabled. Use --enable to enable it.")
-		return nil
-	}
-
-	now := time.Now()
-	state := sunset.GetSolarState(cfg.Latitude, cfg.Longitude, now)
-	isDay := state == sunset.StateDay
-
-	fmt.Printf("Current solar state: %s\n", state)
-
-	operator := sunset.NewThemeOperator()
-
-	fmt.Printf("Applying %s theme...\n", state)
-	if err := operator.SetTheme(isDay); err != nil {
-		fmt.Printf("Warning: failed to set theme: %v\n", err)
-	}
-
-	targetWallpaper := ""
-	if isDay {
-		targetWallpaper = cfg.DayWallpaper
-	} else {
-		targetWallpaper = cfg.NightWallpaper
-	}
-
-	// If no manual wallpaper is set, try the monthly theme
-	if targetWallpaper == "" && cfg.WallpaperTheme != "" {
-		fmt.Printf("Looking up monthly %s wallpaper for %s...\n", cfg.WallpaperTheme, state)
-		path, err := sunset.GetMonthlyWallpaper(cfg.WallpaperTheme, isDay)
-		if err != nil {
-			fmt.Printf("Warning: failed to find monthly wallpaper: %v\n", err)
-		} else {
-			targetWallpaper = path
-		}
-	}
-
-	if targetWallpaper != "" {
-		fmt.Printf("Applying wallpaper: %s\n", filepath.Base(targetWallpaper))
-		if err := operator.SetWallpaper(targetWallpaper); err != nil {
-			fmt.Printf("Warning: failed to set wallpaper: %v\n", err)
-		}
-	}
-
-	return nil
 }
 
 func RunSunsetSetupFlow() error {
 	// Handle WSL Delegation
 	if env.IsWSL() {
-		return handleWSLDelegation()
+		return sunset.DelegateToWindowsCLI(
+			append([]string{"sunset"}, os.Args[2:]...),
+			sunset.RunnerIO{Stdout: os.Stdout, Stderr: os.Stderr, Stdin: os.Stdin},
+			nil,
+		)
 	}
 
 	// Non-Windows guard (native Linux)
@@ -253,7 +166,7 @@ func RunSunsetSetupFlow() error {
 	}
 
 	fmt.Println("Configuration updated and feature enabled!")
-	return runSunset(cfg)
+	return sunset.Apply(cfg, sunset.NewThemeOperator(), nil)
 }
 
 var setupCmd = &cobra.Command{
