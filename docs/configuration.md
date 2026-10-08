@@ -5,11 +5,11 @@ of environment variables. This page documents both.
 
 ## Config file
 
-The config file lives at `~/.config/bluefin-cli/config.yaml` and is managed
-with [Viper](https://github.com/spf13/viper). You normally never edit it by
-hand — commands like `bluefin-cli theme <flavor>` and the TUI's settings
-screen call `viper.Set` and persist the file for you — but it is plain YAML if
-you want to inspect or script against it.
+The config file lives at `~/.config/bluefin-cli/config.yaml`;
+[Viper](https://github.com/spf13/viper) manages it. You normally never edit
+it by hand — commands like `bluefin-cli theme <flavor>` and the TUI's
+settings screen call `viper.Set` and persist the file for you. The file is
+plain YAML if you want to inspect or script against it.
 
 ### Location
 
@@ -48,11 +48,11 @@ game:
 
 ### `BLUEFIN_*` config overrides
 
-Viper is configured with `SetEnvPrefix("BLUEFIN")` and `AutomaticEnv()`
-([`internal/config/config.go`](../internal/config/config.go)), so **any** key
-in the table above can be overridden by an environment variable: uppercase the
-key and replace `.` with `_`. An environment variable always wins over the
-config file.
+The config sets up Viper with `SetEnvPrefix("BLUEFIN")` and `AutomaticEnv()`
+([`internal/config/config.go`](../internal/config/config.go)), so an
+environment variable can override **any** key in the table above. Uppercase
+the key and replace `.` with `_`. An environment variable always wins over
+the config file.
 
 | Variable | Overrides |
 |---|---|
@@ -62,8 +62,8 @@ config file.
 | `BLUEFIN_BUNDLES_BASE_URL` | `bundles.base_url` |
 | `BLUEFIN_BUNDLES_DEFAULT_PATH` | `bundles.default_path` |
 
-This mechanism is generic — it is not a hardcoded list of `os.Getenv` calls,
-it is Viper reading any `BLUEFIN_<KEY>` variable that is set at process start.
+This mechanism is generic — it is not a hardcoded list of `os.Getenv` calls;
+Viper reads any `BLUEFIN_<KEY>` variable that exists at process start.
 
 ### Other environment variables
 
@@ -80,9 +80,9 @@ These are read directly in Go code and are not part of the Viper config:
 
 ### XDG Base Directory support
 
-`bluefin-cli` does not currently implement full XDG Base Directory
-specification support (`XDG_CONFIG_HOME`, `XDG_DATA_HOME`, etc.). The config
-directory is hardcoded to `~/.config/bluefin-cli` (or the Homebrew prefix
+`bluefin-cli` does not yet give full support for the XDG base-directory
+specification (`XDG_CONFIG_HOME`, `XDG_DATA_HOME`, etc.). The code hardcodes
+the config directory to `~/.config/bluefin-cli` (or the Homebrew prefix
 path above), independent of `XDG_CONFIG_HOME`.
 
 ## User-defined bundles
@@ -100,9 +100,9 @@ EOF
 bluefin-cli install my-tools
 ```
 
-Any `*.Brewfile` in that directory is picked up automatically
-([`internal/install/install.go`](../internal/install/install.go)) and listed
-alongside the curated bundles (`ai`, `cli`, `cncf`, `experimental-ide`,
+bluefin-cli picks up any `*.Brewfile` in that directory automatically
+([`internal/install/install.go`](../internal/install/install.go)) and lists
+it alongside the curated bundles (`ai`, `cli`, `cncf`, `experimental-ide`,
 `fonts`, `full-desktop`, `ide`, `k8s`, `all`) when you run
 `bluefin-cli install --list` or the TUI's Install Apps menu. User-defined
 bundles extend the curated set — they do not shadow or replace any of it.
