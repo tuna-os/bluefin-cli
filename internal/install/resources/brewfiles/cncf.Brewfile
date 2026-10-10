@@ -15,11 +15,10 @@ tap "kitops-ml/kitops"
 tap "microcks/tap"
 tap "telepresenceio/telepresence"
 tap "k0sproject/tap"
-tap "kptdev/kpt", "https://github.com/kptdev/kpt.git"
 tap "wasmcloud/wasmcloud"
 tap "artifacthub/cmd"
 # tap "pingcap/brew"
-tap "kcl-lang/tap", trusted: true
+# tap "kcl-lang/tap", trusted: true
 
 # === GRADUATED PROJECTS ===
 
@@ -226,7 +225,9 @@ brew "devspace"
 brew "k8sgpt"
 
 # KCL
-brew "kcl-lang/tap/kcl"
+# Disabled 2026-09-16: upstream GoReleaser emitted duplicate kcl@0.9.rb / kcl-lsp@0.9.rb
+# with wrong class (KclAT090). Re-enable once upstream deletes them.
+# brew "kcl-lang/tap/kcl"
 
 # KitOps
 brew "kitops-ml/kitops/kitops"
@@ -259,10 +260,6 @@ brew "porter"
 # Telepresence
 brew "telepresenceio/telepresence/telepresence-oss"
 
-# Tremor
-# Tremor
-brew "tremor-runtime"
-
 # WasmEdge Runtime
 brew "wasmedge"
 
@@ -279,7 +276,7 @@ brew "k3d"
 brew "ko"
 
 # kpt
-brew "kptdev/kpt/kpt"
+brew "kpt"
 
 # kube-vip
 # brew "kube-vip" # In-cluster deployment
