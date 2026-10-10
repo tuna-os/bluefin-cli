@@ -10,7 +10,7 @@ var statusCmd = &cobra.Command{
 	Short: "Show configuration status",
 	Long:  `Display the current configuration status for shell experience, MOTD, and installed tools.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return status.Show()
+		return status.Show(reportedVersion())
 	},
 }
 

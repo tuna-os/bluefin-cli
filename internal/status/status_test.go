@@ -26,7 +26,7 @@ func TestShow(t *testing.T) {
 		os.Stdout = oldStdout
 	}()
 
-	err := Show()
+	err := Show("v0.1.0")
 	if err != nil {
 		t.Errorf("Show() returned error: %v", err)
 	}
@@ -56,7 +56,7 @@ func TestShow(t *testing.T) {
 func TestShowComponents(t *testing.T) {
 	// This test mainly verifies that Show runs without panicking
 	// We'll trust TestShow to verify the output content
-	err := Show()
+	err := Show("v0.1.0")
 	if err != nil {
 		t.Fatalf("Show() failed: %v", err)
 	}

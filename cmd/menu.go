@@ -101,7 +101,9 @@ func mainMenuItems() []app.MenuItem {
 func mainMenuSelect(it app.MenuItem) tea.Cmd {
 	switch it.Value {
 	case "status":
-		return app.Push(app.NewText("Status", status.Render))
+		return app.Push(app.NewText("Status", func(width int) (string, error) {
+			return status.Render(width, reportedVersion())
+		}))
 	case "doctor":
 		return doctorScreenCmd()
 	case "shell":
