@@ -30,7 +30,7 @@ jobs:
   # neither released product.
   test:
     name: Run Tests (${{ matrix.variant }})
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:
@@ -68,7 +68,7 @@ jobs:
 
   tui-smoke:
     name: TUI Smoke (tmux)
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
     - name: Checkout code
@@ -105,7 +105,7 @@ jobs:
   # indistinguishable from one still waiting.
   test-result:
     name: Run Tests
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: test
     if: always()
 
@@ -122,7 +122,7 @@ jobs:
   # so each variant has to be exercised against its own build.
   integration-test:
     name: Integration Tests (${{ matrix.variant }})
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:
@@ -149,7 +149,7 @@ jobs:
 
   container-test:
     name: Container-based Tests
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
     - name: Checkout code
@@ -175,7 +175,7 @@ jobs:
 
   cross-compile:
     name: Cross-compile (all targets)
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
     - name: Checkout code
@@ -237,7 +237,7 @@ jobs:
 
   shell-syntax:
     name: Generated init scripts parse
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     # The POSIX, fish, ash and nushell init scripts are only ever executed on a
     # user's machine, so a syntax error in one of them ships silently and costs
@@ -332,7 +332,7 @@ jobs:
 
   shell-experience:
     name: Shell experience (behavioral)
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     # The syntax job proves each generated init script parses. Parsing is a weak
     # gate: `zoxide init posix` without a hook parses fine and then prints
@@ -429,7 +429,7 @@ jobs:
 
   docs-current:
     name: docs/commands is current
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     # docs/commands is generated from the cobra command tree, and kept drifting
     # out of date because nothing checked it (tuna-os/bluefin-cli#238, #244,
@@ -457,7 +457,7 @@ jobs:
 
   goreleaser-check:
     name: goreleaser config
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
     - name: Checkout code
@@ -485,7 +485,7 @@ jobs:
   # Gate it here instead, where a red check costs nothing.
   go-mod-tidy:
     name: go.mod tidy
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
     - name: Checkout code
@@ -503,7 +503,7 @@ jobs:
 
   gofmt:
     name: gofmt
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
     - name: Checkout code
@@ -523,7 +523,7 @@ jobs:
 
   lint:
     name: Lint
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     
     steps:
     - name: Checkout code
