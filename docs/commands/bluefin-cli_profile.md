@@ -18,10 +18,10 @@ flavor) as a portable JSON document, and replay it on another machine:
 
 ### SEE ALSO
 
-* [bluefin-cli](bluefin-cli.md)	 - A powerful CLI tool for managing Homebrew and shell customization
-* [bluefin-cli profile diff](bluefin-cli_profile_diff.md)	 - Show what import would change (drift from a saved profile)
-* [bluefin-cli profile export](bluefin-cli_profile_export.md)	 - Write the current setup as JSON (stdout by default)
-* [bluefin-cli profile import](bluefin-cli_profile_import.md)	 - Apply a previously exported setup to this machine
-* [bluefin-cli profile pull](bluefin-cli_profile_pull.md)	 - Fetch and apply the synced profile from its gist
-* [bluefin-cli profile push](bluefin-cli_profile_push.md)	 - Sync this machine's profile to a private GitHub gist (via gh)
+* [bluefin-cli](bluefin-cli.md)	 — CLI tool for Homebrew and shell setup
+* [bluefin-cli profile diff](bluefin-cli_profile_diff.md)	 — Show what import would change (drift from a saved profile)
+* [bluefin-cli profile export](bluefin-cli_profile_export.md)	 — Write the current setup as JSON (stdout by default)
+* [bluefin-cli profile import](bluefin-cli_profile_import.md)	 — Apply a setup file to this machine
+* [bluefin-cli profile pull](bluefin-cli_profile_pull.md)	 — Get and apply the profile from its gist
+* [bluefin-cli profile push](bluefin-cli_profile_push.md)	 — Send this machine's profile to a private GitHub gist (via gh)
 

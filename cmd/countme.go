@@ -15,13 +15,13 @@ var (
 
 var countmeCmd = &cobra.Command{
 	Use:   "countme",
-	Short: "Manage anonymous usage counting",
+	Short: "Set options for anonymous usage counts",
 	Long: `bluefin-cli participates in Fedora's countme protocol to report
 anonymous install counts alongside native Bluefin Linux installs.
 
 Each week, a single GET request is sent to Fedora's mirror infrastructure
 with a User-Agent that identifies the platform (mac, wsl, powershell).
-No personal data, IP addresses, or machine identifiers are transmitted.
+The count does not include personal data, IP addresses, or machine identifiers.
 The aggregate data is publicly available at:
   https://data-analysis.fedoraproject.org/csv-reports/countme/totals.csv
 

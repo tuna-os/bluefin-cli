@@ -1,12 +1,12 @@
 ## bluefin-cli uninstall
 
-Uninstall Bluefin shell setup and managed tools
+Remove the Bluefin shell setup and managed tools
 
 ### Synopsis
 
-Remove Bluefin shell initialization setup across powershell, bash, zsh, and fish.
+Remove shell initialization for powershell, bash, zsh, and fish.
 
-By default this command also attempts to uninstall managed software:
+By default this command also tries to uninstall managed software:
   - Windows: winget-managed shell tools
   - Linux/macOS/WSL: Homebrew-managed shell tools
 
@@ -27,5 +27,5 @@ bluefin-cli uninstall [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli](bluefin-cli.md)	 - A powerful CLI tool for managing Homebrew and shell customization
+* [bluefin-cli](bluefin-cli.md)	 — CLI tool for Homebrew and shell setup
 

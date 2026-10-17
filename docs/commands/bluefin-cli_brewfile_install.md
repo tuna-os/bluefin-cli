@@ -15,5 +15,5 @@ bluefin-cli brewfile install [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli brewfile](bluefin-cli_brewfile.md)	 - Manage your machine's package file (brew/cask + winget/scoop/choco)
+* [bluefin-cli brewfile](bluefin-cli_brewfile.md)	 — Use the package file for your machine (brew/cask + winget/scoop/choco)
 

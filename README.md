@@ -19,7 +19,7 @@ your development environment. Its TUIs use the [Charm](https://charm.sh/) librar
 - **⬆ Self-Update**: `bluefin-cli update` for script installs — sha256-verified against the release checksums. For a package-manager install, it tells you the correct upgrade command
 - **🏠 My Brewfile**: one file describes your machine's packages — `brew`/`cask` lines plus `winget`/`scoop`/`choco` on Windows. `bluefin-cli brewfile dump` records the installed packages. `add`/`remove` edit that file, and `install` applies all of it. The TUI does the same from Install Apps → My Brewfile, one package at a time. Extra recipes in `~/.config/bluefin-cli/bundles/*.Brewfile` appear alongside the curated bundles
 - **📦 Profiles**: `bluefin-cli profile export > setup.json` on one machine, `profile import setup.json` on another — shells, tools, and theme replayed exactly
-- **🦕 A fully native TUI**: a persistent shell with breadcrumbs, a fuzzy filter (`/`), a `ctrl+p` command palette, and a dot-matrix dino in the header. It also hides a surprise.
+- **🦕 A fully native TUI**: a persistent shell with breadcrumbs and a fuzzy filter (`/`). It also has a `ctrl+p` command palette and a dot-matrix dino in the header. It hides a surprise.
 
 ## 🚀 Installation
 
@@ -55,7 +55,7 @@ bluefin-cli shell powershell on
 
 ### Homebrew (Linux / macOS)
 
-The formula is published automatically by GoReleaser to the
+GoReleaser publishes the formula to the
 [`tuna-os/homebrew-tap`](https://github.com/tuna-os/homebrew-tap) tap on every
 release ([#15](https://github.com/tuna-os/bluefin-cli/issues/15)):
 
@@ -159,15 +159,19 @@ Maintainers: semantic-release gives a version to each qualified merge to
 channels. `.github/workflows/winget.yml` is a manual fallback, to submit a
 Winget version again.
 
-A Scoop release needs the `SCOOP_BUCKET_TOKEN` repository secret (a fine-grained PAT with write access to `tuna-os/scoop-bucket`), without which the Scoop manifest upload step is safely skipped during release workflows. See [docs/release-publishing.md](docs/release-publishing.md) for details.
+A Scoop release needs the `SCOOP_BUCKET_TOKEN` repository secret. GoReleaser
+uses it to upload the Scoop manifest to the bucket. Without it, GoReleaser
+skips that upload. See [release details](docs/release-publishing.md).
 
-A Homebrew tap release needs the `HOMEBREW_TAP_TOKEN` repository secret (a fine-grained PAT with write access to `tuna-os/homebrew-tap`), without which the formula upload step is safely skipped during release workflows. See [docs/release-publishing.md](docs/release-publishing.md) for details.
+A Homebrew tap release needs the `HOMEBREW_TAP_TOKEN` repository secret.
+GoReleaser uses it to upload the formula to the tap. Without it, GoReleaser
+skips that upload. See [release details](docs/release-publishing.md).
 
-Homebrew release process: when semantic-release determines that a merge to
-`main` warrants a release, it invokes GoReleaser, which publishes the binary
-formula to `tuna-os/homebrew-tap` (requires the `HOMEBREW_TAP_TOKEN` secret).
-External taps that build from source, such as
-`ublue-os/homebrew-experimental-tap`, must be synced manually — bump `url` and
+Homebrew release process: when semantic-release finds that a merge to
+`main` warrants a release, it invokes GoReleaser. GoReleaser then sends the
+binary formula to `tuna-os/homebrew-tap` when `HOMEBREW_TAP_TOKEN` is set.
+For external taps that build from source, such as
+`ublue-os/homebrew-experimental-tap`, sync the tap by hand. Bump `url` and
 `sha256` in [`contrib/homebrew/bluefin-cli.rb`](contrib/homebrew/bluefin-cli.rb)
 and open a PR in that tap.
 
@@ -402,10 +406,10 @@ grep    # ugrep (if installed)
 - [`docs/troubleshooting.md`](docs/troubleshooting.md): how to read `doctor`
   output, and fixes for common setup problems.
 
-Maintainers can find package-channel credentials and release verification in
-[Release publishing](docs/release-publishing.md). The
-[Winget workflow](.github/workflows/winget.yml) is the manual fallback for
-re-submitting the Windows package; GoReleaser handles the normal release path.
+Maintainers can find package-channel credentials and release checks in
+[release details](docs/release-publishing.md). The
+[Winget workflow](.github/workflows/winget.yml) lets maintainers submit the
+Windows package again; GoReleaser handles the normal release path.
 
 ## 🏗️ Project Structure
 
@@ -438,8 +442,8 @@ This project consolidates and modernizes functionality from:
 ### Prerequisites
 
 - Go 1.26.0 or later, matching the `go` directive in `go.mod` (the CI jobs validate with Go 1.27)
-- Podman (for containerized testing)
-- just (for running recipes)
+- Podman (for container tests)
+- `just` (to run recipes)
 
 ### Building
 
@@ -450,8 +454,8 @@ just build
 `just build` creates both variants:
 
 - `bluefin-cli`: the standard CLI
-- `bluefin-cli-plus`: the standard CLI plus features selected by the `extra`
-  build tag, including wallpapers, fonts, and sunset automation
+- `bluefin-cli-plus`: the standard CLI plus the features that the build tag selects:
+  wallpapers, fonts, and sunset automation
 
 ### Testing
 
@@ -483,9 +487,9 @@ just fish   # Test in fish
 
 This project uses:
 
-- [Cobra](https://github.com/spf13/cobra) - CLI framework
+- [Cobra](https://github.com/spf13/cobra): framework for CLI commands
 - [Huh](https://charm.land/huh/v2) - Forms and prompts
-- [Lipgloss](https://charm.land/lipgloss/v2) - Style definitions
+- [Lipgloss](https://charm.land/lipgloss/v2): styles for terminal output
 
 ## 🤝 Contributing
 
@@ -499,23 +503,23 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📄 License
 
-This project is licensed under the Apache License 2.0 - see the LICENSE file for details.
+The Apache License 2.0 covers this project. See the LICENSE file for details.
 
 ## 🙏 Acknowledgments
 
 - [Universal Blue](https://universal-blue.org/) - For the original bluefin-cli and ublue-bling
-- [Charm](https://charm.sh/) - For the amazing TUI libraries
+- [Charm](https://charm.sh/) - For the TUI libraries
 - The Homebrew community
 
 ## 🔗 Related Projects
 
-- [ublue-os/packages](https://github.com/ublue-os/packages) - Original package implementations
-- [Starship](https://starship.rs/) - Cross-shell prompt
-- [Homebrew](https://brew.sh/) - Package manager for macOS and Linux
+- [ublue-os/packages](https://github.com/ublue-os/packages) - Original implementations of the packages
+- [Starship](https://starship.rs/) - Prompt for many shells
+- [Homebrew](https://brew.sh/) - A package manager for macOS and Linux
 
 ---
 
-Part of the [TunaOS](https://tunaos.org) ecosystem. [Docs](https://tunaos.org) · [Contributing](CONTRIBUTING.md)
+Part of the [TunaOS](https://tunaos.org) ecosystem. [Docs](https://tunaos.org) · [Contributor guide](CONTRIBUTING.md)
 
 <!-- hive-contribute-plea: donated-compute appeal, keep in sync across repos -->
 ## Contribute compute — no code needed

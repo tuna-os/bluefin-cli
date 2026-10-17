@@ -4,7 +4,7 @@ Select and apply a Starship theme
 
 ### Synopsis
 
-Choose from popular Starship preset themes interactively.
+Choose a Starship preset from the menu.
 
 ```
 bluefin-cli starship theme [flags]
@@ -18,5 +18,5 @@ bluefin-cli starship theme [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli starship](bluefin-cli_starship.md)	 - Manage Starship prompt themes
+* [bluefin-cli starship](bluefin-cli_starship.md)	 — Use Starship themes
 

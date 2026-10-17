@@ -1,6 +1,6 @@
 ## bluefin-cli brewfile
 
-Manage your machine's package file (brew/cask + winget/scoop/choco)
+Use the package file for your machine (brew/cask + winget/scoop/choco)
 
 ### Synopsis
 
@@ -24,11 +24,11 @@ applies all of it, and 'list' shows the entries. The interactive menu
 
 ### SEE ALSO
 
-* [bluefin-cli](bluefin-cli.md)	 - A powerful CLI tool for managing Homebrew and shell customization
-* [bluefin-cli brewfile add](bluefin-cli_brewfile_add.md)	 - Add a package entry (and optionally install it)
-* [bluefin-cli brewfile dump](bluefin-cli_brewfile_dump.md)	 - Capture currently installed packages into the file
-* [bluefin-cli brewfile install](bluefin-cli_brewfile_install.md)	 - Install everything in the file
-* [bluefin-cli brewfile list](bluefin-cli_brewfile_list.md)	 - List the entries in your Brewfile
-* [bluefin-cli brewfile remove](bluefin-cli_brewfile_remove.md)	 - Remove package entries from the file
-* [bluefin-cli brewfile search](bluefin-cli_brewfile_search.md)	 - Search packages across this platform's managers
+* [bluefin-cli](bluefin-cli.md)	 — CLI tool for Homebrew and shell setup
+* [bluefin-cli brewfile add](bluefin-cli_brewfile_add.md)	 — Add a package entry (and optionally install it)
+* [bluefin-cli brewfile dump](bluefin-cli_brewfile_dump.md)	 — Write installed packages to the file
+* [bluefin-cli brewfile install](bluefin-cli_brewfile_install.md)	 — Install everything in the file
+* [bluefin-cli brewfile list](bluefin-cli_brewfile_list.md)	 — Show the entries in your Brewfile
+* [bluefin-cli brewfile remove](bluefin-cli_brewfile_remove.md)	 — Remove package entries from the file
+* [bluefin-cli brewfile search](bluefin-cli_brewfile_search.md)	 — Find packages in this platform's managers
 

@@ -43,7 +43,7 @@ var profileExportCmd = &cobra.Command{
 
 var profileImportCmd = &cobra.Command{
 	Use:   "import <file>",
-	Short: "Apply a previously exported setup to this machine",
+	Short: "Apply a setup file to this machine",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		p, err := profile.Load(args[0])
@@ -99,7 +99,7 @@ var profileDiffCmd = &cobra.Command{
 
 var profilePushCmd = &cobra.Command{
 	Use:   "push",
-	Short: "Sync this machine's profile to a private GitHub gist (via gh)",
+	Short: "Send this machine's profile to a private GitHub gist (via gh)",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client, err := profile.NewGitHubCLIClient()
 		if err != nil {
@@ -126,7 +126,7 @@ var profilePushCmd = &cobra.Command{
 
 var profilePullCmd = &cobra.Command{
 	Use:   "pull [gist-id]",
-	Short: "Fetch and apply the synced profile from its gist",
+	Short: "Get and apply the profile from its gist",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client, err := profile.NewGitHubCLIClient()

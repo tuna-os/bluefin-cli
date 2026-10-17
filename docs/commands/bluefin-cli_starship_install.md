@@ -18,5 +18,5 @@ bluefin-cli starship install [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli starship](bluefin-cli_starship.md)	 - Manage Starship prompt themes
+* [bluefin-cli starship](bluefin-cli_starship.md)	 — Use Starship themes
 

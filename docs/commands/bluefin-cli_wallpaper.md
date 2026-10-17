@@ -20,5 +20,5 @@ bluefin-cli wallpaper [image] [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli](bluefin-cli.md)	 - A powerful CLI tool for managing Homebrew and shell customization
+* [bluefin-cli](bluefin-cli.md)	 — CLI tool for Homebrew and shell setup
 

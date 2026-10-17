@@ -1,10 +1,10 @@
 ## bluefin-cli init
 
-Generate shell initialization script
+Create a shell setup script
 
 ### Synopsis
 
-Generate the shell initialization script for bluefin-cli.
+Create the shell setup script for bluefin-cli.
 Add the following to your shell configuration file:
 
 Bash (~/.bashrc):
@@ -22,8 +22,8 @@ PowerShell ($PROFILE):
 Ash (~/.ashrc, with ENV="$HOME/.ashrc" exported from ~/.profile):
   eval "$(bluefin-cli init ash)"
 
-Nushell (~/.config/nushell/config.nu) — nushell cannot evaluate a string, so
-the script is saved to a file and sourced from there:
+Nushell (~/.config/nushell/config.nu) — Nushell cannot evaluate a string.
+Save the script to a file and source it from there:
   bluefin-cli init nu | save -f ~/.config/nushell/bluefin-cli.nu
   source ~/.config/nushell/bluefin-cli.nu
 
@@ -56,5 +56,5 @@ bluefin-cli init [bash|zsh|fish|ash|nu|powershell|pwsh] [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli](bluefin-cli.md)	 - A powerful CLI tool for managing Homebrew and shell customization
+* [bluefin-cli](bluefin-cli.md)	 — CLI tool for Homebrew and shell setup
 
