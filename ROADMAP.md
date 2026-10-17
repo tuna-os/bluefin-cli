@@ -1,10 +1,11 @@
 # Bluefin CLI roadmap
 
-**Last updated:** 2026-08-22
+**Last updated:** 2026-10-17
 
-**Current release line:** v0.10.x
+**Current release line:** v0.11.x
 
-**Planning issue:** [#196](https://github.com/tuna-os/bluefin-cli/issues/196)
+**Planning issues:** [#196](https://github.com/tuna-os/bluefin-cli/issues/196),
+[#223](https://github.com/tuna-os/bluefin-cli/issues/223)
 
 Bluefin CLI is a cross-platform environment setup and customization tool in the
 [TunaOS](https://tunaos.org) ecosystem. This roadmap describes outcomes and
@@ -19,44 +20,56 @@ The project currently ships:
 - shell setup, curated application bundles, wallpapers, and Starship themes;
 - portable setup profiles and a cross-platform Brewfile workflow;
 - self-update and diagnostics;
-- release assets for Linux, macOS, and Windows, including deb and rpm packages;
+- a semantic-release-managed v0.11.x line with versioned GitHub releases;
+- standard and plus archives for Linux, macOS, and Windows on amd64 and arm64;
+- deb and rpm release assets, plus a SHA-256 manifest for release artifacts;
 - CI across Linux, macOS, and Windows, plus scheduled Windows validation.
 
-The release pipeline and direct-download path are operational. Package-manager
-availability is incomplete and remains the clearest adoption gap.
+GitHub Releases and direct downloads are operational. The current
+[release and distribution policy](docs/release-publishing.md) defines what each
+channel promises. First-party package-manager availability remains incomplete
+and is the clearest adoption gap.
 
 ## Near term: make distribution dependable
 
-**Outcome:** every installation path shown as available in the README installs
-the current release, and unavailable paths are clearly marked.
+**Outcome:** every installation path is classified as supported, preview, or
+unavailable, and every supported path receives and verifies the current release.
 
+- Keep the distribution matrix in
+  [release and distribution policy](docs/release-publishing.md) synchronized
+  with the installation guidance in the README.
 - Publish and verify the Homebrew formula in `tuna-os/homebrew-tap`.
 - Publish and verify the Scoop manifest in `tuna-os/scoop-bucket`.
-- Bring Winget to the current release line and validate its update loop.
+- Restore automated Winget submission, bring it to the current release line,
+  and validate its update loop.
 - Decide whether Chocolatey and AUR are supported commitments; either publish
-  and verify them or keep them explicitly out of the supported matrix.
-- Add a lightweight post-release check that records which channels received the
+  and verify them or leave them explicitly unavailable.
+- Add a post-release check that records which supported channels received the
   release and makes partial publication visible.
 
-**Exit evidence:** a release checklist links to successful installs or package
-records for every supported channel, with no stale version claims in the README.
+**Exit evidence:** the release checklist links to successful installs or
+package records for every supported channel, and the README and distribution
+matrix contain no stale version or availability claims.
 
 ## Next: define the v1 readiness gate
 
 **Outcome:** maintainers and users share a concrete definition of a stable
 Bluefin CLI release.
 
-- Document supported operating systems, architectures, shells, installation
+- Publish the supported operating systems, architectures, shells, installation
   methods, and compatibility expectations.
 - Define configuration and profile compatibility guarantees, including how
   breaking changes and migrations are communicated.
 - Set release-health expectations: required CI checks, rollback or hotfix
-  ownership, and the maximum acceptable lag across supported package channels.
+  ownership, backup maintainers, and the maximum acceptable lag across
+  supported package channels.
+- Keep checksums mandatory for release artifacts and decide whether v1 also
+  requires independently verifiable signatures or provenance attestations.
 - Resolve or explicitly defer known platform gaps before declaring v1.0.
 
 **Exit evidence:** a published v1 checklist is complete, the support matrix is
-current, and at least one release candidate passes all supported-platform and
-distribution checks.
+current, and at least one release candidate passes all supported-platform,
+artifact-integrity, and distribution checks.
 
 ## Then: prove adoption and contributor sustainability
 
