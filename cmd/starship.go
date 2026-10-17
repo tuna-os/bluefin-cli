@@ -7,8 +7,8 @@ import (
 
 var starshipCmd = &cobra.Command{
 	Use:   "starship",
-	Short: "Manage Starship prompt themes",
-	Long:  `Install, configure, and customize Starship prompt themes.`,
+	Short: "Use Starship themes",
+	Long:  `Install Starship themes and set their options.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return launchFlow(starshipFlow())
 	},
@@ -17,7 +17,7 @@ var starshipCmd = &cobra.Command{
 var starshipThemeCmd = &cobra.Command{
 	Use:   "theme",
 	Short: "Select and apply a Starship theme",
-	Long:  `Choose from popular Starship preset themes interactively.`,
+	Long:  `Choose a Starship preset from the menu.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) > 0 {
 			return starship.ApplyTheme(args[0])

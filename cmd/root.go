@@ -31,14 +31,14 @@ func reportedVersion() string {
 
 var rootCmd = &cobra.Command{
 	Use:   "bluefin-cli",
-	Short: "A powerful CLI tool for managing Homebrew and shell customization",
+	Short: "CLI tool for Homebrew and shell setup",
 	Long: `Bluefin CLI brings the bluefin terminal experience to you.
 
 - Homebrew & Tool Management
 - Shell Environment Configuration
 - System Status & MOTD
 - Starship Theme Management
-- Automated Theme & Wallpaper Switching (Sunset)
+- Sunset themes and wallpapers
 - Automated Font Installation
 - Monthly Wallpaper Themes`,
 	Version: reportedVersion(),

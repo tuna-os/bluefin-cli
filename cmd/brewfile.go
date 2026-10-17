@@ -19,7 +19,7 @@ func brewfileTarget(cmd *cobra.Command) string {
 
 var brewfileCmd = &cobra.Command{
 	Use:   "brewfile",
-	Short: "Manage your machine's package file (brew/cask + winget/scoop/choco)",
+	Short: "Use the package file for your machine (brew/cask + winget/scoop/choco)",
 	Long: `One file describes your machine's packages — Homebrew formulae and
 casks on Linux/macOS, and winget/scoop/choco entries on Windows:
 
@@ -35,7 +35,7 @@ applies all of it, and 'list' shows the entries. The interactive menu
 
 var brewfileListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List the entries in your Brewfile",
+	Short: "Show the entries in your Brewfile",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		path := brewfileTarget(cmd)
 		pkgs, err := install.GetBrewfilePackages(path)
@@ -70,7 +70,7 @@ var brewfileRemoveCmd = &cobra.Command{
 
 var brewfileSearchCmd = &cobra.Command{
 	Use:   "search <query>",
-	Short: "Search packages across this platform's managers",
+	Short: "Find packages in this platform's managers",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		results := install.SearchPackages(args[0])
@@ -90,7 +90,7 @@ var brewfileSearchCmd = &cobra.Command{
 
 var brewfileDumpCmd = &cobra.Command{
 	Use:   "dump",
-	Short: "Capture currently installed packages into the file",
+	Short: "Write installed packages to the file",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return install.DumpBrewfile(brewfileTarget(cmd))
 	},

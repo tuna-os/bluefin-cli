@@ -1,6 +1,6 @@
 ## bluefin-cli sunset
 
-Manage solar-based theme and wallpaper switching
+Set themes and wallpapers from sunrise and sunset
 
 ### Synopsis
 
@@ -24,6 +24,6 @@ bluefin-cli sunset [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli](bluefin-cli.md)	 - A powerful CLI tool for managing Homebrew and shell customization
-* [bluefin-cli sunset setup](bluefin-cli_sunset_setup.md)	 - Interactive setup for your location
+* [bluefin-cli](bluefin-cli.md)	 — CLI tool for Homebrew and shell setup
+* [bluefin-cli sunset setup](bluefin-cli_sunset_setup.md)	 — Interactive setup for your location
 

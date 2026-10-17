@@ -1,10 +1,10 @@
 ## bluefin-cli shell
 
-Toggle shell experience enhancements
+Turn shell tools on or off
 
 ### Synopsis
 
-Enable or disable shell experience enhancements (modern aliases and tool initialization).
+Turn shell tools on or off. This includes modern aliases and tool initialization.
 
 The Shell Experience provides:
   - Eza: Modern, maintained replacement for ls
@@ -13,12 +13,12 @@ The Shell Experience provides:
   - Ugrep: Ultra fast grep with interactive mode
   - Bat: A cat clone with wings
   - Atuin: Magical shell history
-  - Starship: The minimal, blazing-fast, and infinitely customizable prompt
+  - Starship: A fast, flexible prompt
   - Zoxide: A smarter cd command
   - UutilsCoreutils: Rust rewrite of GNU coreutils
   - UutilsFindutils: Rust rewrite of GNU findutils
   - UutilsDiffutils: Rust rewrite of GNU diffutils
-  - Carapace: Multi-shell multi-command argument completer
+  - Carapace: Completion for many shells and commands
   - Glow: Terminal markdown renderer for MOTD
 
 
@@ -34,6 +34,6 @@ bluefin-cli shell [shell] [on|off] [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli](bluefin-cli.md)	 - A powerful CLI tool for managing Homebrew and shell customization
-* [bluefin-cli shell config](bluefin-cli_shell_config.md)	 - Configure individual shell experience tools
+* [bluefin-cli](bluefin-cli.md)	 — CLI tool for Homebrew and shell setup
+* [bluefin-cli shell config](bluefin-cli_shell_config.md)	 — Set options for each shell tool
 

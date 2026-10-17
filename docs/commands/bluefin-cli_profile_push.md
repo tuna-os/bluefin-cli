@@ -1,6 +1,6 @@
 ## bluefin-cli profile push
 
-Sync this machine's profile to a private GitHub gist (via gh)
+Send this machine's profile to a private GitHub gist (via gh)
 
 ```
 bluefin-cli profile push [flags]
@@ -14,5 +14,5 @@ bluefin-cli profile push [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli profile](bluefin-cli_profile.md)	 - Export or import your bluefin-cli setup
+* [bluefin-cli profile](bluefin-cli_profile.md)	 — Export or import your bluefin-cli setup
 

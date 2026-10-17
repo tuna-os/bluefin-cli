@@ -1,10 +1,10 @@
 ## bluefin-cli motd
 
-Manage Message of the Day
+Set up daily shell messages
 
 ### Synopsis
 
-Configure and display the Message of the Day (MOTD) with system info and tips.
+Set up and display the daily shell message with system info and tips.
 
 ```
 bluefin-cli motd [flags]
@@ -18,8 +18,8 @@ bluefin-cli motd [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli](bluefin-cli.md)	 - A powerful CLI tool for managing Homebrew and shell customization
-* [bluefin-cli motd config](bluefin-cli_motd_config.md)	 - Configure MOTD settings
-* [bluefin-cli motd show](bluefin-cli_motd_show.md)	 - Display the MOTD
-* [bluefin-cli motd toggle](bluefin-cli_motd_toggle.md)	 - Toggle MOTD for shells
+* [bluefin-cli](bluefin-cli.md)	 — CLI tool for Homebrew and shell setup
+* [bluefin-cli motd config](bluefin-cli_motd_config.md)	 — Set MOTD options
+* [bluefin-cli motd show](bluefin-cli_motd_show.md)	 — Display the MOTD
+* [bluefin-cli motd toggle](bluefin-cli_motd_toggle.md)	 — Set MOTD display for shells
 

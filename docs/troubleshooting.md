@@ -25,10 +25,10 @@ bluefin-cli doctor --fix     # applies safe automatic fixes (shell integration, 
 bluefin-cli doctor --bench   # measures shell startup cost vs. a bare shell (bash/zsh/fish only)
 ```
 
-`--fix` covers three cases: it enables shell integration for your current
-shell if it is off, it sets up `coldbrew` on Alpine/musl systems, and it
-installs `eza`, `fzf`, and `starship` when any of them are absent. It does
-not fix network or Homebrew PATH issues — those need the manual steps above.
+`--fix` handles three cases. It enables shell integration, sets up `coldbrew`
+on Alpine/musl systems, and installs `eza`, `fzf`, and `starship` when they
+are missing. It does not fix network or Homebrew PATH issues; use the manual
+steps above.
 
 ## Common issues
 

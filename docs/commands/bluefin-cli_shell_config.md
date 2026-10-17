@@ -1,10 +1,10 @@
 ## bluefin-cli shell config
 
-Configure individual shell experience tools
+Set options for each shell tool
 
 ### Synopsis
 
-Enable or disable specific shell experience components interactively.
+Set options for each shell tool from the menu.
 
 ```
 bluefin-cli shell config [flags]
@@ -18,5 +18,5 @@ bluefin-cli shell config [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli shell](bluefin-cli_shell.md)	 - Toggle shell experience enhancements
+* [bluefin-cli shell](bluefin-cli_shell.md)	 — Turn shell tools on or off
 

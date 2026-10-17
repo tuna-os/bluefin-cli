@@ -25,7 +25,7 @@ import (
 
 var menuCmd = &cobra.Command{
 	Use:   "menu",
-	Short: "Open the interactive Bluefin main menu",
+	Short: "Open the Bluefin menu",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return app.Run(mainMenuScreen(), checkForUpdate)
 	},

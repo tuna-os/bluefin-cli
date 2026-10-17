@@ -1,6 +1,6 @@
 ## bluefin-cli profile pull
 
-Fetch and apply the synced profile from its gist
+Get and apply the profile from its gist
 
 ```
 bluefin-cli profile pull [gist-id] [flags]
@@ -14,5 +14,5 @@ bluefin-cli profile pull [gist-id] [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli profile](bluefin-cli_profile.md)	 - Export or import your bluefin-cli setup
+* [bluefin-cli profile](bluefin-cli_profile.md)	 — Export or import your bluefin-cli setup
 

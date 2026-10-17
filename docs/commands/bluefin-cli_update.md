@@ -1,13 +1,13 @@
 ## bluefin-cli update
 
-Update bluefin-cli to the latest release
+Get the latest bluefin-cli release
 
 ### Synopsis
 
 Check for and install the latest bluefin-cli release.
 
-Binaries installed via a package manager (Homebrew, Winget, Scoop) are not
-self-updated; this command tells you the right upgrade command instead.
+Binaries from a package manager (Homebrew, Winget, Scoop) do not update themselves.
+This command shows the upgrade command to use.
 
 ```
 bluefin-cli update [flags]
@@ -22,5 +22,5 @@ bluefin-cli update [flags]
 
 ### SEE ALSO
 
-* [bluefin-cli](bluefin-cli.md)	 - A powerful CLI tool for managing Homebrew and shell customization
+* [bluefin-cli](bluefin-cli.md)	 — CLI tool for Homebrew and shell setup
 

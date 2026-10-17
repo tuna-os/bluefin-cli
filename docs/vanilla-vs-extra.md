@@ -11,7 +11,7 @@ You can build two versions of the CLI:
 ---
 
 ## 🍦 Standard Features
-These features are included in **both** binaries. They focus on providing tools and resources while leaving final configuration to the user.
+Both binaries include these features. They provide tools and resources; the user sets the final configuration.
 
 | Feature | Command | Description |
 |---------|---------|-------------|
@@ -41,8 +41,8 @@ These features are **only** included in the `bluefin-cli-plus` binary (compiled 
 
 ### Build Tags
 We use Go **build tags** to gate "Extra" logic. 
-- Files marked with `//go:build extra` are excluded from the standard standard build.
-- This ensures the standard binary remains lean and focused on core tasks.
+The standard build omits files marked with `//go:build extra`.
+This keeps the standard binary lean and focused on core tasks.
 
 ### Dynamic UI
-The interactive `bluefin-cli menu` automatically detects which features are compiled in and adjusts its options accordingly, hiding headers and commands that aren't available in the current binary.
+The interactive menu detects the features in each binary and adjusts its options. It hides headers and commands that the binary does not provide.

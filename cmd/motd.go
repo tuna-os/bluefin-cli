@@ -14,8 +14,8 @@ import (
 
 var motdCmd = &cobra.Command{
 	Use:   "motd",
-	Short: "Manage Message of the Day",
-	Long:  `Configure and display the Message of the Day (MOTD) with system info and tips.`,
+	Short: "Set up daily shell messages",
+	Long:  `Set up and display the daily shell message with system info and tips.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return launchFlow(app.Push(motdMenuScreen()))
 	},
@@ -23,7 +23,7 @@ var motdCmd = &cobra.Command{
 
 var motdToggleCmd = &cobra.Command{
 	Use:   "toggle [shell|all] [on|off]",
-	Short: "Toggle MOTD for shells",
+	Short: "Set MOTD display for shells",
 	Long:  `Enable or disable MOTD display on shell startup for bash, zsh, fish, or all shells.`,
 	Args:  cobra.MaximumNArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -71,8 +71,8 @@ var motdShowCmd = &cobra.Command{
 
 var motdConfigCmd = &cobra.Command{
 	Use:   "config",
-	Short: "Configure MOTD settings",
-	Long:  `Interactively configure MOTD theme and settings.`,
+	Short: "Set MOTD options",
+	Long:  `Set the MOTD theme and options from the menu.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) > 0 {
 			return motd.SetTheme(args[0])
