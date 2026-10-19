@@ -416,6 +416,8 @@ grep    # ugrep (if installed)
   bundle categories.
 - [Configuration](docs/configuration.md): Config file location and schema,
   environment variables, and user-defined bundles.
+- [Profile workflows](docs/profiles.md): Export, import, diff, and gist sync
+  for portable shell, tool, and theme setups.
 - [`docs/troubleshooting.md`](docs/troubleshooting.md): how to read `doctor`
   output, and fixes for common setup problems.
 

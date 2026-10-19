@@ -78,4 +78,5 @@ Three layers, run by CI and `just` recipes:
 - 👻 **Terminal Setup** — install Ghostty on macOS/Linux via brew or WezTerm on Windows via winget. Pin Ghostty to the macOS Dock and write a Catppuccin light/dark config with your Nerd Font.
 - 🏠 **My Brewfile** — one package file for every OS. Dump installed packages, search across managers, remove entries, or install everything. Also run `bluefin-cli brewfile`.
 - 📦 **Profiles** — `profile export/import/diff/push/pull` replay a whole setup
-  (shells, tools, flavor) across machines, synced via a private gist.
+  (shells, tools, flavor) across machines, synced via a private gist. See the
+  [profile workflow guide](profiles.md).
