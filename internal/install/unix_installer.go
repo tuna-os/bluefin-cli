@@ -15,10 +15,6 @@ import (
 
 type UnixInstaller struct{}
 
-func init() {
-	SetInstaller(&UnixInstaller{})
-}
-
 func (i *UnixInstaller) InstallBundle(packages ...string) error {
 	// On Alpine-family systems, Homebrew cannot bootstrap (musl libc).
 	// Route to the Alpine-specific installer, which maps brew formulae
