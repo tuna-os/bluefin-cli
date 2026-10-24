@@ -1,11 +1,7 @@
-// Shell enablement, init-script rendering and cache, and status reporting.
+// Shell enablement, and init-script rendering and cache.
 //
-// Package installation lives next door: installers.go owns the Homebrew and
-// cross-platform paths, windows_tools.go the winget/PowerShell ones, and
-// install_alpine.go the coldbrew/apk ones. Before that split
-// (tuna-os/bluefin-cli#217) all of it shared one module, so a change to a
-// platform backend sat in the same file as the interactive startup path and
-// neither could be read or evolved without the other.
+// Status reporting lives in status.go, terminal display styling and formatting
+// in display.go, and package installation next door in installers.go.
 package shell
 
 import (
@@ -16,8 +12,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	"charm.land/lipgloss/v2"
 )
 
 //go:embed resources/shell.sh
@@ -31,12 +25,6 @@ var shellNuScript string
 
 //go:embed resources/shell.ps1
 var shellPowerShellScript string
-
-var (
-	successStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Bold(true)
-	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Bold(true)
-	infoStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("12"))
-)
 
 const shellMaker = "# bluefin-cli shell-config"
 const blingMarker = "# bluefin-cli bling"
@@ -78,7 +66,7 @@ func Toggle(shell string, enable bool) error {
 			}
 			content = []byte("")
 		} else if os.IsNotExist(err) && !enable {
-			fmt.Println(infoStyle.Render(fmt.Sprintf("%s is already disabled for %s", shell, shell)))
+			fmt.Println(FormatToggleResult(shell, false, false))
 			return nil
 		} else {
 			return err
@@ -90,7 +78,7 @@ func Toggle(shell string, enable bool) error {
 
 	if enable {
 		if hasLine {
-			fmt.Println(infoStyle.Render(fmt.Sprintf("%s is already enabled for %s", shell, shell)))
+			fmt.Println(FormatToggleResult(shell, true, false))
 			if cfg, err := LoadConfig(shell); err == nil {
 				InstallTools(shell, cfg)
 			}
@@ -121,10 +109,10 @@ func Toggle(shell string, enable bool) error {
 				return err
 			}
 		}
-		fmt.Println(successStyle.Render(fmt.Sprintf("✓ Enabled shell experience for %s", shell)))
+		fmt.Println(FormatToggleResult(shell, true, true))
 	} else {
 		if !hasLine {
-			fmt.Println(infoStyle.Render(fmt.Sprintf("%s is already disabled for %s", shell, shell)))
+			fmt.Println(FormatToggleResult(shell, false, false))
 			return nil
 		}
 
@@ -154,7 +142,7 @@ func Toggle(shell string, enable bool) error {
 				return err
 			}
 		}
-		fmt.Println(successStyle.Render(fmt.Sprintf("✓ Disabled shell experience for %s", shell)))
+		fmt.Println(FormatToggleResult(shell, false, true))
 	}
 
 	if enable {
@@ -349,49 +337,6 @@ func Init(shell string, config *Config) (string, error) {
 	result := sb.String()
 	saveInitCache(shell, result)
 	return result, nil
-}
-
-func CheckStatus() map[string]bool {
-	status := make(map[string]bool)
-	home, _ := os.UserHomeDir()
-
-	for _, spec := range registry {
-		content, err := os.ReadFile(spec.ConfigPath(home))
-		if err != nil {
-			status[spec.Name] = false
-			continue
-		}
-
-		status[spec.Name] = strings.Contains(string(content), shellMaker) || strings.Contains(string(content), blingMarker)
-	}
-	// Nushell is spelled both ways in the wild; report it under both.
-	status["nushell"] = status["nu"]
-
-	status["powershell"] = checkPowerShellStatus()
-	status["pwsh"] = status["powershell"]
-
-	return status
-}
-
-// GetInstalledShells returns a list of shells that are available in the PATH
-func GetInstalledShells() []string {
-	var installed []string
-
-	for _, spec := range registry {
-		if spec.IsInstalled() {
-			installed = append(installed, spec.Name)
-		}
-	}
-
-	if _, err := exec.LookPath("pwsh"); err == nil {
-		installed = append(installed, "pwsh")
-	} else if _, err := exec.LookPath("powershell"); err == nil {
-		installed = append(installed, "powershell")
-	} else if _, err := exec.LookPath("powershell.exe"); err == nil {
-		installed = append(installed, "powershell")
-	}
-
-	return installed
 }
 
 // writeGeneratedInit renders the init script for a shell that sources a file

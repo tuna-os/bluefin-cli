@@ -300,13 +300,3 @@ func isBinaryAvailable(tool Tool) bool {
 	}
 	return false
 }
-
-func CheckDependencies() map[string]bool {
-	status := make(map[string]bool)
-
-	for _, tool := range toolsForCurrentPlatform() {
-		status[tool.Binary] = isBinaryAvailable(tool)
-	}
-
-	return status
-}
