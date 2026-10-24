@@ -190,6 +190,8 @@ and open a PR in that tap.
 
 ## 📖 Usage
 
+> For a complete first-time walkthrough, see the [Getting Started Guide](docs/GETTING-STARTED.md).
+
 ### Interactive Menu (Default)
 
 Run the command to start the interactive menu:
