@@ -229,7 +229,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.showHelp = true
 				return m, nil
 			case "ctrl+p":
-				if len(registry) > 0 {
+				if defaultRegistry.Count() > 0 {
 					return m.Update(PushMsg{Screen: newPalette()})
 				}
 			}
@@ -367,7 +367,7 @@ func globalHints(canGoBack bool) []KeyHint {
 	if canGoBack {
 		hints = append(hints, KeyHint{"esc/←", "back"})
 	}
-	if len(registry) > 0 {
+	if defaultRegistry.Count() > 0 {
 		hints = append(hints, KeyHint{"ctrl+p", "palette"})
 	}
 	hints = append(hints,
