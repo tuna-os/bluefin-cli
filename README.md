@@ -68,30 +68,23 @@ bluefin-cli shell powershell on
 
 ### Homebrew (Linux / macOS)
 
-GoReleaser publishes the formula to the
-[`tuna-os/homebrew-tap`](https://github.com/tuna-os/homebrew-tap) tap on every
-release ([#15](https://github.com/tuna-os/bluefin-cli/issues/15)):
-
-```bash
-brew tap tuna-os/tap
-brew install bluefin-cli
-```
-
-> **Status (2026-10-07):** still not published — `tuna-os/homebrew-tap` ships
-> only `corral-vm.rb`. GoReleaser skips the Homebrew publisher because no
-> one has set the `HOMEBREW_TAP_TOKEN` repository secret
-> ([#295](https://github.com/tuna-os/bluefin-cli/issues/295)). The formula
-> cannot appear until an org administrator adds that secret (see
-> [`docs/release-publishing.md`](docs/release-publishing.md)). Until then,
-> use `ublue-os/homebrew-experimental-tap` below.
-
-It is also available from `ublue-os/homebrew-experimental-tap`, synced from the
-source-build formula in [`contrib/homebrew/bluefin-cli.rb`](contrib/homebrew/bluefin-cli.rb):
+The preview formula is available from `ublue-os/homebrew-experimental-tap`,
+synced from the source-build formula in
+[`contrib/homebrew/bluefin-cli.rb`](contrib/homebrew/bluefin-cli.rb):
 
 ```bash
 brew tap ublue-os/homebrew-experimental-tap
 brew install bluefin-cli
 ```
+
+> **Status (2026-10-17):** use `ublue-os/homebrew-experimental-tap` above.
+> The primary tap [`tuna-os/homebrew-tap`](https://github.com/tuna-os/homebrew-tap)
+> is pending: automated GoReleaser publishing is configured but currently
+> skipped until an organization administrator configures the
+> `HOMEBREW_TAP_TOKEN` repository secret ([#295](https://github.com/tuna-os/bluefin-cli/issues/295)).
+> For maintainer token and setup details, see
+> [`docs/release-publishing.md`](docs/release-publishing.md). Once published,
+> `brew tap tuna-os/tap && brew install bluefin-cli` will be the primary path.
 
 ### Winget (Windows)
 
