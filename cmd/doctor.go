@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tuna-os/bluefin-cli/internal/doctor"
+	doctorrender "github.com/tuna-os/bluefin-cli/internal/doctor/render"
 	"github.com/tuna-os/bluefin-cli/internal/tui/app"
 )
 
@@ -61,13 +62,13 @@ func runBench() error {
 	if err != nil {
 		return err
 	}
-	fmt.Print(doctor.RenderBench(res))
+	fmt.Print(doctorrender.BenchText(res))
 	return nil
 }
 
-// doctorReport runs all checks and renders the results; failures counts
-// hard failures (warnings excluded).
+// doctorReport runs all checks and formats the results for terminal output;
+// failures counts hard failures (warnings excluded).
 func doctorReport() (string, int) {
 	report := doctor.Diagnose(defaultDoctorOptions())
-	return report.Render(), report.Failures
+	return doctorrender.ReportText(report), report.Failures
 }

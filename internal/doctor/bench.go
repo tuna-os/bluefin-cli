@@ -5,10 +5,7 @@ import (
 	"fmt"
 	"os/exec"
 	"sort"
-	"strings"
 	"time"
-
-	"github.com/tuna-os/bluefin-cli/internal/tui"
 )
 
 // BenchResult records shell startup benchmark measurements.
@@ -102,19 +99,4 @@ func RunBench(opts BenchOptions) (*BenchResult, error) {
 		Base:     base,
 		Overhead: overhead,
 	}, nil
-}
-
-// RenderBench formats benchmark results.
-func RenderBench(res *BenchResult) string {
-	var b strings.Builder
-	fmt.Fprintf(&b, "Benchmarking %s startup (median of 7 runs)...\n", res.Shell)
-	fmt.Fprintf(&b, "  your config:  %s\n", res.Full.Round(time.Millisecond))
-	fmt.Fprintf(&b, "  bare shell:   %s\n", res.Base.Round(time.Millisecond))
-	fmt.Fprintf(&b, "  rc overhead:  %s\n", res.Overhead.Round(time.Millisecond))
-	if res.Overhead > 300*time.Millisecond {
-		b.WriteString(tui.WarningStyle.Render("  Startup overhead is noticeable — try disabling components in the Shell menu.") + "\n")
-	} else {
-		b.WriteString(tui.SuccessStyle.Render("  Snappy.") + "\n")
-	}
-	return b.String()
 }
