@@ -127,5 +127,11 @@ or vice versa. Run both before you open a PR; see the
 
 Search [existing issues](https://github.com/tuna-os/bluefin-cli/issues) —
 many platform quirks (especially Windows/WSL edge cases) are already tracked
-there with workarounds. If you don't find a match, open a new issue with your
-`bluefin-cli doctor` output and the command that failed.
+there with workarounds. Check the dedicated platform setup guides for specific
+configuration requirements and limitations:
+- [Linux Setup Guide](setup-linux.md)
+- [macOS Setup Guide](setup-macos.md)
+- [Windows Setup Guide](setup-windows.md)
+
+If you don't find a match, open a new issue with your `bluefin-cli doctor`
+output and the command that failed.
