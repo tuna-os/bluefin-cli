@@ -106,3 +106,5 @@ it alongside the curated bundles (`ai`, `cli`, `cncf`, `experimental-ide`,
 `fonts`, `full-desktop`, `ide`, `k8s`, `all`) when you run
 `bluefin-cli install --list` or the TUI's Install Apps menu. User-defined
 bundles extend the curated set — they do not shadow or replace any of it.
+
+For detailed cross-platform Brewfile syntax, Windows manager entries, and portable multi-OS examples, see the [Brewfile Advanced Usage Guide](brewfile-guide.md).
