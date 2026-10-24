@@ -48,11 +48,13 @@ For the containerized integration suite, run:
 just test
 ```
 
-If a change affects commands or flags, regenerate the command reference and
-include the new Markdown in your PR:
+If a change affects commands or flags, regenerate the command reference from the
+extra build. The extra build includes both published binaries. Include the new
+Markdown in your PR:
 
 ```bash
-just gen-docs
+go build -tags extra -o bluefin-cli .
+./bluefin-cli docs --dest ./docs/commands
 ```
 
 Run `just --list` to see the remaining development and inspection recipes.

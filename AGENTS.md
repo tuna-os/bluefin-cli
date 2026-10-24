@@ -38,8 +38,10 @@ The repository produces two binaries from the same source:
   composes navigation but does not own the registry.
 - `internal/config/`, `internal/profile/`, and `internal/update/` own persisted
   configuration, portable profiles, and checksum-verified self-update.
-- `docs/commands/` holds the generated command reference. Regenerate it with
-  `just gen-docs` after changing commands or flags.
+  `docs/commands/` holds the generated command reference for both standard and
+  plus builds. Regenerate it from the extra variant (the superset) after changing
+  commands or flags:
+  `go build -tags extra -o bluefin-cli . && ./bluefin-cli docs --dest ./docs/commands`.
 
 ## Development workflow
 
@@ -51,7 +53,8 @@ just build                    # build standard and plus binaries
 go test ./...                 # run the local test suite
 go test -tags extra -race ./... # exercise the CI build tag with race checks
 just test                     # run the containerized integration suite
-just gen-docs                 # regenerate docs/commands
+go build -tags extra -o bluefin-cli .
+./bluefin-cli docs --dest ./docs/commands
 ```
 
 Use `just --list` for the complete recipe list. Podman is required by the
