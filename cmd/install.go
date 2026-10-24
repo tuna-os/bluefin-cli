@@ -5,8 +5,8 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/spf13/cobra"
-	"github.com/tuna-os/bluefin-cli/internal/env"
 	"github.com/tuna-os/bluefin-cli/internal/install"
+	"github.com/tuna-os/bluefin-cli/internal/platform"
 	"github.com/tuna-os/bluefin-cli/internal/tui"
 	"github.com/tuna-os/bluefin-cli/internal/tui/app"
 )
@@ -125,7 +125,7 @@ var bundleCategories = []bundleCategory{
 // package manager, printing errors as it goes (used by both the legacy
 // flow and the native menu flow via the legacy bridge).
 func applyPackageChanges(toInstall, toRemove []install.Package) {
-	if env.IsWindows() {
+	if platform.IsWindows() {
 		if len(toInstall) > 0 {
 			var winPkgs []install.WindowsPackage
 			for _, p := range toInstall {

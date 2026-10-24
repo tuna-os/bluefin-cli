@@ -7,14 +7,14 @@ import (
 	"testing"
 
 	"github.com/spf13/cobra"
-	"github.com/tuna-os/bluefin-cli/internal/env"
+	"github.com/tuna-os/bluefin-cli/internal/platform"
 )
 
 // TestSupportsWindowsThemePostInstall checks the platform guard stays in
-// sync with the env package's detection.
+// sync with the platform package's detection.
 func TestSupportsWindowsThemePostInstall(t *testing.T) {
 	got := supportsWindowsThemePostInstall()
-	want := env.IsWindows() || env.IsWSL()
+	want := platform.GetCapabilities().SupportsSunset
 	if got != want {
 		t.Errorf("supportsWindowsThemePostInstall() = %v, want %v", got, want)
 	}
@@ -82,7 +82,7 @@ func TestRunSunsetSetupFlow_NonWindows(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("windows path runs the interactive sunset form")
 	}
-	if env.IsWSL() {
+	if platform.IsWSL() {
 		t.Skip("WSL path delegates to a Windows-side runner")
 	}
 	if err := RunSunsetSetupFlow(); err != nil {

@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/tuna-os/bluefin-cli/internal/env"
+	"github.com/tuna-os/bluefin-cli/internal/platform"
 	"github.com/tuna-os/bluefin-cli/internal/shell"
 	"github.com/tuna-os/bluefin-cli/internal/tui/app"
 )
@@ -48,7 +48,7 @@ var shellConfigCmd = &cobra.Command{
 
 func init() {
 	describedTools := shell.Tools
-	if env.IsWindows() {
+	if platform.IsWindows() {
 		describedTools = shell.ToolsForShell("powershell")
 	}
 

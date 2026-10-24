@@ -7,13 +7,13 @@ import (
 
 	"charm.land/huh/v2"
 	"github.com/spf13/cobra"
-	"github.com/tuna-os/bluefin-cli/internal/env"
+	"github.com/tuna-os/bluefin-cli/internal/platform"
 	"github.com/tuna-os/bluefin-cli/internal/terminal"
 	"github.com/tuna-os/bluefin-cli/internal/tui"
 )
 
 func supportsWindowsThemePostInstall() bool {
-	return env.IsWSL() || env.IsWindows()
+	return platform.GetCapabilities().SupportsSunset
 }
 
 func maybeHandleWindowsThemePostInstall(cmd *cobra.Command, casks []string) error {

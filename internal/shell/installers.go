@@ -17,6 +17,7 @@ import (
 
 	"charm.land/huh/v2"
 	"github.com/tuna-os/bluefin-cli/internal/env"
+	"github.com/tuna-os/bluefin-cli/internal/platform"
 )
 
 func toolsForCurrentPlatform() []Tool {
@@ -65,7 +66,7 @@ func InstallTools(shell string, cfg *Config) {
 		return
 	}
 
-	if env.IsAlpine() {
+	if platform.IsAlpine() {
 		installToolsAlpine(tools, cfg)
 		return
 	}
@@ -223,7 +224,7 @@ func EnsureInstalled(binary string) error {
 	if runtime.GOOS == "windows" {
 		return fmt.Errorf("install %s from the Shell menu on Windows", binary)
 	}
-	if env.IsAlpine() {
+	if platform.IsAlpine() {
 		mgr := alpinePackageManager()
 		if mgr == "" {
 			return fmt.Errorf("neither coldbrew nor apk found")
