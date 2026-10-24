@@ -12,28 +12,27 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/huh/v2"
 	"github.com/spf13/viper"
+	"github.com/tuna-os/bluefin-cli/internal/commands"
 	"github.com/tuna-os/bluefin-cli/internal/config"
 	"github.com/tuna-os/bluefin-cli/internal/env"
-	"github.com/tuna-os/bluefin-cli/internal/install"
-	"github.com/tuna-os/bluefin-cli/internal/motd"
-	"github.com/tuna-os/bluefin-cli/internal/shell"
-	"github.com/tuna-os/bluefin-cli/internal/starship"
 	"github.com/tuna-os/bluefin-cli/internal/tui"
 	"github.com/tuna-os/bluefin-cli/internal/tui/app"
 	"github.com/tuna-os/bluefin-cli/internal/tui/theme"
-	"github.com/tuna-os/bluefin-cli/internal/wallpaper"
+)
+
+var (
+	motdController      = commands.NewMOTDController()
+	shellController     = commands.NewShellController()
+	wallpaperController = commands.NewWallpaperController()
+	starshipController  = commands.NewStarshipController()
 )
 
 // --- Shell submenu -----------------------------------------------------
 
 func motdMenuScreen() app.Screen {
 	items := func() []app.MenuItem {
-		cfg, err := shell.LoadConfig(currentShellName())
-		if err != nil {
-			cfg = shell.DefaultConfig(currentShellName())
-		}
 		toggle := "Enable MOTD"
-		if cfg.IsEnabled("Motd") {
+		if motdController.IsEnabled(currentShellName()) {
 			toggle = "Disable MOTD"
 		}
 		return []app.MenuItem{
@@ -45,23 +44,14 @@ func motdMenuScreen() app.Screen {
 		switch it.Value {
 		case "toggle":
 			return tea.Sequence(func() tea.Msg {
-				sh := currentShellName()
-				cfg, err := shell.LoadConfig(sh)
+				res, err := motdController.Toggle(currentShellName())
 				if err != nil {
-					cfg = shell.DefaultConfig(sh)
-				}
-				enable := !cfg.IsEnabled("Motd")
-				cfg.SetEnabled("Motd", enable)
-				if err := shell.SaveConfig(cfg); err != nil {
 					return app.ToastMsg{Text: "Error: " + err.Error(), IsErr: true}
 				}
-				if enable {
-					return app.ToastMsg{Text: "MOTD enabled."}
-				}
-				return app.ToastMsg{Text: "MOTD disabled."}
+				return app.ToastMsg{Text: res.Message}
 			}, app.ReloadTop())
 		case "show":
-			return app.Push(app.NewRunner("MOTD", motd.Show))
+			return app.Push(app.NewRunner("MOTD", motdController.Show))
 		}
 		return nil
 	})
@@ -73,8 +63,8 @@ func shellsFormScreen() app.Screen {
 	initial := map[string]bool{}
 
 	build := func() *huh.Form {
-		installed = shell.GetInstalledShells()
-		status := shell.CheckStatus()
+		installed = shellController.GetInstalledShells()
+		status := shellController.CheckStatus()
 		selected = selected[:0]
 		options := make([]huh.Option[string], 0, len(installed))
 		for _, sh := range installed {
@@ -112,15 +102,8 @@ func shellsFormScreen() app.Screen {
 		}
 		shells := append([]string(nil), installed...)
 		return app.Push(app.NewRunner("Applying", func() error {
-			for _, sh := range shells {
-				if want[sh] != initial[sh] {
-					fmt.Printf("%s -> %v\n", sh, want[sh])
-					if err := shell.Toggle(sh, want[sh]); err != nil {
-						return err
-					}
-				}
-			}
-			return nil
+			_, err := shellController.ApplyChanges(want, initial, shells)
+			return err
 		}))
 	})
 }
@@ -131,7 +114,7 @@ func wallpapersFlow() tea.Cmd {
 	items := []app.MenuItem{
 		{Icon: "📥", Label: "Install collections", Value: "install", Desc: "Curated wallpaper packs via Homebrew", Submenu: true},
 	}
-	if wallpaper.Supported() {
+	if wallpaperController.Supported() {
 		items = append(items, app.MenuItem{Icon: "🖼", Label: "Set wallpaper", Value: "set", Desc: "Pick an image and apply it to the desktop", Submenu: true})
 	}
 	return app.Push(app.NewMenu("Wallpapers", items, nil, func(it app.MenuItem) tea.Cmd {
@@ -149,14 +132,14 @@ func installWallpapersFlow() tea.Cmd {
 	return tea.Batch(
 		app.Toast("Loading wallpapers…", false),
 		func() tea.Msg {
-			casks, err := install.GetWallpaperCasks()
+			casks, err := wallpaperController.GetWallpaperCasks()
 			if err != nil {
 				return app.ToastMsg{Text: "Error: " + err.Error(), IsErr: true}
 			}
 			if len(casks) == 0 {
 				return app.ToastMsg{Text: "No wallpaper casks found in ublue-os/tap.", IsErr: true}
 			}
-			return app.PushMsg{Screen: wallpapersFormScreen(casks, install.InstalledCasks())}
+			return app.PushMsg{Screen: wallpapersFormScreen(casks, wallpaperController.InstalledCasks())}
 		},
 	)
 }
@@ -167,7 +150,7 @@ func setWallpaperFlow() tea.Cmd {
 	return tea.Batch(
 		app.Toast("Scanning for images…", false),
 		func() tea.Msg {
-			imgs := wallpaper.List()
+			imgs := wallpaperController.ListImages()
 			if len(imgs) == 0 {
 				return app.ToastMsg{Text: "No images found — install a collection first.", IsErr: true}
 			}
@@ -182,10 +165,11 @@ func setWallpaperFlow() tea.Cmd {
 			picker := app.NewWallpaperPicker("Set Wallpaper", items, func(it app.MenuItem) tea.Cmd {
 				pick := it.Value
 				return func() tea.Msg {
-					if err := wallpaper.Set(pick); err != nil {
+					res, err := wallpaperController.SetWallpaper(pick)
+					if err != nil {
 						return app.ToastMsg{Text: "Error: " + err.Error(), IsErr: true}
 					}
-					return app.ToastMsg{Text: "Wallpaper set: " + filepath.Base(pick)}
+					return app.ToastMsg{Text: res.Message}
 				}
 			})
 			return app.PushMsg{Screen: picker}
@@ -219,11 +203,11 @@ func wallpapersFormScreen(casks []string, installed map[string]bool) app.Screen 
 		}
 		picks := append([]string(nil), selected...)
 		run := app.NewRunner("Installing wallpapers", func() error {
-			return install.InstallWallpaperCasks(picks)
+			return wallpaperController.InstallCasks(picks)
 		})
 		if env.IsWSL() || env.IsWindows() {
 			run = app.NewRunnerWithPost("Installing wallpapers", func() error {
-				return install.InstallWallpaperCasks(picks)
+				return wallpaperController.InstallCasks(picks)
 			}, func() tea.Cmd {
 				return app.Push(wallpaperSunsetPostInstallScreen())
 			})
@@ -299,10 +283,8 @@ func starshipFlow() tea.Cmd {
 	menu := app.NewMenu("Starship Theme", items, nil, func(it app.MenuItem) tea.Cmd {
 		pick := it.Value
 		return app.Push(app.NewRunner("Applying "+it.Label, func() error {
-			if err := starship.Install(); err != nil {
-				return err
-			}
-			return starship.ApplyTheme(pick)
+			_, err := starshipController.ApplyTheme(pick)
+			return err
 		}))
 	})
 	return app.Push(menu)
