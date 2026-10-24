@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/spf13/viper"
+	"github.com/tuna-os/bluefin-cli/internal/config"
 	"github.com/tuna-os/bluefin-cli/internal/tui/theme"
 )
 
@@ -72,13 +72,13 @@ func TestThemeCommand_SetFlavor_Persists(t *testing.T) {
 	} else {
 		t.Setenv("HOME", home)
 	}
-	t.Cleanup(viper.Reset)
+	t.Cleanup(config.Reset)
 
 	if err := runTheme(t, []string{"mocha"}); err != nil {
 		t.Fatalf("theme mocha failed: %v", err)
 	}
-	if got := viper.GetString("ui.flavor"); got != "mocha" {
-		t.Errorf("viper ui.flavor = %q, want mocha", got)
+	if got := config.GetUIFlavor(); got != "mocha" {
+		t.Errorf("config ui.flavor = %q, want mocha", got)
 	}
 	cfg := filepath.Join(home, ".config", "bluefin-cli", "config.yaml")
 	data, err := os.ReadFile(cfg)
@@ -93,8 +93,8 @@ func TestThemeCommand_SetFlavor_Persists(t *testing.T) {
 // TestApplyThemeFlavor_Noop guards the auto/empty fast path: with no pinned
 // flavor the theme package must keep its defaults and the call must not panic.
 func TestApplyThemeFlavor_Noop(t *testing.T) {
-	t.Cleanup(viper.Reset)
-	viper.Set("ui.flavor", "auto")
+	t.Cleanup(config.Reset)
+	config.SetUIFlavor("auto")
 	applyThemeFlavor() // must not panic, must not change the global flavor
 	if theme.Flavor != "" {
 		t.Errorf("theme.Flavor = %q after auto no-op, want empty", theme.Flavor)
@@ -105,11 +105,11 @@ func TestApplyThemeFlavor_Noop(t *testing.T) {
 // the theme package.
 func TestApplyThemeFlavor_PinsFlavor(t *testing.T) {
 	t.Cleanup(func() {
-		viper.Reset()
+		config.Reset()
 		theme.Flavor = ""
 		theme.DefaultTheme = theme.Resolve(true)
 	})
-	viper.Set("ui.flavor", "mocha")
+	config.SetUIFlavor("mocha")
 	applyThemeFlavor()
 	if theme.Flavor != "mocha" {
 		t.Errorf("theme.Flavor = %q, want mocha", theme.Flavor)

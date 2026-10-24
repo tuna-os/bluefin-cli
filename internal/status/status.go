@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/viper"
+	"github.com/tuna-os/bluefin-cli/internal/config"
 
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/term"
@@ -251,6 +251,6 @@ func Render(width int, version string) (string, error) {
 	}
 
 	head := titleStyle.Render("Bluefin CLI Status") + "  " +
-		labelStyle.Render("v"+version+" · flavor "+viper.GetString("ui.flavor"))
+		labelStyle.Render("v"+version+" · flavor "+config.GetUIFlavor())
 	return head + "\n\n" + formatted, nil
 }

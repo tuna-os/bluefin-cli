@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"charm.land/lipgloss/v2"
-	"github.com/spf13/viper"
+	"github.com/tuna-os/bluefin-cli/internal/config"
 )
 
 var (
@@ -163,12 +163,12 @@ func GetBrewfile(nameOrPath string) (string, func(), error) {
 	}
 
 	// Fallback to download
-	path := viper.GetString("bundles.default_path")
+	path := config.GetBundlesDefaultPath()
 	if bundle.Path != "" {
 		path = bundle.Path
 	}
 
-	url := fmt.Sprintf("%s/%s/%s", viper.GetString("bundles.base_url"), path, bundle.File)
+	url := fmt.Sprintf("%s/%s/%s", config.GetBundlesBaseURL(), path, bundle.File)
 	f, err := os.CreateTemp("", "bluefin-download-*.Brewfile")
 	if err != nil {
 		return "", func() {}, fmt.Errorf("failed to create temp file for downloaded bundle: %w", err)

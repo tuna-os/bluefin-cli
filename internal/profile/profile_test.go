@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/spf13/viper"
+	"github.com/tuna-os/bluefin-cli/internal/config"
 )
 
 func TestDiff(t *testing.T) {
@@ -102,12 +102,12 @@ func TestExportAndApply(t *testing.T) {
 	// run in parallel, which this must not be: HOME and viper are process
 	// globals.
 	t.Setenv("HOME", dir)
-	// Apply() does viper.Set + config.Save(). Viper resolves its config file
+	// Apply() does config.SetUIFlavor + config.Save(). Viper resolves its config file
 	// path once, globally, so without this reset Save() writes through a path
 	// left over from an earlier Init -- i.e. into the developer's real
 	// ~/.config/bluefin-cli/config.yaml rather than the temp HOME above.
-	viper.Reset()
-	t.Cleanup(viper.Reset)
+	config.Reset()
+	t.Cleanup(config.Reset)
 
 	prof, err := Export("bash")
 	if err != nil {

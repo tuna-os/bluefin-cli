@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/spf13/viper"
 	"github.com/tuna-os/bluefin-cli/internal/config"
 )
 
@@ -89,10 +88,10 @@ func (s *Sync) Fetch(id string) (*Profile, error) {
 
 type ConfigSyncIDStore struct{}
 
-func (ConfigSyncIDStore) Get() string { return viper.GetString("profile.gist_id") }
+func (ConfigSyncIDStore) Get() string { return config.GetProfileGistID() }
 
 func (ConfigSyncIDStore) Set(id string) error {
-	viper.Set("profile.gist_id", id)
+	config.SetProfileGistID(id)
 	return config.Save()
 }
 
