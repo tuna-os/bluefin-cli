@@ -15,115 +15,11 @@ import (
 	"github.com/tuna-os/bluefin-cli/internal/config"
 	"github.com/tuna-os/bluefin-cli/internal/env"
 	"github.com/tuna-os/bluefin-cli/internal/install"
-	"github.com/tuna-os/bluefin-cli/internal/motd"
-	"github.com/tuna-os/bluefin-cli/internal/shell"
-	"github.com/tuna-os/bluefin-cli/internal/starship"
 	"github.com/tuna-os/bluefin-cli/internal/tui"
 	"github.com/tuna-os/bluefin-cli/internal/tui/app"
 	"github.com/tuna-os/bluefin-cli/internal/tui/theme"
 	"github.com/tuna-os/bluefin-cli/internal/wallpaper"
 )
-
-// --- Shell submenu -----------------------------------------------------
-
-func motdMenuScreen() app.Screen {
-	items := func() []app.MenuItem {
-		cfg, err := shell.LoadConfig(currentShellName())
-		if err != nil {
-			cfg = shell.DefaultConfig(currentShellName())
-		}
-		toggle := "Enable MOTD"
-		if cfg.IsEnabled("Motd") {
-			toggle = "Disable MOTD"
-		}
-		return []app.MenuItem{
-			{Icon: "🔄", Label: toggle, Value: "toggle", Desc: "Message of the day on new terminals"},
-			{Icon: "📰", Label: "Show MOTD", Value: "show", Desc: "Preview today's message"},
-		}
-	}
-	return app.NewMenu("MOTD", nil, items, func(it app.MenuItem) tea.Cmd {
-		switch it.Value {
-		case "toggle":
-			return tea.Sequence(func() tea.Msg {
-				sh := currentShellName()
-				cfg, err := shell.LoadConfig(sh)
-				if err != nil {
-					cfg = shell.DefaultConfig(sh)
-				}
-				enable := !cfg.IsEnabled("Motd")
-				cfg.SetEnabled("Motd", enable)
-				if err := shell.SaveConfig(cfg); err != nil {
-					return app.ToastMsg{Text: "Error: " + err.Error(), IsErr: true}
-				}
-				if enable {
-					return app.ToastMsg{Text: "MOTD enabled."}
-				}
-				return app.ToastMsg{Text: "MOTD disabled."}
-			}, app.ReloadTop())
-		case "show":
-			return app.Push(app.NewRunner("MOTD", motd.Show))
-		}
-		return nil
-	})
-}
-
-func shellsFormScreen() app.Screen {
-	var installed []string
-	var selected []string
-	initial := map[string]bool{}
-
-	build := func() *huh.Form {
-		installed = shell.GetInstalledShells()
-		status := shell.CheckStatus()
-		selected = selected[:0]
-		options := make([]huh.Option[string], 0, len(installed))
-		for _, sh := range installed {
-			initial[sh] = status[sh]
-			if status[sh] {
-				selected = append(selected, sh)
-			}
-			options = append(options, huh.NewOption(sh, sh))
-		}
-		return huh.NewForm(huh.NewGroup(
-			huh.NewMultiSelect[string]().
-				Title("Manage other shells").
-				Description("Selected = enabled. Space toggles, enter applies.").
-				Options(options...).
-				Value(&selected),
-		)).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap())
-	}
-
-	return app.NewForm("Other Shells", build, func(aborted bool) tea.Cmd {
-		if aborted {
-			return nil
-		}
-		want := map[string]bool{}
-		for _, sh := range selected {
-			want[sh] = true
-		}
-		changed := 0
-		for _, sh := range installed {
-			if want[sh] != initial[sh] {
-				changed++
-			}
-		}
-		if changed == 0 {
-			return app.Toast("No changes.", false)
-		}
-		shells := append([]string(nil), installed...)
-		return app.Push(app.NewRunner("Applying", func() error {
-			for _, sh := range shells {
-				if want[sh] != initial[sh] {
-					fmt.Printf("%s -> %v\n", sh, want[sh])
-					if err := shell.Toggle(sh, want[sh]); err != nil {
-						return err
-					}
-				}
-			}
-			return nil
-		}))
-	})
-}
 
 // --- Extras ------------------------------------------------------------
 
@@ -280,32 +176,6 @@ func fontsFlow() tea.Cmd {
 			return maybeHandlePostFontInstall()
 		}))
 	}))
-}
-
-func starshipFlow() tea.Cmd {
-	items := []app.MenuItem{
-		{Icon: "◆", Label: "Nerd Font Symbols", Value: "nerd-font-symbols", Desc: "❯ ~/project  main ·  v1.22 — icons for every tool"},
-		{Icon: "🌃", Label: "Tokyo Night", Value: "tokyo-night", Desc: "Neon segments on a midnight palette"},
-		{Icon: "🌈", Label: "Gruvbox Rainbow", Value: "gruvbox-rainbow", Desc: "Warm retro powerline blocks"},
-		{Icon: "🐈", Label: "Catppuccin Powerline", Value: "catppuccin-powerline", Desc: "Pastel powerline matching the app theme"},
-		{Icon: "🚀", Label: "Jetpack", Value: "jetpack", Desc: "Dense, information-rich two-liner"},
-		{Icon: "🎨", Label: "Pastel Powerline", Value: "pastel-powerline", Desc: "Soft colors, hard arrows"},
-		{Icon: "✨", Label: "Pure Preset", Value: "pure-preset", Desc: "Minimal two-line prompt, zero noise"},
-		{Icon: "🔤", Label: "Plain Text Symbols", Value: "plain-text-symbols", Desc: "ASCII-safe — no special font needed"},
-		{Icon: "🔡", Label: "No Nerd Font", Value: "no-nerd-font", Desc: "Unicode-only, works in any terminal"},
-		{Icon: "⏱", Label: "No Runtime Versions", Value: "no-runtime-versions", Desc: "Hides language version clutter"},
-		{Icon: "▫️", Label: "No Empty Icons", Value: "no-empty-icons", Desc: "Icons only when they mean something"},
-	}
-	menu := app.NewMenu("Starship Theme", items, nil, func(it app.MenuItem) tea.Cmd {
-		pick := it.Value
-		return app.Push(app.NewRunner("Applying "+it.Label, func() error {
-			if err := starship.Install(); err != nil {
-				return err
-			}
-			return starship.ApplyTheme(pick)
-		}))
-	})
-	return app.Push(menu)
 }
 
 // --- Advanced ----------------------------------------------------------
