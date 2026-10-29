@@ -68,7 +68,11 @@ var rootCmd = &cobra.Command{
 // Execute runs the root command via fang (styled help/errors, manpage and
 // completion commands, --version).
 func Execute() error {
-	return fang.Execute(context.Background(), rootCmd, fang.WithVersion(reportedVersion()))
+	return executeWithFang(rootCmd)
+}
+
+func executeWithFang(root *cobra.Command) error {
+	return fang.Execute(context.Background(), root, fang.WithVersion(reportedVersion()), fang.WithErrorHandler(renderError))
 }
 
 func init() {
