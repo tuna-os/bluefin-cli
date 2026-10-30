@@ -13,7 +13,6 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/huh/v2"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/tuna-os/bluefin-cli/internal/config"
 	"github.com/tuna-os/bluefin-cli/internal/env"
 	"github.com/tuna-os/bluefin-cli/internal/install"
@@ -40,10 +39,10 @@ func init() {
 // is never worth an error message — and the GitHub API is only asked once
 // per day.
 func checkForUpdate() tea.Msg {
-	if last := viper.GetInt64("update.last_check"); time.Since(time.Unix(last, 0)) < 24*time.Hour {
+	if last := config.GetUpdateLastCheck(); time.Since(time.Unix(last, 0)) < 24*time.Hour {
 		return nil
 	}
-	viper.Set("update.last_check", time.Now().Unix())
+	config.SetUpdateLastCheck(time.Now().Unix())
 	_ = config.Save()
 	rel, err := update.Latest()
 	if err != nil || !update.IsNewer(version, rel.TagName) {

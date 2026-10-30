@@ -12,7 +12,6 @@ import (
 	"runtime"
 	"sort"
 
-	"github.com/spf13/viper"
 	"github.com/tuna-os/bluefin-cli/internal/config"
 	"github.com/tuna-os/bluefin-cli/internal/shell"
 )
@@ -51,7 +50,7 @@ func Export(currentShell string) (*Profile, error) {
 
 	return &Profile{
 		Version:       1,
-		Flavor:        viper.GetString("ui.flavor"),
+		Flavor:        config.GetUIFlavor(),
 		Tools:         map[string]bool(*cfg),
 		EnabledShells: enabled,
 	}, nil
@@ -106,7 +105,7 @@ func Parse(data []byte) (*Profile, error) {
 // output via fmt (captured by the TUI RunnerScreen when run from the menu).
 func (p *Profile) Apply() error {
 	if p.Flavor != "" {
-		viper.Set("ui.flavor", p.Flavor)
+		config.SetUIFlavor(p.Flavor)
 		if err := config.Save(); err != nil {
 			return fmt.Errorf("saving flavor: %w", err)
 		}
