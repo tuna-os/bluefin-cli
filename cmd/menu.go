@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"strings"
 
@@ -15,8 +14,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tuna-os/bluefin-cli/internal/config"
-	"github.com/tuna-os/bluefin-cli/internal/env"
 	"github.com/tuna-os/bluefin-cli/internal/install"
+	"github.com/tuna-os/bluefin-cli/internal/platform"
 	"github.com/tuna-os/bluefin-cli/internal/shell"
 	"github.com/tuna-os/bluefin-cli/internal/tui"
 	"github.com/tuna-os/bluefin-cli/internal/tui/app"
@@ -116,7 +115,7 @@ func mainMenuSelect(it app.MenuItem) tea.Cmd {
 func currentShellName() string {
 	name := filepath.Base(os.Getenv("SHELL"))
 	if name == "" || name == "." {
-		if env.IsWindows() {
+		if platform.IsWindows() {
 			return "powershell"
 		}
 		return "bash"
@@ -169,7 +168,7 @@ func runWithHomebrew(title string, task func() error) tea.Cmd {
 // path. Windows installs through winget and Alpine through apk, so neither ever
 // asks.
 func homebrewConfirmNeeded() bool {
-	if runtime.GOOS == "windows" || env.IsAlpine() {
+	if !platform.GetCapabilities().SupportsHomebrew {
 		return false
 	}
 	return !shell.HomebrewAvailable()

@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/tuna-os/bluefin-cli/internal/env"
+	"github.com/tuna-os/bluefin-cli/internal/platform"
 )
 
 type UnixInstaller struct{}
@@ -23,7 +23,7 @@ func (i *UnixInstaller) InstallBundle(packages ...string) error {
 	// On Alpine-family systems, Homebrew cannot bootstrap (musl libc).
 	// Route to the Alpine-specific installer, which maps brew formulae
 	// to apk packages where possible and degrades gracefully otherwise.
-	if env.IsAlpine() {
+	if platform.IsAlpine() {
 		return installBundleAlpine(packages...)
 	}
 

@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/tuna-os/bluefin-cli/internal/env"
+	"github.com/tuna-os/bluefin-cli/internal/platform"
 	"github.com/tuna-os/bluefin-cli/internal/shell"
 )
 
@@ -25,7 +25,7 @@ type FixOptions struct {
 func (o FixOptions) withDefaults() FixOptions {
 	opts := o
 	if opts.IsAlpine == nil {
-		opts.IsAlpine = env.IsAlpine
+		opts.IsAlpine = platform.IsAlpine
 	}
 	if opts.CommandExists == nil {
 		opts.CommandExists = func(bin string) bool {

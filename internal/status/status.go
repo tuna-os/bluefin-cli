@@ -13,9 +13,9 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/term"
-	"github.com/tuna-os/bluefin-cli/internal/env"
 	"github.com/tuna-os/bluefin-cli/internal/install"
 	"github.com/tuna-os/bluefin-cli/internal/motd"
+	"github.com/tuna-os/bluefin-cli/internal/platform"
 	"github.com/tuna-os/bluefin-cli/internal/shell"
 	"github.com/tuna-os/bluefin-cli/internal/sunset"
 )
@@ -154,7 +154,7 @@ func Render(width int, version string) (string, error) {
 	deps := shell.CheckDependencies()
 
 	var toolsToShow []shell.Tool
-	if env.IsWindows() {
+	if platform.IsWindows() {
 		toolsToShow = shell.ToolsForShell("powershell")
 	} else {
 		// Heuristic: if we can't determine current shell, at least filter for platform-aware tools
@@ -186,7 +186,7 @@ func Render(width int, version string) (string, error) {
 
 	// Homebrew status
 	rightCol += labelStyle.Render("Package Manager:") + "\n"
-	if env.IsWindows() {
+	if platform.IsWindows() {
 		managers := install.AvailableWindowsManagers()
 		if len(managers) == 0 {
 			rightCol += fmt.Sprintf("  %s Windows PMs: %s\n",
@@ -222,7 +222,7 @@ func Render(width int, version string) (string, error) {
 	rightCol += "\n"
 
 	// Sunset status (Windows/WSL only)
-	if env.IsWindows() || env.IsWSL() {
+	if platform.GetCapabilities().SupportsSunset {
 		rightCol += labelStyle.Render("Sunset Automation:") + "\n"
 		if cfg, err := sunset.LoadConfig(); err == nil && cfg.Enabled {
 			rightCol += fmt.Sprintf("  %s Status: %s\n",
