@@ -20,6 +20,10 @@ plain YAML if you want to inspect or script against it.
    variable is set.
 3. `~/.config/bluefin-cli` otherwise (created on first write).
 
+For platform-specific directory conventions and environment variable handling,
+see the setup guides for [Linux](setup-linux.md), [macOS](setup-macos.md),
+and [Windows](setup-windows.md).
+
 ### Keys
 
 | Key | Default | Set by |
