@@ -7,7 +7,6 @@ import (
 	"charm.land/huh/v2"
 	"github.com/spf13/cobra"
 	"github.com/tuna-os/bluefin-cli/internal/motd"
-	"github.com/tuna-os/bluefin-cli/internal/shell"
 	"github.com/tuna-os/bluefin-cli/internal/tui"
 	"github.com/tuna-os/bluefin-cli/internal/tui/app"
 )
@@ -41,15 +40,8 @@ var motdToggleCmd = &cobra.Command{
 		if target == "all" || target == "" {
 			targets = []string{"bash", "zsh", "fish"}
 		}
-		for _, sh := range targets {
-			cfg, err := shell.LoadConfig(sh)
-			if err != nil {
-				cfg = shell.DefaultConfig(sh)
-			}
-			cfg.SetEnabled("Motd", enable)
-			if err := shell.SaveConfig(cfg); err != nil {
-				return fmt.Errorf("saving %s config: %w", sh, err)
-			}
+		if _, err := motdController.SetEnabled(targets, enable); err != nil {
+			return err
 		}
 		state := "disabled"
 		if enable {
