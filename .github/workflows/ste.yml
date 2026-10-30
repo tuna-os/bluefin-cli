@@ -51,4 +51,4 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    uses: tuna-os/.github/.github/workflows/ste-lint.yml@main
+    uses: tuna-os/.github/.github/workflows/ste-lint.yml@f835d4a4cdb18746e9b8abbc07defcef796a30a1 # main
