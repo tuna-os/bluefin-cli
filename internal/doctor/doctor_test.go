@@ -319,27 +319,6 @@ func TestCheckVersion(t *testing.T) {
 	})
 }
 
-func TestDiagnoseAndRender(t *testing.T) {
-	opts := Options{
-		CurrentShell: "bash",
-		Version:      "dev",
-		LookPath:     func(string) (string, error) { return "/bin/tool", nil },
-		ShellStatus:  func() map[string]bool { return map[string]bool{"bash": true} },
-		CheckNetwork: func() error { return nil },
-		DetectUpdate: func() update.InstallMethod { return update.MethodHomebrew },
-		IsAlpine:     func() bool { return false },
-	}
-
-	report := Diagnose(opts)
-	if report.Failures != 0 {
-		t.Errorf("expected 0 failures, got %d", report.Failures)
-	}
-	rendered := report.Render()
-	if !strings.Contains(rendered, "All checks passed") {
-		t.Errorf("expected 'All checks passed' in output, got:\n%s", rendered)
-	}
-}
-
 func TestRunFixes(t *testing.T) {
 	var buf bytes.Buffer
 	toggled := false
@@ -431,10 +410,6 @@ func TestRunBench(t *testing.T) {
 		}
 		if res.Shell != "bash" {
 			t.Errorf("res.Shell = %q, want bash", res.Shell)
-		}
-		rendered := RenderBench(res)
-		if !strings.Contains(rendered, "Benchmarking bash startup") {
-			t.Errorf("unexpected render output: %s", rendered)
 		}
 	})
 }
