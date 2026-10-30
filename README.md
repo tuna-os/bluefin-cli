@@ -418,6 +418,8 @@ grep    # ugrep (if installed)
   environment variables, and user-defined bundles.
 - [`docs/troubleshooting.md`](docs/troubleshooting.md): how to read `doctor`
   output, and fixes for common setup problems.
+- [`docs/shell-experience.md`](docs/shell-experience.md): setup walkthrough
+  and configuration for each supported shell.
 
 Maintainers can find package-channel credentials and release checks in
 [release details](docs/release-publishing.md). The
