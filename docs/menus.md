@@ -76,6 +76,6 @@ Three layers, run by CI and `just` recipes:
   `ctrl+p` → "Dino Run", or the hidden `bluefin-cli dino` command. Space jumps
   kelp, stay down under fish; high score persists.
 - 👻 **Terminal Setup** — install Ghostty on macOS/Linux via brew or WezTerm on Windows via winget. Pin Ghostty to the macOS Dock and write a Catppuccin light/dark config with your Nerd Font.
-- 🏠 **My Brewfile** — one package file for every OS. Dump installed packages, search across managers, remove entries, or install everything. Also run `bluefin-cli brewfile`.
+- 🏠 **My Brewfile** — one package file for every OS. Dump installed packages, search across managers, remove entries, or install everything. Also run `bluefin-cli brewfile`. See the [Brewfile Advanced Usage Guide](brewfile-guide.md) for cross-platform syntax.
 - 📦 **Profiles** — `profile export/import/diff/push/pull` replay a whole setup
   (shells, tools, flavor) across machines, synced via a private gist.
