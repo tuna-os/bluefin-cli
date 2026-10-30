@@ -18,12 +18,28 @@ This runs six checks ([`cmd/doctor.go`](../cmd/doctor.go)) and prints `✓`
 | Self-update viable | The install directory is writable (direct installs only; skipped for package-manager installs) | Fix directory permissions, or install via a package manager instead |
 | Version | Compares your version against the latest GitHub release | `bluefin-cli update`, or your package manager's upgrade command |
 
-Two useful flags:
+Doctor flags:
 
 ```bash
 bluefin-cli doctor --fix     # applies safe automatic fixes (shell integration, missing tools)
 bluefin-cli doctor --bench   # measures shell startup cost vs. a bare shell (bash/zsh/fish only)
+bluefin-cli doctor --json    # prints a machine-readable diagnostic report
 ```
+
+`--json` emits one JSON object on stdout, without terminal formatting. Version 1
+has `schema_version` (the integer `1`), `checks` (an array), and `failures`
+(the number of hard failures). Each check has `name` (display text), `ok` and
+`warn` booleans, and an optional `note` string. An `ok` check passed; a check
+with `ok: false` and `warn: true` is a warning; a check with both false is a
+hard failure. Names, notes, and the set and order of checks may change. Consumers
+should ignore unknown fields; incompatible schema changes will increment
+`schema_version`.
+
+A report with only warnings exits successfully, while hard failures produce a
+nonzero exit after the JSON is written. Errors, including output write failures,
+are reported on stderr and exit nonzero. `--json` cannot be combined with
+`--fix` or `--bench`: those modes produce separate human-oriented output. The
+combination is rejected before running checks or applying fixes.
 
 `--fix` handles three cases. It enables shell integration, sets up `coldbrew`
 on Alpine/musl systems, and installs `eza`, `fzf`, and `starship` when they
