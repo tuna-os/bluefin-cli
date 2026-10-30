@@ -6,7 +6,7 @@
 # packages whose signatures no longer match the image keyring, breaking
 # `dnf install` (tuna-os/bluefin-cli#167; same defect as wootc#135,
 # protota#226). Re-bump once the upstream image is fixed.
-FROM registry.fedoraproject.org/fedora:45 AS builder
+FROM registry.fedoraproject.org/fedora:45@sha256:cdfc05e94a5ea508a56bd784e82de74acbff18b20679ed74ff235841d716ee42 AS builder
 
 # Install Go and build dependencies (this layer is cached unless Fedora updates)
 RUN dnf install -y golang git && dnf clean all
@@ -27,7 +27,7 @@ COPY . .
 RUN go build -o bluefin-cli
 
 # Test stage - set up base environment first (cached)
-FROM registry.fedoraproject.org/fedora:46
+FROM registry.fedoraproject.org/fedora:46@sha256:09cf04ce018b908094f602dc7a08a3a29f63e69814f007bf58850df0129477ec
 
 # Install runtime dependencies for testing (cached layer)
 RUN dnf install -y bash zsh fish curl git grep findutils coreutils && dnf clean all
