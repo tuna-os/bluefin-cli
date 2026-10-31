@@ -2,6 +2,7 @@ package shell
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -37,6 +38,51 @@ func TestConfigData(t *testing.T) {
 	}
 	if !loadedCfg.IsEnabled("Starship") {
 		t.Error("Expected Starship to be enabled (unchanged)")
+	}
+}
+
+func TestMOTDSetting(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	t.Setenv("HOMEBREW_PREFIX", "")
+	if !MOTDEnabled("bash") {
+		t.Fatal("MOTD should default to enabled")
+	}
+	cfg := DefaultConfig("bash")
+	cfg.SetEnabled("Eza", false)
+	if err := SaveConfig(cfg); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []bool{false, true} {
+		got, err := ToggleMOTD("bash")
+		if err != nil || got != want || MOTDEnabled("bash") != want {
+			t.Fatalf("ToggleMOTD = %v, %v; want %v", got, err, want)
+		}
+	}
+	loaded, err := LoadConfig("bash")
+	if err != nil || loaded.IsEnabled("Eza") {
+		t.Fatalf("toggle changed another setting: %v, %v", loaded, err)
+	}
+
+	path := filepath.Join(home, ".config", "bluefin-cli", "shell.json")
+	if err := os.WriteFile(path, []byte("invalid json"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if !MOTDEnabled("bash") {
+		t.Fatal("invalid config should use defaults")
+	}
+	if got, err := ToggleMOTD("bash"); err != nil || got {
+		t.Fatalf("toggle should use default on invalid config: %v, %v", got, err)
+	}
+	if err := os.Remove(path); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(path, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ToggleMOTD("bash"); err == nil {
+		t.Fatal("saving to a directory must fail")
 	}
 }
 
