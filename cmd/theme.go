@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/tuna-os/bluefin-cli/internal/config"
 	"github.com/tuna-os/bluefin-cli/internal/tui/theme"
 )
@@ -23,14 +22,14 @@ naming a flavor pins it regardless of the terminal background.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			fmt.Printf("Flavor: %s (options: %s)\n",
-				viper.GetString("ui.flavor"), strings.Join(theme.Flavors(), ", "))
+				config.GetUIFlavor(), strings.Join(theme.Flavors(), ", "))
 			return nil
 		}
 		flavor := strings.ToLower(args[0])
 		if !slices.Contains(theme.Flavors(), flavor) {
 			return fmt.Errorf("unknown flavor %q (options: %s)", flavor, strings.Join(theme.Flavors(), ", "))
 		}
-		viper.Set("ui.flavor", flavor)
+		config.SetUIFlavor(flavor)
 		if err := config.Save(); err != nil {
 			return err
 		}
@@ -46,7 +45,7 @@ func init() {
 // applyThemeFlavor loads the configured flavor into the theme package; called
 // from the root PersistentPreRun so every command renders with it.
 func applyThemeFlavor() {
-	flavor := strings.ToLower(viper.GetString("ui.flavor"))
+	flavor := strings.ToLower(config.GetUIFlavor())
 	if flavor == "" || flavor == "auto" {
 		return
 	}

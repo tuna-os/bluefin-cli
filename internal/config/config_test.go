@@ -215,3 +215,81 @@ func TestGetConfigDir_NoHome(t *testing.T) {
 		t.Error("GetConfigDir() should error when HOME is not set")
 	}
 }
+
+// ── Typed accessors tests ───────────────────────────────────────────────────
+
+func TestTypedAccessors(t *testing.T) {
+	Reset()
+	t.Cleanup(Reset)
+
+	if err := Init(); err != nil {
+		t.Fatalf("Init() failed: %v", err)
+	}
+
+	// Default values
+	if got := GetTheme(); got != "catppuccin" {
+		t.Errorf("GetTheme() = %q, want catppuccin", got)
+	}
+	if got := GetUIFlavor(); got != "auto" {
+		t.Errorf("GetUIFlavor() = %q, want auto", got)
+	}
+	if got := GetUIDarkMode(); got != true {
+		t.Errorf("GetUIDarkMode() = %v, want true", got)
+	}
+	if got := GetBundlesBaseURL(); got != "https://raw.githubusercontent.com/projectbluefin/common/main/system_files" {
+		t.Errorf("GetBundlesBaseURL() = %q", got)
+	}
+	if got := GetBundlesDefaultPath(); got != "shared/usr/share/ublue-os/homebrew" {
+		t.Errorf("GetBundlesDefaultPath() = %q", got)
+	}
+	if got := GetGameHighScore(); got != 0 {
+		t.Errorf("GetGameHighScore() = %d, want 0", got)
+	}
+	if got := GetUpdateLastCheck(); got != 0 {
+		t.Errorf("GetUpdateLastCheck() = %d, want 0", got)
+	}
+	if got := GetProfileGistID(); got != "" {
+		t.Errorf("GetProfileGistID() = %q, want empty", got)
+	}
+
+	// Setters and Getters roundtrip
+	SetTheme("nord")
+	if got := GetTheme(); got != "nord" {
+		t.Errorf("after SetTheme: GetTheme() = %q, want nord", got)
+	}
+
+	SetUIFlavor("mocha")
+	if got := GetUIFlavor(); got != "mocha" {
+		t.Errorf("after SetUIFlavor: GetUIFlavor() = %q, want mocha", got)
+	}
+
+	SetUIDarkMode(false)
+	if got := GetUIDarkMode(); got != false {
+		t.Errorf("after SetUIDarkMode: GetUIDarkMode() = %v, want false", got)
+	}
+
+	SetBundlesBaseURL("https://example.com/bundles")
+	if got := GetBundlesBaseURL(); got != "https://example.com/bundles" {
+		t.Errorf("after SetBundlesBaseURL: GetBundlesBaseURL() = %q", got)
+	}
+
+	SetBundlesDefaultPath("custom/path")
+	if got := GetBundlesDefaultPath(); got != "custom/path" {
+		t.Errorf("after SetBundlesDefaultPath: GetBundlesDefaultPath() = %q", got)
+	}
+
+	SetGameHighScore(42)
+	if got := GetGameHighScore(); got != 42 {
+		t.Errorf("after SetGameHighScore: GetGameHighScore() = %d, want 42", got)
+	}
+
+	SetUpdateLastCheck(1234567890)
+	if got := GetUpdateLastCheck(); got != 1234567890 {
+		t.Errorf("after SetUpdateLastCheck: GetUpdateLastCheck() = %d, want 1234567890", got)
+	}
+
+	SetProfileGistID("abc123gist")
+	if got := GetProfileGistID(); got != "abc123gist" {
+		t.Errorf("after SetProfileGistID: GetProfileGistID() = %q, want abc123gist", got)
+	}
+}

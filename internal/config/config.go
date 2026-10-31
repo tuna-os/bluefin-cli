@@ -75,3 +75,88 @@ func GetConfigDir() (string, error) {
 	}
 	return filepath.Join(home, ".config", "bluefin-cli"), nil
 }
+
+// Reset wraps viper.Reset for tests.
+func Reset() {
+	viper.Reset()
+}
+
+// GetTheme returns the configured theme name.
+func GetTheme() string {
+	return viper.GetString("theme")
+}
+
+// SetTheme sets the configured theme name.
+func SetTheme(theme string) {
+	viper.Set("theme", theme)
+}
+
+// GetUIFlavor returns the configured UI flavor (e.g. "auto", "latte", "frappe", "macchiato", "mocha").
+func GetUIFlavor() string {
+	return viper.GetString("ui.flavor")
+}
+
+// SetUIFlavor sets the configured UI flavor.
+func SetUIFlavor(flavor string) {
+	viper.Set("ui.flavor", flavor)
+}
+
+// GetUIDarkMode returns whether UI dark mode is enabled.
+func GetUIDarkMode() bool {
+	return viper.GetBool("ui.dark_mode")
+}
+
+// SetUIDarkMode sets the UI dark mode preference.
+func SetUIDarkMode(enabled bool) {
+	viper.Set("ui.dark_mode", enabled)
+}
+
+// GetBundlesBaseURL returns the base URL for downloading bundles.
+func GetBundlesBaseURL() string {
+	return viper.GetString("bundles.base_url")
+}
+
+// SetBundlesBaseURL sets the base URL for downloading bundles.
+func SetBundlesBaseURL(url string) {
+	viper.Set("bundles.base_url", url)
+}
+
+// GetBundlesDefaultPath returns the default path under the base URL for bundles.
+func GetBundlesDefaultPath() string {
+	return viper.GetString("bundles.default_path")
+}
+
+// SetBundlesDefaultPath sets the default path under the base URL for bundles.
+func SetBundlesDefaultPath(path string) {
+	viper.Set("bundles.default_path", path)
+}
+
+// GetGameHighScore returns the saved dino game high score.
+func GetGameHighScore() int {
+	return viper.GetInt("game.high_score")
+}
+
+// SetGameHighScore updates the saved dino game high score.
+func SetGameHighScore(score int) {
+	viper.Set("game.high_score", score)
+}
+
+// GetUpdateLastCheck returns the timestamp (unix seconds) of the last update check.
+func GetUpdateLastCheck() int64 {
+	return viper.GetInt64("update.last_check")
+}
+
+// SetUpdateLastCheck records the timestamp (unix seconds) of an update check.
+func SetUpdateLastCheck(timestamp int64) {
+	viper.Set("update.last_check", timestamp)
+}
+
+// GetProfileGistID returns the GitHub Gist ID used for profile sync.
+func GetProfileGistID() string {
+	return viper.GetString("profile.gist_id")
+}
+
+// SetProfileGistID sets the GitHub Gist ID used for profile sync.
+func SetProfileGistID(id string) {
+	viper.Set("profile.gist_id", id)
+}

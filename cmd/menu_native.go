@@ -11,7 +11,6 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/huh/v2"
-	"github.com/spf13/viper"
 	"github.com/tuna-os/bluefin-cli/internal/config"
 	"github.com/tuna-os/bluefin-cli/internal/env"
 	"github.com/tuna-os/bluefin-cli/internal/install"
@@ -313,12 +312,12 @@ func starshipFlow() tea.Cmd {
 func advancedMenuScreen() app.Screen {
 	items := func() []app.MenuItem {
 		dark := "🌙 Dark Mode: On"
-		if !viper.GetBool("ui.dark_mode") {
+		if !config.GetUIDarkMode() {
 			dark = "☀️  Dark Mode: Off"
 		}
 		return []app.MenuItem{
 			{Label: dark, Value: "toggle_dark", Desc: "Color hint for plain CLI output"},
-			{Icon: "🎨", Label: "Flavor: " + viper.GetString("ui.flavor"), Value: "flavor",
+			{Icon: "🎨", Label: "Flavor: " + config.GetUIFlavor(), Value: "flavor",
 				Desc: "Cycle Catppuccin flavor (auto follows the terminal)"},
 		}
 	}
@@ -326,7 +325,7 @@ func advancedMenuScreen() app.Screen {
 		switch it.Value {
 		case "toggle_dark":
 			return tea.Sequence(func() tea.Msg {
-				viper.Set("ui.dark_mode", !viper.GetBool("ui.dark_mode"))
+				config.SetUIDarkMode(!config.GetUIDarkMode())
 				if err := config.Save(); err != nil {
 					return app.ToastMsg{Text: "Error: " + err.Error(), IsErr: true}
 				}
@@ -335,7 +334,7 @@ func advancedMenuScreen() app.Screen {
 		case "flavor":
 			return tea.Sequence(func() tea.Msg {
 				flavors := theme.Flavors()
-				cur := viper.GetString("ui.flavor")
+				cur := config.GetUIFlavor()
 				next := flavors[0]
 				for i, f := range flavors {
 					if f == cur {
@@ -343,7 +342,7 @@ func advancedMenuScreen() app.Screen {
 						break
 					}
 				}
-				viper.Set("ui.flavor", next)
+				config.SetUIFlavor(next)
 				if err := config.Save(); err != nil {
 					return app.ToastMsg{Text: "Error: " + err.Error(), IsErr: true}
 				}
@@ -373,8 +372,8 @@ func doctorScreenCmd() tea.Cmd {
 
 // gameScreen builds the dino runner with a config-persisted high score.
 func gameScreen() app.Screen {
-	return app.NewGame(viper.GetInt("game.high_score"), func(n int) {
-		viper.Set("game.high_score", n)
+	return app.NewGame(config.GetGameHighScore(), func(n int) {
+		config.SetGameHighScore(n)
 		_ = config.Save()
 	})
 }
