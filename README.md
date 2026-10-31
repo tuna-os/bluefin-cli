@@ -43,7 +43,7 @@ Never post account credentials or API keys in issues or pull requests.
 
 ### One-liner (Linux / macOS)
 
-For platform-specific details and distro package managers, see the [Linux Setup Guide](docs/setup-linux.md) and [macOS Setup Guide](docs/setup-macos.md).
+For more Linux and macOS steps, see the [Linux Setup Guide](docs/setup-linux.md) and [macOS Setup Guide](docs/setup-macos.md).
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/tuna-os/bluefin-cli/main/install.sh | sh
@@ -54,7 +54,7 @@ curl -fsSL https://raw.githubusercontent.com/tuna-os/bluefin-cli/main/install.sh
 
 ### One-liner (Windows PowerShell)
 
-For Windows-specific details and WSL configuration, see the [Windows Setup Guide](docs/setup-windows.md).
+For more Windows steps, see the [Windows Setup Guide](docs/setup-windows.md).
 
 ```powershell
 irm https://raw.githubusercontent.com/tuna-os/bluefin-cli/main/install.ps1 | iex
@@ -422,12 +422,12 @@ grep    # ugrep (if installed)
   environment variables, and user-defined bundles.
 - [Profile workflows](docs/profiles.md): Export, import, diff, and gist sync
   for portable shell, tool, and theme setups.
-- [Linux Setup Guide](docs/setup-linux.md): Distro package managers, Alpine/musl,
-  XDG compliance, and desktop environment setup.
-- [macOS Setup Guide](docs/setup-macos.md): Homebrew prefix detection, Terminal
-  and iTerm2 setup, wallpaper backend, and Apple Silicon notes.
-- [Windows Setup Guide](docs/setup-windows.md): PowerShell integration, Winget,
-  WSL delegation, Windows Terminal, and registry settings.
+- [Linux Setup Guide](docs/setup-linux.md): install, Alpine and musl, files,
+  shell, and wallpaper.
+- [macOS Setup Guide](docs/setup-macos.md): install, Homebrew, terminal,
+  wallpaper, and shell.
+- [Windows Setup Guide](docs/setup-windows.md): install, PowerShell, WSL, theme,
+  and wallpaper.
 - [`docs/troubleshooting.md`](docs/troubleshooting.md): how to read `doctor`
   output, and fixes for common setup problems.
 - [`docs/testing.md`](docs/testing.md): how to run the TUI tests, the test
