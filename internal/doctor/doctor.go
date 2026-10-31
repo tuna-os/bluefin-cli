@@ -5,13 +5,10 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"strings"
 	"time"
 
-	"charm.land/lipgloss/v2"
 	"github.com/tuna-os/bluefin-cli/internal/env"
 	"github.com/tuna-os/bluefin-cli/internal/shell"
-	"github.com/tuna-os/bluefin-cli/internal/tui/theme"
 	"github.com/tuna-os/bluefin-cli/internal/update"
 )
 
@@ -122,33 +119,4 @@ func Diagnose(opts Options) Report {
 		Checks:   checks,
 		Failures: failures,
 	}
-}
-
-// Render formats the report into a styled terminal string.
-func (r Report) Render() string {
-	t := theme.DefaultTheme
-	pass := lipgloss.NewStyle().Foreground(t.Success).Render("✓")
-	warn := lipgloss.NewStyle().Foreground(t.Warning).Render("!")
-	fail := lipgloss.NewStyle().Foreground(t.Error).Render("✗")
-	dim := lipgloss.NewStyle().Foreground(t.TextFaint)
-
-	var b strings.Builder
-	b.WriteString("\n")
-	for _, c := range r.Checks {
-		mark := pass
-		switch {
-		case !c.OK && c.Warn:
-			mark = warn
-		case !c.OK:
-			mark = fail
-		}
-		fmt.Fprintf(&b, "  %s %s\n", mark, c.Name)
-		if c.Note != "" {
-			fmt.Fprintf(&b, "    %s\n", dim.Render(c.Note))
-		}
-	}
-	if r.Failures == 0 {
-		b.WriteString("\n" + dim.Render("  All checks passed."))
-	}
-	return b.String()
 }
