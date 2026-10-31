@@ -41,8 +41,8 @@ When the tool sets a terminal font, it changes these terminals:
 ## Wallpaper
 
 The `bluefin-cli wallpaper` command uses the `wallpaper` CLI if it is
-available. If not, it uses `osascript`. macOS can then ask for automation
-permission one time.
+available. If not, it uses `osascript`. Then macOS can ask you one time for
+permission.
 
 The wallpaper picker looks for images in these folders:
 
