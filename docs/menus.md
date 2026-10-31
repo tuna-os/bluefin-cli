@@ -65,6 +65,8 @@ Three layers, run by CI and `just` recipes:
 2. **Menu wiring tests** (`cmd/menu_test.go`): Check every menu item and bundle category. Each entry must resolve to an action and never lead nowhere.
 3. **End-to-end smoke** (`scripts/tui-smoke.sh`, `just tui-smoke`): Drives the real binary in a tmux pane. It captures the screen and checks the menu, drill-down, filter, palette, help, and quit.
 
+For more about the TUI tests, see the [test guide](testing.md).
+
 ## Native screens & extras
 
 - Every flow renders inside the shell. Selection UIs use `app.FormScreen`, and read-only views use `app.TextScreen`. Tasks that print (brew installs, MOTD, doctor) use `app.RunnerScreen`. The runner captures stdout in a scrollable log with a spinner and elapsed time. The only terminal handover is the WSL→Windows sunset delegation (`app.RunExternal`), which launches another interactive program.
