@@ -416,6 +416,8 @@ grep    # ugrep (if installed)
   bundle categories.
 - [Configuration](docs/configuration.md): Config file location and schema,
   environment variables, and user-defined bundles.
+- [Developer guide](docs/development.md): Code organization, package structure,
+  and architecture.
 - [`docs/troubleshooting.md`](docs/troubleshooting.md): how to read `doctor`
   output, and fixes for common setup problems.
 
