@@ -37,7 +37,10 @@ func (o FixOptions) withDefaults() FixOptions {
 		opts.CheckStatus = shell.CheckStatus
 	}
 	if opts.ToggleShell == nil {
-		opts.ToggleShell = shell.Toggle
+		opts.ToggleShell = func(sh string, enable bool) error {
+			_, err := shell.Toggle(sh, enable)
+			return err
+		}
 	}
 	if opts.EnsureColdbrew == nil {
 		opts.EnsureColdbrew = shell.EnsureColdbrew

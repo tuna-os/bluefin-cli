@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tuna-os/bluefin-cli/internal/shell"
+	shellrender "github.com/tuna-os/bluefin-cli/internal/shell/render"
 )
 
 var (
@@ -35,6 +36,7 @@ Use flags to keep software/modules/config as needed.`,
 			return fmt.Errorf("uninstall completed with issues: %w", err)
 		}
 
+		fmt.Println(shellrender.UninstallSuccess())
 		return nil
 	},
 }

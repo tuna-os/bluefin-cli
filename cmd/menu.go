@@ -201,7 +201,10 @@ func shellMenuScreen() app.Screen {
 			if enabled {
 				verb = "Disabling"
 			}
-			task := func() error { return shell.Toggle(current, !enabled) }
+			task := func() error {
+				_, err := shell.Toggle(current, !enabled)
+				return err
+			}
 			if enabled {
 				// Disabling only rewrites the rc file; it never installs.
 				return app.Push(app.NewRunner(verb+" "+current, task))

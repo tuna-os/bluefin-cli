@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tuna-os/bluefin-cli/internal/env"
 	"github.com/tuna-os/bluefin-cli/internal/shell"
+	shellrender "github.com/tuna-os/bluefin-cli/internal/shell/render"
 	"github.com/tuna-os/bluefin-cli/internal/tui/app"
 )
 
@@ -33,7 +34,12 @@ The Shell Experience provides:
 			enable = args[1] == "on"
 		}
 
-		return shell.Toggle(selectedShell, enable)
+		res, err := shell.Toggle(selectedShell, enable)
+		if err != nil {
+			return err
+		}
+		fmt.Println(shellrender.ToggleStatus(res))
+		return nil
 	},
 }
 
