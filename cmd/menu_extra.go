@@ -7,7 +7,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/huh/v2"
-	"github.com/tuna-os/bluefin-cli/internal/env"
+	"github.com/tuna-os/bluefin-cli/internal/platform"
 	"github.com/tuna-os/bluefin-cli/internal/sunset"
 	"github.com/tuna-os/bluefin-cli/internal/tui"
 	"github.com/tuna-os/bluefin-cli/internal/tui/app"
@@ -19,7 +19,7 @@ func extraMenuItems() []app.MenuItem {
 		{Icon: "🔤", Label: "Fonts", Value: "fonts", Desc: "Nerd Fonts for your terminal", Submenu: true},
 		{Icon: "🚀", Label: "Starship Theme", Value: "starship", Desc: "Prompt presets & customization", Submenu: true},
 	}
-	if env.IsWSL() || env.IsWindows() {
+	if platform.GetCapabilities().SupportsSunset {
 		items = append(items, app.MenuItem{Icon: "🌇", Label: "Sunset Switching", Value: "sunset", Desc: "Auto light/dark by time of day", Submenu: true})
 	}
 	return items
@@ -43,10 +43,10 @@ func extraMenuDo(value string) tea.Cmd {
 // delegated to the Windows CLI — an external interactive program, so that
 // path releases the terminal (the one legitimate use of the exec bridge).
 func sunsetFlow() tea.Cmd {
-	if env.IsWSL() {
+	if platform.IsWSL() {
 		return app.RunExternal(RunSunsetSetupFlow)
 	}
-	if !env.IsWindows() {
+	if !platform.IsWindows() {
 		return app.Toast("Sunset switching is Windows/WSL only.", true)
 	}
 

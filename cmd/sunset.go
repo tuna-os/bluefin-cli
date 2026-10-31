@@ -9,7 +9,7 @@ import (
 
 	"charm.land/huh/v2"
 	"github.com/spf13/cobra"
-	"github.com/tuna-os/bluefin-cli/internal/env"
+	"github.com/tuna-os/bluefin-cli/internal/platform"
 	"github.com/tuna-os/bluefin-cli/internal/sunset"
 	"github.com/tuna-os/bluefin-cli/internal/tui"
 )
@@ -29,7 +29,7 @@ var sunsetCmd = &cobra.Command{
 	Long:  `Automatically switch between light and dark themes and different wallpapers based on sunrise and sunset times for your location.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Handle WSL Delegation
-		if env.IsWSL() {
+		if platform.IsWSL() {
 			return sunset.DelegateToWindowsCLI(
 				append([]string{"sunset"}, os.Args[2:]...),
 				sunset.RunnerIO{Stdout: os.Stdout, Stderr: os.Stderr, Stdin: os.Stdin},
@@ -80,7 +80,7 @@ var sunsetCmd = &cobra.Command{
 
 func RunSunsetSetupFlow() error {
 	// Handle WSL Delegation
-	if env.IsWSL() {
+	if platform.IsWSL() {
 		return sunset.DelegateToWindowsCLI(
 			append([]string{"sunset"}, os.Args[2:]...),
 			sunset.RunnerIO{Stdout: os.Stdout, Stderr: os.Stderr, Stdin: os.Stdin},

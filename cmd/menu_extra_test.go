@@ -6,7 +6,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/tuna-os/bluefin-cli/internal/env"
+	"github.com/tuna-os/bluefin-cli/internal/platform"
 )
 
 // TestExtraMenu_SunsetTracksPlatform pins bluefin-cli-plus's half of the
@@ -14,10 +14,10 @@ import (
 // Windows and WSL only, and only ever by the plus binary.
 func TestExtraMenu_SunsetTracksPlatform(t *testing.T) {
 	got := slices.Contains(menuValues(extraMenuItems()), "sunset")
-	want := env.IsWSL() || env.IsWindows()
+	want := platform.GetCapabilities().SupportsSunset
 	if got != want {
 		t.Errorf("plus menu offers sunset = %v, want %v (WSL=%v Windows=%v)",
-			got, want, env.IsWSL(), env.IsWindows())
+			got, want, platform.IsWSL(), platform.IsWindows())
 	}
 }
 

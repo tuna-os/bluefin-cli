@@ -13,9 +13,9 @@ import (
 	"charm.land/huh/v2"
 	"github.com/spf13/viper"
 	"github.com/tuna-os/bluefin-cli/internal/config"
-	"github.com/tuna-os/bluefin-cli/internal/env"
 	"github.com/tuna-os/bluefin-cli/internal/install"
 	"github.com/tuna-os/bluefin-cli/internal/motd"
+	"github.com/tuna-os/bluefin-cli/internal/platform"
 	"github.com/tuna-os/bluefin-cli/internal/shell"
 	"github.com/tuna-os/bluefin-cli/internal/starship"
 	"github.com/tuna-os/bluefin-cli/internal/tui"
@@ -221,7 +221,7 @@ func wallpapersFormScreen(casks []string, installed map[string]bool) app.Screen 
 		run := app.NewRunner("Installing wallpapers", func() error {
 			return install.InstallWallpaperCasks(picks)
 		})
-		if env.IsWSL() || env.IsWindows() {
+		if platform.GetCapabilities().SupportsSunset {
 			run = app.NewRunnerWithPost("Installing wallpapers", func() error {
 				return install.InstallWallpaperCasks(picks)
 			}, func() tea.Cmd {

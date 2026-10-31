@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/tuna-os/bluefin-cli/internal/env"
+	"github.com/tuna-os/bluefin-cli/internal/platform"
 )
 
 const (
@@ -181,9 +182,9 @@ func variant() string {
 	switch {
 	case runtime.GOOS == "darwin":
 		return "mac"
-	case env.IsWSL():
+	case platform.IsWSL():
 		return "wsl"
-	case env.IsWindows():
+	case platform.IsWindows():
 		return "powershell"
 	default:
 		return "linux"

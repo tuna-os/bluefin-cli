@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"charm.land/lipgloss/v2"
-	"github.com/tuna-os/bluefin-cli/internal/env"
+	"github.com/tuna-os/bluefin-cli/internal/platform"
 	"github.com/tuna-os/bluefin-cli/internal/shell"
 	"github.com/tuna-os/bluefin-cli/internal/tui/theme"
 	"github.com/tuna-os/bluefin-cli/internal/update"
@@ -56,7 +56,7 @@ func (o Options) withDefaults() Options {
 		opts.Stat = os.Stat
 	}
 	if opts.IsAlpine == nil {
-		opts.IsAlpine = env.IsAlpine
+		opts.IsAlpine = platform.IsAlpine
 	}
 	if opts.CheckNetwork == nil {
 		opts.CheckNetwork = func() error {
