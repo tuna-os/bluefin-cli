@@ -3,6 +3,8 @@ package cmd
 import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/tuna-os/bluefin-cli/internal/config"
 	"github.com/tuna-os/bluefin-cli/internal/tui/app"
 )
 
@@ -21,5 +23,13 @@ func init() {
 	app.Register(app.Action{
 		ID: "dino", Icon: "🦕", Label: "Dino Run", Section: "Fun",
 		Do: func() tea.Cmd { return app.Push(gameScreen()) },
+	})
+}
+
+// gameScreen builds the dino runner with a config-persisted high score.
+func gameScreen() app.Screen {
+	return app.NewGame(viper.GetInt("game.high_score"), func(n int) {
+		viper.Set("game.high_score", n)
+		_ = config.Save()
 	})
 }
