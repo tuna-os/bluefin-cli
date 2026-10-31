@@ -1,7 +1,6 @@
 package doctor
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
