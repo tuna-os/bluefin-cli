@@ -1,27 +1,16 @@
 package cmd
 
-// Native in-shell flows for everything that used to hand over the terminal:
-// selection UIs are FormScreens, read-only views are TextScreens, and
-// anything that prints (brew installs, toggles with output) runs in a
-// RunnerScreen that captures stdout into a log view.
-
 import (
-	"fmt"
 	"path/filepath"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/huh/v2"
-	"github.com/spf13/viper"
-	"github.com/tuna-os/bluefin-cli/internal/config"
 	"github.com/tuna-os/bluefin-cli/internal/env"
 	"github.com/tuna-os/bluefin-cli/internal/install"
 	"github.com/tuna-os/bluefin-cli/internal/tui"
 	"github.com/tuna-os/bluefin-cli/internal/tui/app"
-	"github.com/tuna-os/bluefin-cli/internal/tui/theme"
 	"github.com/tuna-os/bluefin-cli/internal/wallpaper"
 )
-
-// --- Extras ------------------------------------------------------------
 
 func wallpapersFlow() tea.Cmd {
 	items := []app.MenuItem{
@@ -147,104 +136,5 @@ func wallpaperSunsetPostInstallScreen() app.Screen {
 			return nil
 		}
 		return app.RunExternal(RunSunsetSetupFlow)
-	})
-}
-
-func fontsFlow() tea.Cmd {
-	var selected []string
-	build := func() *huh.Form {
-		selected = selected[:0]
-		opts := make([]huh.Option[string], 0, len(availableFonts))
-		for _, f := range availableFonts {
-			opts = append(opts, huh.NewOption(f.Name, f.Cask))
-		}
-		return huh.NewForm(huh.NewGroup(
-			huh.NewMultiSelect[string]().
-				Title("Select fonts to install").
-				Description("Space toggles, enter confirms.").
-				Options(opts...).
-				Value(&selected),
-		)).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap())
-	}
-	return app.Push(app.NewForm("Fonts", build, func(aborted bool) tea.Cmd {
-		if aborted || len(selected) == 0 {
-			return nil
-		}
-		picks := append([]string(nil), selected...)
-		return app.Push(app.NewRunner("Installing fonts", func() error {
-			installFontCasks(picks)
-			return maybeHandlePostFontInstall()
-		}))
-	}))
-}
-
-// --- Advanced ----------------------------------------------------------
-
-func advancedMenuScreen() app.Screen {
-	items := func() []app.MenuItem {
-		dark := "🌙 Dark Mode: On"
-		if !viper.GetBool("ui.dark_mode") {
-			dark = "☀️  Dark Mode: Off"
-		}
-		return []app.MenuItem{
-			{Label: dark, Value: "toggle_dark", Desc: "Color hint for plain CLI output"},
-			{Icon: "🎨", Label: "Flavor: " + viper.GetString("ui.flavor"), Value: "flavor",
-				Desc: "Cycle Catppuccin flavor (auto follows the terminal)"},
-		}
-	}
-	return app.NewMenu("Advanced", nil, items, func(it app.MenuItem) tea.Cmd {
-		switch it.Value {
-		case "toggle_dark":
-			return tea.Sequence(func() tea.Msg {
-				viper.Set("ui.dark_mode", !viper.GetBool("ui.dark_mode"))
-				if err := config.Save(); err != nil {
-					return app.ToastMsg{Text: "Error: " + err.Error(), IsErr: true}
-				}
-				return app.ToastMsg{Text: "Saved."}
-			}, app.ReloadTop())
-		case "flavor":
-			return tea.Sequence(func() tea.Msg {
-				flavors := theme.Flavors()
-				cur := viper.GetString("ui.flavor")
-				next := flavors[0]
-				for i, f := range flavors {
-					if f == cur {
-						next = flavors[(i+1)%len(flavors)]
-						break
-					}
-				}
-				viper.Set("ui.flavor", next)
-				if err := config.Save(); err != nil {
-					return app.ToastMsg{Text: "Error: " + err.Error(), IsErr: true}
-				}
-				theme.Flavor = ""
-				if next != "auto" {
-					theme.Flavor = next
-				}
-				theme.DefaultTheme = theme.Resolve(theme.DefaultTheme.IsDark)
-				return app.ToastMsg{Text: "Flavor: " + next}
-			}, app.ReloadTop())
-		}
-		return nil
-	})
-}
-
-// --- Doctor & game wiring ----------------------------------------------
-
-// doctorScreenCmd runs the doctor checks in a RunnerScreen (they hit the
-// network, so they must not block the render loop).
-func doctorScreenCmd() tea.Cmd {
-	return app.Push(app.NewRunner("Doctor", func() error {
-		report, _ := doctorReport()
-		fmt.Println(report)
-		return nil
-	}))
-}
-
-// gameScreen builds the dino runner with a config-persisted high score.
-func gameScreen() app.Screen {
-	return app.NewGame(viper.GetInt("game.high_score"), func(n int) {
-		viper.Set("game.high_score", n)
-		_ = config.Save()
 	})
 }

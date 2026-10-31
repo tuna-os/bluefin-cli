@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	tea "charm.land/bubbletea/v2"
 	"github.com/spf13/cobra"
 	"github.com/tuna-os/bluefin-cli/internal/doctor"
 	"github.com/tuna-os/bluefin-cli/internal/tui/app"
@@ -70,4 +71,14 @@ func runBench() error {
 func doctorReport() (string, int) {
 	report := doctor.Diagnose(defaultDoctorOptions())
 	return report.Render(), report.Failures
+}
+
+// doctorScreenCmd runs the doctor checks in a RunnerScreen (they hit the
+// network, so they must not block the render loop).
+func doctorScreenCmd() tea.Cmd {
+	return app.Push(app.NewRunner("Doctor", func() error {
+		report, _ := doctorReport()
+		fmt.Println(report)
+		return nil
+	}))
 }
