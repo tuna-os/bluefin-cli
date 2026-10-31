@@ -1,20 +1,12 @@
 # Profile Workflow Guide
 
-`bluefin-cli` provides portable profile management. You can capture your shell
-configuration, tool selections, and theme flavor into a portable JSON document
-and replay it across machines.
+A profile is a JSON file. It records your theme flavor, your tool settings, and
+the shells that have `bluefin-cli` integration. Use a profile to copy your
+setup to a different machine.
 
-Profiles answer a common need: make this machine feel like my machine.
+## 1. Profile contents
 
----
-
-## 1. Profile Concepts
-
-A profile captures reproducible user preferences for your CLI environment.
-
-### What a profile contains
-
-When you export a profile, `bluefin-cli` creates a JSON document with version `1`:
+`bluefin-cli profile export` writes a JSON file with this shape:
 
 ```json
 {
@@ -27,11 +19,13 @@ When you export a profile, `bluefin-cli` creates a JSON document with version `1
     "eza": true,
     "fzf": true,
     "glow": true,
+    "gsudo": false,
+    "motd": true,
     "starship": true,
     "ugrep": true,
-    "uutils-coreutils": true,
-    "uutils-diffutils": true,
-    "uutils-findutils": true,
+    "uutilscoreutils": true,
+    "uutilsdiffutils": true,
+    "uutilsfindutils": true,
     "zoxide": true
   },
   "enabled_shells": [
@@ -42,59 +36,55 @@ When you export a profile, `bluefin-cli` creates a JSON document with version `1
 }
 ```
 
-The document stores:
+The fields are:
 
-- `version`: Profile schema version (currently `1`).
-- `flavor`: Theme flavor saved in `ui.flavor` (for example, `mocha`, `latte`, `macchiato`, `frappe`, `nord`, or `auto`).
-- `tools`: A map of managed tool keys and their active status (`true` or `false`).
-- `enabled_shells`: A list of shells that have `bluefin-cli` integration active.
+- `version`: The schema version. The only valid value is `1`.
+- `flavor`: The value of `ui.flavor`. Valid values are `auto`, `latte`,
+  `frappe`, `macchiato`, and `mocha`.
+- `tools`: The tool keys and their state. A key is the tool name in lowercase,
+  for example `uutilscoreutils`.
+- `enabled_shells`: The shells that have `bluefin-cli` integration.
 
-### Immutability and safety guarantees
+An import changes these items:
 
-- **Declarative document**: A profile is plain JSON. You can inspect it, track it in Git, or edit it before application.
-- **Reconciliation**: Applying a profile updates configuration values (`ui.flavor` in `~/.config/bluefin-cli/config.yaml` and shell tool configuration in `~/.config/bluefin-cli/shell.yaml`). It enables or disables rc-file integration lines for managed shells.
-- **Non-destructive to custom rc lines**: `bluefin-cli` manages only its own block inside rc files. Custom aliases, functions, or external configs remain intact.
-- **No secret storage**: Profiles do not contain passwords, API tokens, SSH keys, or private environment variables.
+- `ui.flavor` in `~/.config/bluefin-cli/config.yaml`.
+- The tool settings in `~/.config/bluefin-cli/shell.json`.
+- The `bluefin-cli` lines in your shell rc files. Your other rc lines do not
+  change.
 
----
+A profile does not keep passwords, tokens, or SSH keys.
 
-## 2. Export and Import Workflow
+## 2. Export and import
 
-Local file-based export and import is the simplest workflow. It works offline and needs no GitHub account.
+These commands use local files. They do not need a GitHub account.
 
-### Exporting your setup
-
-To output JSON directly to your terminal:
+To show the profile in the terminal:
 
 ```bash
 bluefin-cli profile export
 ```
 
-To save the profile to a file:
+To write the profile to a file:
 
 ```bash
-# Save using file argument
 bluefin-cli profile export my-profile.json
-
-# Or redirect standard output
-bluefin-cli profile export > ~/backup-profile.json
 ```
 
-### Checking drift with diff
+### Find the differences
 
-Before applying a profile, inspect what would change:
+Before you apply a profile, compare it with this machine:
 
 ```bash
 bluefin-cli profile diff my-profile.json
 ```
 
-If your machine matches the profile, `bluefin-cli` outputs:
+If there are no differences, the output is:
 
 ```text
 ✓ No drift — this machine matches the profile.
 ```
 
-If differences exist, `bluefin-cli` reports each change:
+If there are differences, the command shows each change:
 
 ```text
 Import would change:
@@ -103,321 +93,122 @@ Import would change:
   shell fish: disabled -> enabled
 ```
 
-For automation or CI scripts, add `--exit-code` to return non-zero when drift exists:
+Add `--exit-code` to get a non-zero exit status when differences exist. Scripts
+can use this status:
 
 ```bash
 if ! bluefin-cli profile diff my-profile.json --exit-code; then
-  echo "Configuration drift detected!"
+  echo "The setup is different from the profile."
 fi
 ```
 
-### Applying a profile
-
-To apply the profile document:
+### Apply a profile
 
 ```bash
 bluefin-cli profile import my-profile.json
 ```
 
-Output:
+## 3. Sync with a GitHub gist
 
-```text
-flavor: mocha
-tools: 12 configured
-shell fish: true
-✓ Profile applied.
-```
+`profile push` and `profile pull` keep the profile in a private GitHub gist.
+These commands use the GitHub CLI (`gh`). Install `gh` and run `gh auth login`
+first.
 
----
-
-## 3. Cloud Sync with GitHub Gist
-
-`bluefin-cli profile push` and `bluefin-cli profile pull` synchronize your profile using a private GitHub Gist via the GitHub CLI (`gh`).
-
-### Prerequisites
-
-- Install `gh` (GitHub CLI).
-- Authenticate with `gh auth login`.
-
-### Pushing a profile
-
-Run push on your primary machine:
+### Push
 
 ```bash
 bluefin-cli profile push
 ```
 
-On first run:
-1. `bluefin-cli` creates a new private gist titled `bluefin-cli profile` containing `bluefin-profile.json`.
-2. It saves the gist ID into `~/.config/bluefin-cli/config.yaml` under the key `profile.gist_id`.
-3. Output:
+The first push makes a private gist. The gist contains the file
+`bluefin-profile.json`. `bluefin-cli` keeps the gist ID in
+`~/.config/bluefin-cli/config.yaml` as `profile.gist_id`. The output shows the
+ID:
 
 ```text
 ✓ Profile pushed to new private gist 7a8b9c0d1e2f3a4b5c6d (saved in config)
 ```
 
-On later runs on the same machine, `profile push` updates the existing gist:
+Each subsequent push on that machine replaces the contents of the same gist.
 
-```text
-✓ Profile pushed to gist 7a8b9c0d1e2f3a4b5c6d
-```
+### Pull
 
-### Pulling a profile
-
-On a new machine, pull using the gist ID:
+On a different machine, give the gist ID:
 
 ```bash
 bluefin-cli profile pull 7a8b9c0d1e2f3a4b5c6d
 ```
 
-When you specify the gist ID:
-1. `bluefin-cli` downloads `bluefin-profile.json` from GitHub.
-2. It saves `profile.gist_id` into the local machine's config file.
-3. It applies the theme, tool settings, and shell integrations immediately.
-
-On subsequent updates on that machine, run pull without arguments:
+`bluefin-cli` gets `bluefin-profile.json` from the gist and applies it. If the
+machine has no gist ID yet, `bluefin-cli` keeps this ID as `profile.gist_id`.
+After that, you can pull without the ID:
 
 ```bash
 bluefin-cli profile pull
 ```
 
----
+### Prevent lost changes
 
-## 4. Multi-Machine Setup
-
-Use profiles to keep desktop workstations, laptops, and virtual machines synchronized.
-
-### Setup flow
-
-```mermaid
-flowchart LR
-    A["Primary Machine"] -->|"profile push"| G["Private GitHub Gist"]
-    G -->|"profile pull &lt;gist-id&gt;"| B["Laptop"]
-    G -->|"profile pull"| C["Remote Server / VM"]
-```
-
-1. **Machine 1 (Source)**:
-   ```bash
-   bluefin-cli profile push
-   # Note the reported gist ID: 7a8b9c0d1e2f3a4b5c6d
-   ```
-2. **Machine 2 (Target)**:
-   ```bash
-   bluefin-cli profile pull 7a8b9c0d1e2f3a4b5c6d
-   ```
-3. **Machine 3 (Target)**:
-   ```bash
-   bluefin-cli profile pull 7a8b9c0d1e2f3a4b5c6d
-   ```
-
-Now all machines share the gist ID in their local configuration.
-
----
-
-## 5. Cross-Platform Profiles
-
-`bluefin-cli` supports Linux, macOS, and Windows. Profiles can transfer across operating systems, with platform-specific behavior for shell reconciliation.
-
-### What transfers cleanly
-
-- **Theme flavor**: UI flavors apply identically across all platforms.
-- **Tool selections**: Tool flags in `tools` are platform-independent configuration keys.
-- **JSON format**: The schema is consistent across operating systems.
-
-### What differs across platforms
-
-| Feature | Linux / macOS / Unix | Windows / WSL |
-|---|---|---|
-| Reconciled shells | `bash`, `zsh`, `fish` | `powershell` |
-| RC file mechanism | Edits `~/.bashrc`, `~/.zshrc`, `~/.config/fish/config.fish` | Edits `$PROFILE` (PowerShell profile script) |
-| Binary packages | Managed by Homebrew or Alpine `coldbrew`/`apk` | Managed by Winget or Homebrew (WSL) |
-| Tool availability | Most tools available on POSIX | Some tools (such as `ugrep` or `uutils-*`) skip PowerShell |
-
-### Platform reconciliation rules
-
-When `bluefin-cli profile import` or `pull` runs:
-- On **Linux / macOS**: It reconciles Unix shells (`bash`, `zsh`, `fish`). If a shell is listed in `enabled_shells`, it enables it; if not listed, it disables it.
-- On **Windows**: It reconciles `powershell`.
-- Unmanaged shells present in the profile list for other platforms are safely ignored during target reconciliation.
-
----
-
-## 6. Updating and Versioning
-
-Profiles can change as your setup evolves.
-
-### Local file versioning in Git
-
-You can store profile files inside a dotfiles repository:
+A gist does not merge changes. The last push replaces the gist contents.
+Before you push from a second machine, compare the gist with that machine:
 
 ```bash
-mkdir -p ~/dotfiles/bluefin
-bluefin-cli profile export > ~/dotfiles/bluefin/profile.json
-
-cd ~/dotfiles
-git add bluefin/profile.json
-git commit -m "feat(bluefin): update shell tools and theme"
-git push
+gh gist view 7a8b9c0d1e2f3a4b5c6d --filename bluefin-profile.json --raw > /tmp/remote-profile.json
+bluefin-cli profile diff /tmp/remote-profile.json
 ```
 
-### Profile document versioning
+Then select one of these steps:
 
-`Profile.Version` in the JSON document is `1`. If future versions of `bluefin-cli` update the document schema, older versions will guard against incompatible schemas with an explicit error:
+- To use the gist settings, run `bluefin-cli profile pull`.
+- To keep the settings of this machine, run `bluefin-cli profile push`.
+
+## 4. Different operating systems
+
+The flavor and the tool settings have the same meaning on all platforms. The
+shell step uses the operating system of the target machine:
+
+| Platform | Shells that import changes |
+|---|---|
+| Linux, macOS, and WSL | `bash`, `zsh`, `fish` |
+| Windows | `powershell` |
+
+On Linux, macOS, and WSL, import enables each of `bash`, `zsh`, and `fish`
+if `enabled_shells` lists it. It disables each one that the list does not
+include. On Windows, import does the same for `powershell`. Import ignores
+the other shells in the list.
+
+## 5. Keep a profile in Git
+
+You can keep a profile in a dotfiles repository:
+
+```bash
+bluefin-cli profile export ~/dotfiles/bluefin/profile.json
+cd ~/dotfiles
+git add bluefin/profile.json
+git commit -m "Update bluefin-cli profile"
+```
+
+If a profile has a different `version`, import stops with an error:
 
 ```text
 unsupported profile version 2
 ```
 
----
+## 6. Troubleshooting
 
-## 7. Conflict Resolution
+### Push or pull shows "profile sync uses the GitHub CLI"
 
-When you sync across multiple devices, divergence can happen if two machines update settings independently.
+`gh` is not on your `PATH`. Install the GitHub CLI and run `gh auth login`.
 
-### Handling push and pull divergence
+### Pull shows "no gist configured"
 
-GitHub Gists do not support automatic branch merging. The last push overwrites the gist contents.
+You did not give a gist ID, and `profile.gist_id` has no value. Give the ID:
 
-To avoid accidental overwrites:
-
-1. **Before pushing from Machine B**:
-   Check if the remote profile has changes by fetching or diffing first:
-   ```bash
-   # Download the current remote gist to a temporary file
-   gh gist view $(bluefin-cli config get profile.gist_id 2>/dev/null || cat ~/.config/bluefin-cli/config.yaml | grep gist_id | awk '{print $2}') --filename bluefin-profile.json --raw > /tmp/remote-profile.json
-
-   # Diff against your local state
-   bluefin-cli profile diff /tmp/remote-profile.json
-   ```
-
-2. **If differences exist**:
-   - If you want the remote settings, run `bluefin-cli profile pull`.
-   - If you want your local settings to become the new source of truth, run `bluefin-cli profile push`.
-
----
-
-## 8. Team and Organization Profiles
-
-Teams can use standardized profiles to provision consistent developer workstations.
-
-### Sharing team templates
-
-1. Create a baseline template `team-profile.json`:
-   ```json
-   {
-     "version": 1,
-     "flavor": "mocha",
-     "tools": {
-       "bat": true,
-       "eza": true,
-       "fzf": true,
-       "starship": true,
-       "zoxide": true
-     },
-     "enabled_shells": [
-       "bash",
-       "zsh"
-     ]
-   }
-   ```
-
-2. Store `team-profile.json` in your team's developer onboarding repository or an internal wiki.
-
-3. New team members apply the template during onboarding:
-   ```bash
-   curl -fsSL https://internal.example.com/profiles/team-profile.json -o /tmp/team-profile.json
-   bluefin-cli profile import /tmp/team-profile.json
-   ```
-
----
-
-## 9. Troubleshooting
-
-### Problem: `profile push` fails with "profile sync uses the GitHub CLI"
-
-**Cause**: `gh` is not found on your system `PATH`.
-
-**Solution**:
-1. Install GitHub CLI:
-   ```bash
-   brew install gh       # macOS / Linux (Homebrew)
-   winget install GitHub.cli  # Windows
-   ```
-2. Authenticate:
-   ```bash
-   gh auth login
-   ```
-
-### Problem: `profile pull` reports "no gist configured"
-
-**Cause**: No gist ID was passed as an argument, and `profile.gist_id` is empty in `~/.config/bluefin-cli/config.yaml`.
-
-**Solution**:
-Pass the gist ID explicitly on the first pull:
 ```bash
 bluefin-cli profile pull <gist-id>
 ```
-Once pulled successfully, `bluefin-cli` saves the ID for future runs.
 
-### Problem: Import succeeds, but tools do not execute
+### A tool does not start after import
 
-**Cause**: Profiles synchronize tool *configuration* (whether a tool is enabled in `bluefin-cli`'s shell hooks), not tool *binaries*.
-
-**Solution**:
-Install any missing binaries using `bluefin-cli`:
-```bash
-# Verify system status
-bluefin-cli doctor
-
-# Install missing CLI tools
-bluefin-cli install cli
-```
-
----
-
-## 10. Example Workflows
-
-### Example A: Quick backup before system reinstall
-
-```bash
-# 1. Export current profile
-bluefin-cli profile export ~/profile-backup.json
-
-# 2. Copy profile-backup.json to a USB drive or cloud drive
-
-# 3. After clean OS installation, install bluefin-cli and apply:
-bluefin-cli profile import /media/usb/profile-backup.json
-```
-
-### Example B: Syncing a work laptop with a home desktop
-
-```bash
-# On your home desktop:
-bluefin-cli profile push
-# Output: ✓ Profile pushed to new private gist 4a5b6c7d8e9f (saved in config)
-
-# On your work laptop:
-bluefin-cli profile pull 4a5b6c7d8e9f
-
-# Both machines are now linked to gist 4a5b6c7d8e9f.
-# Future updates on either machine require only:
-bluefin-cli profile push   # on the machine with new settings
-bluefin-cli profile pull   # on the other machine
-```
-
-### Example C: Audit configuration drift in CI / cron
-
-Run `bluefin-cli profile diff` in a periodic maintenance script:
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-PROFILE_FILE="$HOME/.dotfiles/bluefin/profile.json"
-
-if ! bluefin-cli profile diff "$PROFILE_FILE" --exit-code; then
-  echo "Notice: System configuration drifted from $PROFILE_FILE"
-  # Optional: Re-apply to enforce consistency
-  # bluefin-cli profile import "$PROFILE_FILE"
-fi
-```
+A profile keeps the tool settings, not the tool programs. Run
+`bluefin-cli doctor` to find the missing programs.
