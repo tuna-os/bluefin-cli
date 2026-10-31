@@ -418,8 +418,8 @@ grep    # ugrep (if installed)
   environment variables, and user-defined bundles.
 - [`docs/troubleshooting.md`](docs/troubleshooting.md): how to read `doctor`
   output, and fixes for common setup problems.
-- [Testing guide](docs/testing.md): Local TUI testing, suite architecture, and
-  adding test cases.
+- [`docs/testing.md`](docs/testing.md): how to run the TUI tests, the test
+  layers, and how to add a test.
 
 Maintainers can find package-channel credentials and release checks in
 [release details](docs/release-publishing.md). The

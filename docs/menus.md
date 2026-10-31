@@ -59,13 +59,13 @@ destination in the tree. Each command or menu module registers its own palette
 action; `cmd/menu.go` only composes the navigation tree.
 
 ## How this is tested
- 
+
 Three layers, run by CI and `just` recipes:
 1. **Model tests** (`internal/tui/app/app_test.go`): Use synchronous tests for navigation state, cursor movement, the filter, palette, help, and the composed frame.
 2. **Menu wiring tests** (`cmd/menu_test.go`): Check every menu item and bundle category. Each entry must resolve to an action and never lead nowhere.
 3. **End-to-end smoke** (`scripts/tui-smoke.sh`, `just tui-smoke`): Drives the real binary in a tmux pane. It captures the screen and checks the menu, drill-down, filter, palette, help, and quit.
 
-See [Testing guide](testing.md) for full details on local test execution, suite architecture, and adding new TUI test cases.
+For more about the TUI tests, see the [test guide](testing.md).
 
 ## Native screens & extras
 

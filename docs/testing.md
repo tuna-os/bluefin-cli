@@ -1,75 +1,53 @@
-# TUI Testing and Test Architecture
+# TUI tests and test layout
 
-This guide explains how to test the Bluefin CLI Terminal User Interface (TUI) locally, outlines the test architecture across suites, and shows how to add new TUI tests.
+This guide tells you how to test the TUI on your computer. It also shows
+the test layers and how to add a test.
 
-## Architecture Overview
+## Test layers
 
-Bluefin CLI uses [Bubble Tea v2](https://github.com/charmbracelet/bubbletea) (`charm.land/bubbletea/v2`) for its interactive interface (`internal/tui/app`). The application maintains a persistent navigation stack of screens, contextual footers, a breadcrumb header, and a fuzzy-search command palette.
+The TUI uses [Bubble Tea v2](https://github.com/charmbracelet/bubbletea)
+(`charm.land/bubbletea/v2`). The code is in `internal/tui/app`. The tests
+for the TUI have four layers:
 
-Testing the TUI is organized into four complementary layers:
+| Layer | Location | What it checks |
+|---|---|---|
+| Model tests | `internal/tui/app/*_test.go` | Navigation state, the screen stack, the cursor, the filter, and the frame |
+| Menu wire tests | `cmd/menu_test.go` | Each menu item and bundle category goes to an action |
+| Smoke test | `scripts/tui-smoke.sh` | The real binary in a `tmux` pane: screens, filter, palette, help, and quit |
+| State test | `scripts/tui-state.sh` | Menu actions write the correct changes to files in a temporary `$HOME` |
 
-| Layer | Location | What It Validates | Mechanism |
-|---|---|---|---|
-| **Unit & Model Tests** | `internal/tui/app/*_test.go` | Navigation state, screen stack, cursor movement, filter logic, keymaps, component rendering | Synchronous message dispatch (`drive()` / `teatest`) |
-| **Menu Wiring Tests** | `cmd/menu_test.go` | Completeness of menu trees and bundle categories; ensures all options resolve to commands | Static registry assertions |
-| **End-to-End Smoke Tests** | `scripts/tui-smoke.sh` | Visual rendering, screen transitions, palette, help overlay, interactive exit | Runs real binary inside a headless `tmux` pane; captures terminal output |
-| **End-to-End State Tests** | `scripts/tui-state.sh` | Desired-state persistence; verifies actions in the UI write expected filesystem/config changes | Drives binary via `tmux` in an isolated `$HOME` sandbox; asserts config files |
+## Run the tests
 
----
+### Model and menu tests
 
-## Quick Start: Running Local Tests
-
-You can run each test layer individually or all together through `just` recipes.
-
-### 1. Model & Unit Tests
-
-Run the Bubble Tea model tests without launching a terminal:
+These tests do not open a terminal:
 
 ```bash
-# Test internal/tui packages
-go test -v ./internal/tui/...
-
-# Test menu wiring
-go test -v ./cmd -run 'Test(MainMenu|ExtraMenu|BundleCategories)'
+go test ./internal/tui/...
+go test ./cmd -run 'Test(MainMenu|ExtraMenu|BundleCategories)'
 ```
 
-### 2. End-to-End TUI Smoke Test (`tui-smoke.sh`)
+### Smoke test
 
-Asserts visual rendering and navigation in `tmux`:
+You must install `tmux`. The `just` recipe builds the binary with
+`-tags extra`, runs the script, and then removes the binary:
 
 ```bash
-# Via just (builds with -tags extra to tmp/bfc-smoke, runs suite, cleans up)
 just tui-smoke
+```
 
-# Or manually:
+To run the same steps yourself:
+
+```bash
 go build -tags extra -o tmp/bfc-smoke .
 ./scripts/tui-smoke.sh tmp/bfc-smoke
 rm -f tmp/bfc-smoke
 ```
 
-**Expected output:**
-```
-ok   main menu renders
-ok   menu items present
-ok   footer hints present
-ok   dino is on screen
-ok   drill-down breadcrumb
-ok   categories listed
-ok   back hint appears
-ok   escape pops to home
-ok   filter echoes query
-ok   filter matches fuzzily
-ok   palette opens
-ok   dino game opens
-ok   game exits to home
-ok   help overlay opens
-ok   q quits
-TUI smoke: all checks passed
-```
+If `tmux` is not available, the script shows `SKIP: tmux not available`
+and stops with exit code 0.
 
-### 3. End-to-End Desired-State Test (`tui-state.sh`)
-
-Verifies that selecting options in the TUI modifies configuration files as expected:
+### State test
 
 ```bash
 go build -tags extra -o tmp/bfc-state .
@@ -77,162 +55,91 @@ go build -tags extra -o tmp/bfc-state .
 rm -f tmp/bfc-state
 ```
 
-**Expected output:**
-```
-ok   missing-Homebrew confirm opened before the runner, not inside it
-ok   TUI toggle wrote the init line to .bashrc
-ok   menu label reflects the new state
-ok   TUI disable removed the init line
-ok   pre-existing rc content survived the round trip
-ok   TUI MOTD toggle persisted to shell config
-TUI state: all checks passed
-```
+### All checks
 
-### 4. Shell Experience Test (`shell-experience.sh`)
-
-Verifies the shell init scripts produced by the CLI across installed shells (`bash`, `zsh`, `fish`, etc.):
-
-```bash
-just shell-experience
-# Or specify binary and target shells:
-./scripts/shell-experience.sh ./bluefin-cli bash
-```
-
-### 5. Full Verification Gauntlet
-
-To run all checks matching CI:
+To do the CI checks on your computer, use this recipe:
 
 ```bash
 just verify
 ```
 
----
+## How the tests work
 
-## Test Suites in Detail
+### Model tests
 
-### Unit & Model Tests (`internal/tui/app/app_test.go`)
-
-Model tests do not start an interactive terminal or execute external processes. Instead, they use a synchronous driver pattern:
+The model tests use the `drive` helper in `internal/tui/app/app_test.go`:
 
 ```go
-func drive(m tea.Model, msgs ...tea.Msg) tea.Model
+func drive(root Screen, msgs ...tea.Msg) Model
 ```
 
-- **Why:** Real Bubble Tea programs run commands in goroutines, introducing race conditions in deterministic tests. The synchronous helper evaluates returned `tea.Cmd` values immediately on the same thread.
-- **Coverage:** Breadcrumb navigation, stack push/pop, cursor motion (`j`/`k`, arrow keys), fuzzy filtering (`/`), help toggle (`?`), palette display (`ctrl+p`), text scrolling, and canvas rendering.
+The helper makes a new model with `root` as the first screen. It then
+sends each message to `Update`. It runs each command that `Update` returns
+at once, and sends the result back to `Update`. The real program runs
+commands in goroutines, so the order of messages can change. The helper
+keeps the order the same for each test run.
 
-### Menu Wiring Tests (`cmd/menu_test.go`)
+### Smoke test
 
-Guards against "dead-end" items:
-- `TestMainMenuItemsResolve`: Ensures every entry returned by `mainMenuItems()` produces a non-nil `tea.Cmd` when selected.
-- `TestExtraMenuItemsResolve`: Ensures extra features in `-tags extra` resolve to valid actions.
-- `TestBundleCategoriesAvailable`: Ensures package installation categories are defined with valid IDs and labels.
+The script starts a `tmux` session with a size of 100 x 28. It sends keys
+with `tmux send-keys` and reads the screen with `tmux capture-pane -p`.
+It then uses `grep -q` to find each expected pattern. If a check fails, the
+script shows the first 20 lines of the screen.
 
-### Visual Smoke Testing (`scripts/tui-smoke.sh`)
+The `SLEEP` variable sets the time in seconds after each key. The default
+is 0.5. On a slow computer, set a larger value:
 
-Catches integration breakage that unit tests cannot detect (terminal initialization, escape sequence formatting, terminal sizing, and real key handling).
-
-- **How it works:**
-  1. Starts a headless `tmux` session at a fixed resolution (`100x28`).
-  2. Waits for the application to paint its initial view (`Bluefin CLI › Home`).
-  3. Sends keystrokes via `tmux send-keys`.
-  4. Captures the terminal pane using `tmux capture-pane -p`.
-  5. Evaluates regular expression patterns against captured output with `grep -q`.
-  6. Automatically cleans up the tmux session via an `EXIT` trap.
-
-### Desired-State Testing (`scripts/tui-state.sh`)
-
-Complements smoke tests by verifying filesystem effects:
-- Creates an isolated temporary directory set to `$HOME`.
-- Navigates through menus using fuzzy filtering (`/`) to prevent cursor desynchronization under high CPU load.
-- Triggers actions (such as enabling shell integrations or toggling MOTD).
-- Waits for asynchronous runner screens to finish (`wait_runner`).
-- Inspects target files (such as `~/.bashrc` and `~/.config/bluefin-cli/*.json`) to confirm changes persist and rollback cleanly.
-
----
-
-## Adding New TUI Test Cases
-
-When introducing a new screen, menu item, or interactive component:
-
-### 1. Add Model Tests (`internal/tui/app/`)
-
-- For new screen types (implementing `app.Screen`), add unit tests in `internal/tui/app/<feature>_test.go` or `screens_test.go`.
-- Test `Init()`, `Update()`, and `View()` methods.
-- Assert expected text appears in the output using `stripAnsi(view)` to strip ANSI escape sequences.
-- Verify navigation contracts: `Escape` or `BackMsg` returns to the previous screen.
-
-### 2. Verify Menu Wiring (`cmd/menu_test.go`)
-
-- If adding an item to `mainMenuItems()` or `extraMenuItems()`, ensure `mainMenuSelect()` handles the item value.
-- Run `go test ./cmd` to verify `TestMainMenuItemsResolve` passes.
-
-### 3. Add End-to-End Assertions (`scripts/tui-smoke.sh`)
-
-If the change affects core navigation flows or adds a primary submenu:
-1. Open `scripts/tui-smoke.sh`.
-2. Add keystrokes to reach your screen, for example:
-   ```bash
-   keys /; keys m y - f e a t u r e; keys Enter; sleep 0.5; cap
-   assert "my feature renders" "› My Feature"
-   keys Escape; cap
-   assert "returns to parent" "› Home"
-   ```
-3. Test locally with `just tui-smoke`.
-
-### 4. Add State Assertions (`scripts/tui-state.sh`)
-
-If your UI modifies configuration or system state:
-1. Open `scripts/tui-state.sh`.
-2. Navigate to the option using fuzzy filter (`keys /; keys ...`).
-3. If the action executes an asynchronous task, use `wait_runner <timeout-seconds>`.
-4. Assert expected filesystem changes in `$H` (the sandbox home).
-5. Trigger undo/disable and assert cleanup.
-
----
-
-## CI Test Flow
-
-In GitHub Actions (`.github/workflows/ci.yml`), TUI tests run as part of the automated pull request checks:
-
-1. **`test` job matrix:**
-   - Runs `go test ./...` across `standard` and `extra` build tags with race detection (`-race`).
-   - Executes model and menu wiring tests.
-2. **`tui-smoke` job:**
-   - Installs `tmux`.
-   - Builds the full binary with `-tags extra`.
-   - Runs `./scripts/tui-smoke.sh`.
-   - Runs `./scripts/tui-state.sh`.
-3. **`container-test` / `just test`:**
-   - Containerized integration test suite run in Podman/Docker, testing the compiled binaries in an isolated Linux environment.
-
----
-
-## Debugging and Troubleshooting
-
-### Inspecting Captured Terminal Output
-If `tui-smoke.sh` fails an assertion, it prints the first 20 lines of the captured terminal buffer:
-```
-FAIL drill-down breadcrumb: expected /› Install Apps/ in capture:
-  | Bluefin CLI › Home
-  | ...
-```
-To view the full terminal capture during debugging, modify `scripts/tui-smoke.sh` temporarily to print `$DIR/cap.txt` or copy it out.
-
-### Timing and Keystroke Desynchronization
-- Under heavy load, screen updates may take longer than the default sleep intervals.
-- `tui-smoke.sh` supports tuning keystroke delays via the `SLEEP` environment variable:
-  ```bash
-  SLEEP=1.0 ./scripts/tui-smoke.sh tmp/bfc-smoke
-  ```
-- In `tui-state.sh`, always navigate with the `/` filter instead of fixed `j`/`k` cursor movements to prevent landing on wrong rows if rendering lags.
-
-### Missing `tmux`
-If `tmux` is not installed, `tui-smoke.sh` exits cleanly with `SKIP: tmux not available`. For local testing on Linux or macOS, install tmux:
 ```bash
-# Ubuntu/Debian
-sudo apt-get install tmux
-
-# macOS
-brew install tmux
+SLEEP=1.0 ./scripts/tui-smoke.sh tmp/bfc-smoke
 ```
+
+### State test
+
+The script makes a temporary directory and sets `HOME` to it. It moves
+through the menus with the `/` filter, because the cursor keys can go to
+the wrong row on a slow computer. For actions that run in a runner screen,
+it uses `wait_runner` to wait until the task stops. Then it examines the
+files in the temporary home.
+
+## Add a test
+
+### New screen
+
+1. Add a model test in `internal/tui/app/`. Use `drive` to send keys.
+2. Use `stripAnsi` to remove the ANSI codes from the frame before you
+   compare text.
+3. Make sure that `Escape` or `PopMsg` goes back to the previous screen.
+
+### New menu item
+
+1. If you add an item to `mainMenuItems()`, make sure that
+   `mainMenuSelect()` gives an action for its value.
+2. Run `go test ./cmd`.
+
+### New main flow
+
+Add keys and checks to `scripts/tui-smoke.sh`. For example:
+
+```bash
+keys /; keys m y - f e a t u r e; keys Enter; cap
+assert "my feature renders" "› My Feature"
+keys Escape; cap
+assert "returns to parent" "› Home"
+```
+
+Then run `just tui-smoke`.
+
+### New change to files
+
+Add steps to `scripts/tui-state.sh`. Use the `/` filter to go to the menu
+item. Then examine the files in `$H`, the temporary home.
+
+## Tests in CI
+
+The CI workflow is `.github/workflows/ci.yml`:
+
+- **Run Tests (standard)** and **Run Tests (extra)** run
+  `go test -race ./...` with each build variant.
+- **TUI Smoke (tmux)** installs `tmux`, builds the binary with
+  `-tags extra`, and runs `scripts/tui-smoke.sh` and
+  `scripts/tui-state.sh`.
