@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/tuna-os/bluefin-cli/internal/env"
@@ -83,16 +81,8 @@ func (i *UnixInstaller) InstallWallpapers(casks []string) error {
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to install wallpaper casks: %w", err)
 	}
-	fmt.Println(successStyle.Render("✓ Wallpaper casks installed!"))
 
 	postInstallWallpaperSetup(casks)
-
-	// macOS specific instructions
-	if runtime.GOOS == "darwin" {
-		home, _ := os.UserHomeDir()
-		fmt.Println("\n" + infoStyle.Render("Wallpapers installed to: "+filepath.Join(home, "Library/Desktop Pictures")))
-		fmt.Println(infoStyle.Render("To use: System Settings > Wallpaper > Add Folder"))
-	}
 
 	return nil
 }

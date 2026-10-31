@@ -72,14 +72,14 @@ func InstallTools(shell string, cfg *Config) {
 
 	// Ensure Homebrew is available
 	if err := ensureHomebrew(); err != nil {
-		fmt.Println(errorStyle.Render(fmt.Sprintf("Skipping tool installation: %v", err)))
+		fmt.Fprintf(os.Stderr, "Skipping tool installation: %v\n", err)
 		return
 	}
 
 	for _, tool := range tools {
 		if cfg.IsEnabled(tool.Name) {
 			if err := ensureTool(tool.Binary, tool.GetBrewPkg()); err != nil {
-				fmt.Println(errorStyle.Render(fmt.Sprintf("Warning: Failed to install %s: %v", tool.GetBrewPkg(), err)))
+				fmt.Fprintf(os.Stderr, "Warning: Failed to install %s: %v\n", tool.GetBrewPkg(), err)
 			}
 		}
 	}
@@ -128,7 +128,7 @@ func InstallHomebrew() error {
 		return fmt.Errorf("homebrew is not available on Windows; install shell tools with winget")
 	}
 
-	fmt.Println(infoStyle.Render("⬇️  Installing Homebrew..."))
+	fmt.Println("⬇️  Installing Homebrew...")
 
 	cmd := exec.Command("/bin/bash", "-c", "curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | bash")
 	cmd.Stdout = os.Stdout
@@ -145,7 +145,7 @@ func InstallHomebrew() error {
 	if err := addBrewToPath(); err != nil {
 		return err
 	}
-	fmt.Println(successStyle.Render("✓ Homebrew installed and added to PATH for this session."))
+	fmt.Println("✓ Homebrew installed and added to PATH for this session.")
 	return nil
 }
 
@@ -177,7 +177,7 @@ func ensureHomebrew() error {
 		return fmt.Errorf("homebrew not found on Windows; install shell tools with winget")
 	}
 
-	fmt.Println(infoStyle.Render("Homebrew is missing. It is required to install enabled components."))
+	fmt.Println("Homebrew is missing. It is required to install enabled components.")
 
 	// Inside a TUI runner the keyboard belongs to Bubble Tea, so a confirm here
 	// would render nowhere and wait forever (tuna-os/bluefin-cli#273). The TUI
@@ -255,14 +255,14 @@ func ensureTool(binary, pkg string) error {
 		return fmt.Errorf("brew not found")
 	}
 
-	fmt.Println(infoStyle.Render(fmt.Sprintf("⬇️  Installing %s via Homebrew...", pkg)))
+	fmt.Printf("⬇️  Installing %s via Homebrew...\n", pkg)
 	cmd := exec.Command("brew", "install", pkg)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to install %s: %w", pkg, err)
 	}
-	fmt.Println(successStyle.Render(fmt.Sprintf("✓ %s installed successfully!", pkg)))
+	fmt.Printf("✓ %s installed successfully!\n", pkg)
 	return nil
 }
 

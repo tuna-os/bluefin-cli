@@ -115,7 +115,7 @@ func shellsFormScreen() app.Screen {
 			for _, sh := range shells {
 				if want[sh] != initial[sh] {
 					fmt.Printf("%s -> %v\n", sh, want[sh])
-					if err := shell.Toggle(sh, want[sh]); err != nil {
+					if _, err := shell.Toggle(sh, want[sh]); err != nil {
 						return err
 					}
 				}

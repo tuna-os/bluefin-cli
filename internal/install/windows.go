@@ -115,8 +115,8 @@ func InstallWindowsPackages(pkgs []WindowsPackage) error {
 		return fmt.Errorf("winget is required on Windows and was not found")
 	}
 
-	fmt.Println(infoStyle.Render("📦 Installing selected Windows packages..."))
-	fmt.Println(infoStyle.Render("Manager: winget"))
+	fmt.Println("📦 Installing selected Windows packages...")
+	fmt.Println("Manager: winget")
 
 	var unmatched []string
 	for _, pkg := range pkgs {
@@ -132,19 +132,19 @@ func InstallWindowsPackages(pkgs []WindowsPackage) error {
 	if len(unmatched) > 0 {
 		unavailablePath, writeErr := writeWingetUnavailableList(unmatched)
 		fmt.Println()
-		fmt.Println(errorStyle.Render("⚠ Some packages are unavailable in winget and were skipped:"))
+		fmt.Println("⚠ Some packages are unavailable in winget and were skipped:")
 		for _, name := range unmatched {
 			fmt.Printf("  - %s\n", name)
 		}
 		if unavailablePath != "" {
-			fmt.Println(infoStyle.Render("Unavailable list saved to: " + unavailablePath))
+			fmt.Println("Unavailable list saved to: " + unavailablePath)
 		}
 		if writeErr != nil {
-			fmt.Println(errorStyle.Render("Warning: could not write unavailable list: " + writeErr.Error()))
+			fmt.Fprintf(os.Stderr, "Warning: could not write unavailable list: %v\n", writeErr)
 		}
 	}
 
-	fmt.Println(successStyle.Render("✓ Windows package installation complete"))
+	fmt.Println("✓ Windows package installation complete")
 	return nil
 }
 
@@ -161,7 +161,7 @@ func installWindowsManifestPackage(availableManagers []string, pkg WindowsPackag
 				if strings.TrimSpace(label) == "" {
 					label = pkg.ID
 				}
-				fmt.Println(successStyle.Render(fmt.Sprintf("✓ %s (%s)", label, manager)))
+				fmt.Printf("✓ %s (%s)\n", label, manager)
 				return nil
 			}
 		}
@@ -213,7 +213,7 @@ func ensureWindowsManagersBootstrap(getAvailable func() []string) ([]string, err
 			return
 		}
 
-		fmt.Println(infoStyle.Render("No Windows package manager detected. Bluefin CLI can help bootstrap one now."))
+		fmt.Println("No Windows package manager detected. Bluefin CLI can help bootstrap one now.")
 
 		for _, manager := range windowsManagerPriority {
 			installNow, err := promptInstallWindowsManager(manager)
@@ -227,7 +227,7 @@ func ensureWindowsManagersBootstrap(getAvailable func() []string) ([]string, err
 			}
 
 			if err := bootstrapWindowsManager(manager); err != nil {
-				fmt.Println(errorStyle.Render(fmt.Sprintf("Failed to install %s: %v", manager, err)))
+				fmt.Fprintf(os.Stderr, "Failed to install %s: %v\n", manager, err)
 			}
 
 			available = getAvailable()
@@ -258,8 +258,8 @@ func promptInstallWindowsManager(manager windowsManager) (bool, error) {
 func bootstrapWindowsManager(manager windowsManager) error {
 	switch manager {
 	case managerWinget:
-		fmt.Println(infoStyle.Render("Opening Microsoft App Installer page for winget..."))
-		fmt.Println(infoStyle.Render("If it does not open automatically, install from: https://apps.microsoft.com/detail/9NBLGGH4NNS1"))
+		fmt.Println("Opening Microsoft App Installer page for winget...")
+		fmt.Println("If it does not open automatically, install from: https://apps.microsoft.com/detail/9NBLGGH4NNS1")
 		cmd := exec.Command("rundll32", "url.dll,FileProtocolHandler", "https://apps.microsoft.com/detail/9NBLGGH4NNS1")
 		if err := windowsRunCommand(cmd); err != nil {
 			return fmt.Errorf("could not open App Installer page: %w", err)

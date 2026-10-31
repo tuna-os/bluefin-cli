@@ -16,8 +16,12 @@ func TestToggle(t *testing.T) {
 	t.Setenv("USERPROFILE", tmpHome)
 
 	// Enable creates ~/.bashrc with the init line.
-	if err := Toggle("bash", true); err != nil {
+	res, err := Toggle("bash", true)
+	if err != nil {
 		t.Fatalf("Toggle(bash, true) error: %v", err)
+	}
+	if !res.Changed || !res.Enabled {
+		t.Errorf("expected res.Changed=true, res.Enabled=true, got %+v", res)
 	}
 	bashrc := filepath.Join(tmpHome, ".bashrc")
 	data, err := os.ReadFile(bashrc)
@@ -29,8 +33,12 @@ func TestToggle(t *testing.T) {
 	}
 
 	// Enabling again is idempotent and must not duplicate the line.
-	if err := Toggle("bash", true); err != nil {
+	res, err = Toggle("bash", true)
+	if err != nil {
 		t.Errorf("Toggle(bash, true) second call error: %v", err)
+	}
+	if res.Changed || !res.Enabled {
+		t.Errorf("expected res.Changed=false, res.Enabled=true on second call, got %+v", res)
 	}
 	data, _ = os.ReadFile(bashrc)
 	if strings.Count(string(data), "bluefin-cli init bash") != 1 {
@@ -38,8 +46,12 @@ func TestToggle(t *testing.T) {
 	}
 
 	// Disable removes the marker.
-	if err := Toggle("bash", false); err != nil {
+	res, err = Toggle("bash", false)
+	if err != nil {
 		t.Fatalf("Toggle(bash, false) error: %v", err)
+	}
+	if !res.Changed || res.Enabled {
+		t.Errorf("expected res.Changed=true, res.Enabled=false, got %+v", res)
 	}
 	data, _ = os.ReadFile(bashrc)
 	if strings.Contains(string(data), "bluefin-cli init bash") {
@@ -47,8 +59,12 @@ func TestToggle(t *testing.T) {
 	}
 
 	// Disabling when already disabled is a no-op success.
-	if err := Toggle("bash", false); err != nil {
+	res, err = Toggle("bash", false)
+	if err != nil {
 		t.Errorf("Toggle(bash, false) second call error: %v", err)
+	}
+	if res.Changed || res.Enabled {
+		t.Errorf("expected res.Changed=false, res.Enabled=false on second disable, got %+v", res)
 	}
 }
 

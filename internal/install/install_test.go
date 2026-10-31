@@ -7,11 +7,6 @@ import (
 	"testing"
 )
 
-func TestListBundles(t *testing.T) {
-	// This should not panic or error
-	ListBundles()
-}
-
 func TestBundleValidation(t *testing.T) {
 	tests := []struct {
 		name      string

@@ -224,7 +224,7 @@ func UninstallWingetPackages(ids []string) error {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
-			fmt.Println(errorStyle.Render(fmt.Sprintf("Failed to uninstall %s: %v", id, err)))
+			fmt.Fprintf(os.Stderr, "Failed to uninstall %s: %v\n", id, err)
 		}
 	}
 	return nil
