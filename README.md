@@ -190,6 +190,9 @@ and open a PR in that tap.
 
 ## 📖 Usage
 
+New here? Follow the [quick-start guide](docs/getting-started.md) to set up your
+shell, install tools, and save a profile.
+
 ### Interactive Menu (Default)
 
 Run the command to start the interactive menu:
@@ -403,6 +406,9 @@ grep    # ugrep (if installed)
 ```
 
 ## 📚 Documentation
+
+- [Quick start](docs/getting-started.md): First steps after installation, menu
+  navigation, shell setup, bundles, and profiles.
 
 - [Command reference](docs/commands/bluefin-cli.md): Generated documentation for
   every command and flag.
