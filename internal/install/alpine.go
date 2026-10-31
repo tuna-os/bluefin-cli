@@ -56,12 +56,12 @@ func installBundleAlpine(packages ...string) error {
 		case "brew":
 			// Brew formulae may have Alpine equivalents; try to install.
 			apkName := p.Name
-			fmt.Println(infoStyle.Render(fmt.Sprintf("⬇️  Installing %s via %s...", apkName, mgr)))
+			fmt.Printf("⬇️  Installing %s via %s...\n", apkName, mgr)
 			if err := installAlpinePkg(mgr, apkName); err != nil {
-				fmt.Println(errorStyle.Render(fmt.Sprintf("  ✗ %s: not available via %s", apkName, mgr)))
+				fmt.Printf("  ✗ %s: not available via %s\n", apkName, mgr)
 				failed = append(failed, apkName)
 			} else {
-				fmt.Println(successStyle.Render(fmt.Sprintf("  ✓ %s installed", apkName)))
+				fmt.Printf("  ✓ %s installed\n", apkName)
 				installed = append(installed, apkName)
 			}
 		case "cask":
@@ -76,14 +76,14 @@ func installBundleAlpine(packages ...string) error {
 	// Print summary
 	fmt.Println()
 	if len(installed) > 0 {
-		fmt.Println(successStyle.Render(fmt.Sprintf("✓ Installed %d package(s): %s", len(installed), strings.Join(installed, ", "))))
+		fmt.Printf("✓ Installed %d package(s): %s\n", len(installed), strings.Join(installed, ", "))
 	}
 	if len(skipped) > 0 {
-		fmt.Println(infoStyle.Render(fmt.Sprintf("⊘ Skipped %d package(s) (no apk equivalent): %s", len(skipped), strings.Join(skipped, ", "))))
+		fmt.Printf("⊘ Skipped %d package(s) (no apk equivalent): %s\n", len(skipped), strings.Join(skipped, ", "))
 	}
 	if len(failed) > 0 {
-		fmt.Println(errorStyle.Render(fmt.Sprintf("✗ %d package(s) not found in Alpine repos: %s", len(failed), strings.Join(failed, ", "))))
-		fmt.Println(infoStyle.Render("These may need to be installed manually or from source."))
+		fmt.Printf("✗ %d package(s) not found in Alpine repos: %s\n", len(failed), strings.Join(failed, ", "))
+		fmt.Println("These may need to be installed manually or from source.")
 	}
 
 	if len(installed) == 0 && len(skipped) > 0 {

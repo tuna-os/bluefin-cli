@@ -2,11 +2,14 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"runtime"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/spf13/cobra"
 	"github.com/tuna-os/bluefin-cli/internal/env"
 	"github.com/tuna-os/bluefin-cli/internal/install"
+	installrender "github.com/tuna-os/bluefin-cli/internal/install/render"
 	"github.com/tuna-os/bluefin-cli/internal/tui"
 	"github.com/tuna-os/bluefin-cli/internal/tui/app"
 )
@@ -40,7 +43,7 @@ var installListCmd = &cobra.Command{
 	Short: "Show the available bundles",
 	Long:  `Show all available bundles with descriptions.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		install.ListBundles()
+		fmt.Print(installrender.BundlesText(install.AvailableBundles()))
 		return nil
 	},
 }
@@ -73,6 +76,11 @@ var installWallpapersCmd = &cobra.Command{
 		if len(args) > 0 {
 			if err := install.InstallWallpaperCasks(args); err != nil {
 				return err
+			}
+			fmt.Println(installrender.WallpaperSuccess())
+			if runtime.GOOS == "darwin" {
+				home, _ := os.UserHomeDir()
+				fmt.Print(installrender.DarwinWallpaperInstructions(home))
 			}
 			return maybeHandleWindowsThemePostInstall(cmd, args)
 		}

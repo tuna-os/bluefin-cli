@@ -12,15 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"charm.land/lipgloss/v2"
 	"github.com/spf13/viper"
-)
-
-var (
-	successStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Bold(true)
-	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Bold(true)
-	infoStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("12"))
-	titleStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("14")).Bold(true)
 )
 
 type BundleSpec struct {
@@ -158,7 +150,6 @@ func GetBrewfile(nameOrPath string) (string, func(), error) {
 			_ = os.Remove(brewfilePath)
 			return "", func() {}, fmt.Errorf("failed to write embedded bundle to disk: %w", writeErr)
 		}
-		fmt.Println(infoStyle.Render(fmt.Sprintf("📦 Using embedded %s bundle...", nameOrPath)))
 		return brewfilePath, func() { _ = os.Remove(brewfilePath) }, nil
 	}
 
@@ -175,8 +166,6 @@ func GetBrewfile(nameOrPath string) (string, func(), error) {
 	}
 	brewfilePath := f.Name()
 	_ = f.Close()
-
-	fmt.Println(infoStyle.Render(fmt.Sprintf("⬇️  Downloading %s bundle from %s...", nameOrPath, url)))
 
 	if err := downloadFile(url, brewfilePath); err != nil {
 		_ = os.Remove(brewfilePath)
@@ -237,7 +226,6 @@ func EnsureBbrew() error {
 		return nil
 	}
 
-	fmt.Println(infoStyle.Render("🍺 bbrew not found, installing..."))
 	cmd := exec.Command("brew", "install", "Valkyrie00/homebrew-bbrew/bbrew")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -255,20 +243,13 @@ func RunBbrew(brewfilePath string) error {
 	return cmd.Run()
 }
 
-func ListBundles() {
-	fmt.Println(titleStyle.Render("📦 Available Bundles"))
-	fmt.Println()
-
-	for name, bundle := range bundles {
-		fmt.Printf("  %s %s\n",
-			lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Bold(true).Render(name+":"),
-			bundle.Description)
+// AvailableBundles returns a copy of the available predefined bundle specifications.
+func AvailableBundles() map[string]BundleSpec {
+	cp := make(map[string]BundleSpec, len(bundles))
+	for k, v := range bundles {
+		cp[k] = v
 	}
-
-	fmt.Println()
-	fmt.Println(infoStyle.Render("Usage:"))
-	fmt.Println("  bluefin-cli install <bundle-name>")
-	fmt.Println("  bluefin-cli install /path/to/Brewfile")
+	return cp
 }
 
 func downloadFile(url, filepath string) error {
@@ -322,7 +303,6 @@ func EnsureFlathub() error {
 		return nil
 	}
 
-	fmt.Println(infoStyle.Render("Adding Flathub remote..."))
 	addCmd := exec.Command("flatpak", "remote-add", "--if-not-exists", "flathub", "https://dl.flathub.org/repo/flathub.flatpakrepo")
 	addCmd.Stdout = os.Stdout
 	addCmd.Stderr = os.Stderr

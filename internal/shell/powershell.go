@@ -37,10 +37,10 @@ func isPowerShellShell(name string) bool {
 	return normalized == "powershell" || normalized == "pwsh"
 }
 
-func togglePowerShell(enable bool) error {
+func togglePowerShell(enable bool) (ToggleResult, error) {
 	configFiles, err := powerShellProfilePaths()
 	if err != nil {
-		return err
+		return ToggleResult{}, err
 	}
 
 	execPath := preferredInitExecutablePath()
@@ -57,24 +57,10 @@ func togglePowerShell(enable bool) error {
 	for _, configFile := range configFiles {
 		changed, err := syncPowerShellProfile(configFile, rcLine, enable)
 		if err != nil {
-			return err
+			return ToggleResult{}, err
 		}
 		if changed {
 			changedAny = true
-		}
-	}
-
-	if enable {
-		if changedAny {
-			fmt.Println(successStyle.Render("✓ Enabled shell experience for powershell"))
-		} else {
-			fmt.Println(infoStyle.Render("powershell is already enabled for powershell"))
-		}
-	} else {
-		if changedAny {
-			fmt.Println(successStyle.Render("✓ Disabled shell experience for powershell"))
-		} else {
-			fmt.Println(infoStyle.Render("powershell is already disabled for powershell"))
 		}
 	}
 
@@ -84,7 +70,11 @@ func togglePowerShell(enable bool) error {
 		}
 	}
 
-	return nil
+	return ToggleResult{
+		Shell:   "powershell",
+		Enabled: enable,
+		Changed: changedAny,
+	}, nil
 }
 
 func powerShellProfilePaths() ([]string, error) {

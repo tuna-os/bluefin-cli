@@ -20,30 +20,30 @@ import (
 
 func installToolsWindows(cfg *Config) {
 	if err := ensurePowerShellModules(); err != nil {
-		fmt.Println(errorStyle.Render(fmt.Sprintf("Warning: Failed to ensure PowerShell modules: %v", err)))
+		fmt.Fprintf(os.Stderr, "Warning: Failed to ensure PowerShell modules: %v\n", err)
 	}
 
 	availableManagers := availableWindowsManagers()
 	if len(availableManagers) == 0 {
-		fmt.Println(errorStyle.Render("Skipping tool installation: winget not found"))
+		fmt.Fprintln(os.Stderr, "Skipping tool installation: winget not found")
 		return
 	}
 
-	fmt.Println(infoStyle.Render("Installing enabled components using winget."))
+	fmt.Println("Installing enabled components using winget.")
 
 	tools := ToolsForShell("powershell")
 
 	for _, tool := range tools {
 		if strings.EqualFold(tool.Name, "Gsudo") && cfg.IsEnabled(tool.Name) {
 			if err := ensureWindowsTool(tool.Binary, tool.Pkg, availableManagers); err != nil {
-				fmt.Println(errorStyle.Render(fmt.Sprintf("Warning: Failed to install %s: %v", tool.Pkg, err)))
+				fmt.Fprintf(os.Stderr, "Warning: Failed to install %s: %v\n", tool.Pkg, err)
 			}
 			break
 		}
 	}
 
 	if err := primeGsudoCache(); err != nil {
-		fmt.Println(infoStyle.Render("Proceeding without gsudo elevation cache: " + err.Error()))
+		fmt.Println("Proceeding without gsudo elevation cache: " + err.Error())
 	}
 
 	for _, tool := range tools {
@@ -53,14 +53,14 @@ func installToolsWindows(cfg *Config) {
 
 		if cfg.IsEnabled(tool.Name) {
 			if err := ensureWindowsTool(tool.Binary, tool.Pkg, availableManagers); err != nil {
-				fmt.Println(errorStyle.Render(fmt.Sprintf("Warning: Failed to install %s: %v", tool.Pkg, err)))
+				fmt.Fprintf(os.Stderr, "Warning: Failed to install %s: %v\n", tool.Pkg, err)
 			}
 		}
 	}
 
 	if cfg.IsEnabled("Motd") {
 		if err := ensureWindowsTool("glow", "charmbracelet.glow", availableManagers); err != nil {
-			fmt.Println(errorStyle.Render(fmt.Sprintf("Warning: Failed to install glow: %v", err)))
+			fmt.Fprintf(os.Stderr, "Warning: Failed to install glow: %v\n", err)
 		}
 	}
 }
@@ -96,7 +96,7 @@ func ensurePowerShellModule(moduleName string) error {
 		return nil
 	}
 
-	fmt.Println(infoStyle.Render(fmt.Sprintf("⬇️  Installing PowerShell module %s...", moduleName)))
+	fmt.Printf("⬇️  Installing PowerShell module %s...\n", moduleName)
 	installScript := fmt.Sprintf("%s; $ErrorActionPreference='Stop'; Import-Module PackageManagement -ErrorAction Stop; Import-Module PowerShellGet -ErrorAction Stop; if (-not (Get-PackageProvider -Name NuGet -ListAvailable -ErrorAction SilentlyContinue)) { Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope CurrentUser -Force | Out-Null }; Set-PSRepository -Name PSGallery -InstallationPolicy Trusted -ErrorAction SilentlyContinue; Install-Module -Name '%s' -Scope CurrentUser -Repository PSGallery -Force -AllowClobber", modulePathReset, moduleName)
 	install := exec.Command(powerShellExe, "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", installScript)
 	install.Stdout = os.Stdout
@@ -110,7 +110,7 @@ func ensurePowerShellModule(moduleName string) error {
 		return fmt.Errorf("module %s install completed but module is still not discoverable", moduleName)
 	}
 
-	fmt.Println(successStyle.Render(fmt.Sprintf("✓ PowerShell module %s installed", moduleName)))
+	fmt.Printf("✓ PowerShell module %s installed\n", moduleName)
 	return nil
 }
 
@@ -150,12 +150,12 @@ func ensureWindowsTool(binary, pkg string, managers []string) error {
 			seen[key] = true
 
 			if err := tryInstallWithWindowsManager(manager, candidate); err == nil {
-				fmt.Println(successStyle.Render(fmt.Sprintf("✓ %s installed via %s", pkg, manager)))
+				fmt.Printf("✓ %s installed via %s\n", pkg, manager)
 				return nil
 			}
 
 			if _, err := exec.LookPath(binary); err == nil {
-				fmt.Println(successStyle.Render(fmt.Sprintf("✓ %s is already available", pkg)))
+				fmt.Printf("✓ %s is already available\n", pkg)
 				return nil
 			}
 		}
@@ -318,7 +318,7 @@ func ensurePSFileIcons() error {
 	}
 
 	if updated {
-		fmt.Println(successStyle.Render("✓ PSFileIcons module installed"))
+		fmt.Println("✓ PSFileIcons module installed")
 	}
 	return nil
 }

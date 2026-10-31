@@ -16,8 +16,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	"charm.land/lipgloss/v2"
 )
 
 //go:embed resources/shell.sh
@@ -32,28 +30,29 @@ var shellNuScript string
 //go:embed resources/shell.ps1
 var shellPowerShellScript string
 
-var (
-	successStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Bold(true)
-	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Bold(true)
-	infoStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("12"))
-)
-
 const shellMaker = "# bluefin-cli shell-config"
 const blingMarker = "# bluefin-cli bling"
 
-func Toggle(shell string, enable bool) error {
+// ToggleResult represents the outcome of enabling or disabling shell integration.
+type ToggleResult struct {
+	Shell   string
+	Enabled bool
+	Changed bool
+}
+
+func Toggle(shell string, enable bool) (ToggleResult, error) {
 	if isPowerShellShell(shell) {
 		return togglePowerShell(enable)
 	}
 
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return err
+		return ToggleResult{}, err
 	}
 
 	spec, ok := LookupShell(shell)
 	if !ok {
-		return fmt.Errorf("unsupported shell: %s (supported: %s)", shell, strings.Join(ManagedShells(), ", "))
+		return ToggleResult{}, fmt.Errorf("unsupported shell: %s (supported: %s)", shell, strings.Join(ManagedShells(), ", "))
 	}
 	shell = spec.Name
 	configFile := spec.ConfigPath(home)
@@ -64,7 +63,7 @@ func Toggle(shell string, enable bool) error {
 	// the line that sources it is written.
 	if enable && spec.GeneratedInit != "" {
 		if err := writeGeneratedInit(spec, home); err != nil {
-			return err
+			return ToggleResult{}, err
 		}
 	}
 
@@ -74,14 +73,13 @@ func Toggle(shell string, enable bool) error {
 			// Create if it doesn't exist and we are enabling. fish and nushell
 			// both keep their config under ~/.config, which may be absent.
 			if err := spec.ensureRCDir(home); err != nil {
-				return err
+				return ToggleResult{}, err
 			}
 			content = []byte("")
 		} else if os.IsNotExist(err) && !enable {
-			fmt.Println(infoStyle.Render(fmt.Sprintf("%s is already disabled for %s", shell, shell)))
-			return nil
+			return ToggleResult{Shell: shell, Enabled: false, Changed: false}, nil
 		} else {
-			return err
+			return ToggleResult{}, err
 		}
 	}
 
@@ -90,16 +88,15 @@ func Toggle(shell string, enable bool) error {
 
 	if enable {
 		if hasLine {
-			fmt.Println(infoStyle.Render(fmt.Sprintf("%s is already enabled for %s", shell, shell)))
 			if cfg, err := LoadConfig(shell); err == nil {
 				InstallTools(shell, cfg)
 			}
-			return nil
+			return ToggleResult{Shell: shell, Enabled: true, Changed: false}, nil
 		}
 
 		f, err := os.OpenFile(configFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 		if err != nil {
-			return err
+			return ToggleResult{}, err
 		}
 		defer func() {
 			_ = f.Close()
@@ -111,21 +108,19 @@ func Toggle(shell string, enable bool) error {
 		}
 
 		if _, err := f.WriteString(prefix + rcLine + "\n"); err != nil {
-			return err
+			return ToggleResult{}, err
 		}
 		// ash has no rc file of its own: an interactive shell reads whatever
 		// $ENV names. Writing ~/.ashrc alone leaves it dormant, so point $ENV
 		// at it from ~/.profile too.
 		if shell == "ash" {
 			if err := ensureAshENV(home); err != nil {
-				return err
+				return ToggleResult{}, err
 			}
 		}
-		fmt.Println(successStyle.Render(fmt.Sprintf("✓ Enabled shell experience for %s", shell)))
 	} else {
 		if !hasLine {
-			fmt.Println(infoStyle.Render(fmt.Sprintf("%s is already disabled for %s", shell, shell)))
-			return nil
+			return ToggleResult{Shell: shell, Enabled: false, Changed: false}, nil
 		}
 
 		// Remove the lines containing the marker
@@ -142,19 +137,18 @@ func Toggle(shell string, enable bool) error {
 		output = strings.TrimRight(output, "\n") + "\n"
 
 		if err := os.WriteFile(configFile, []byte(output), 0644); err != nil {
-			return err
+			return ToggleResult{}, err
 		}
 		if shell == "ash" {
 			if err := removeAshENV(home); err != nil {
-				return err
+				return ToggleResult{}, err
 			}
 		}
 		if path := spec.GeneratedInitPath(home); path != "" {
 			if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
-				return err
+				return ToggleResult{}, err
 			}
 		}
-		fmt.Println(successStyle.Render(fmt.Sprintf("✓ Disabled shell experience for %s", shell)))
 	}
 
 	if enable {
@@ -163,7 +157,7 @@ func Toggle(shell string, enable bool) error {
 		}
 	}
 
-	return nil
+	return ToggleResult{Shell: shell, Enabled: enable, Changed: true}, nil
 }
 
 // initCacheMtime returns the modification time of the shell config file

@@ -130,7 +130,7 @@ func (p *Profile) Apply() error {
 		if current[sh] == want[sh] {
 			continue
 		}
-		if err := shell.Toggle(sh, want[sh]); err != nil {
+		if _, err := shell.Toggle(sh, want[sh]); err != nil {
 			return fmt.Errorf("toggling %s: %w", sh, err)
 		}
 		fmt.Printf("shell %s: %v\n", sh, want[sh])

@@ -8,8 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	"charm.land/lipgloss/v2"
 )
 
 type WindowsInstaller struct{}
@@ -78,7 +76,7 @@ func (i *WindowsInstaller) InstallWallpapers(casks []string) error {
 			case <-done:
 				break loop
 			default:
-				fmt.Printf("\r%s %s...", infoStyle.Foreground(lipgloss.Color("13")).Render(frames[i%len(frames)]), infoStyle.Render("Installing "+normalized))
+				fmt.Printf("\r%s Installing %s...", frames[i%len(frames)], normalized)
 				i++
 				time.Sleep(100 * time.Millisecond)
 			}
@@ -89,12 +87,12 @@ func (i *WindowsInstaller) InstallWallpapers(casks []string) error {
 			return fmt.Errorf("failed to install %s: %w", normalized, err)
 		case <-successChan:
 			fmt.Printf("\r\033[K") // Clear throbber line
-			fmt.Println(successStyle.Render(fmt.Sprintf("✓ Installed %s wallpapers to %s", normalized, targetDir)))
+			fmt.Printf("✓ Installed %s wallpapers to %s\n", normalized, targetDir)
 		}
 	}
 
-	fmt.Println(infoStyle.Render("Wallpaper files downloaded without Homebrew."))
-	fmt.Println(infoStyle.Render("You can apply them from Windows Settings > Personalization > Background."))
+	fmt.Println("Wallpaper files downloaded without Homebrew.")
+	fmt.Println("You can apply them from Windows Settings > Personalization > Background.")
 	return nil
 }
 

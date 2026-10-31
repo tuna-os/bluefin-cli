@@ -131,7 +131,7 @@ func TestToggle_AshWiresUpENV(t *testing.T) {
 	home := t.TempDir()
 	setTestHome(t, home)
 
-	if err := Toggle("ash", true); err != nil {
+	if _, err := Toggle("ash", true); err != nil {
 		t.Fatalf("Toggle(ash, true): %v", err)
 	}
 
@@ -145,14 +145,14 @@ func TestToggle_AshWiresUpENV(t *testing.T) {
 	}
 
 	// Enabling twice must not duplicate the ENV line.
-	if err := Toggle("ash", true); err != nil {
+	if _, err := Toggle("ash", true); err != nil {
 		t.Fatalf("second Toggle(ash, true): %v", err)
 	}
 	if n := strings.Count(readFile(t, filepath.Join(home, ".profile")), "ENV="); n != 1 {
 		t.Errorf("~/.profile has %d ENV lines, want 1", n)
 	}
 
-	if err := Toggle("ash", false); err != nil {
+	if _, err := Toggle("ash", false); err != nil {
 		t.Fatalf("Toggle(ash, false): %v", err)
 	}
 	if got := readFile(t, filepath.Join(home, ".profile")); strings.Contains(got, "ENV=") {
@@ -169,10 +169,10 @@ func TestToggle_AshPreservesUnrelatedProfileLines(t *testing.T) {
 	userLine := `export ENV="$HOME/.my-own-rc"`
 	writeFile(t, filepath.Join(home, ".profile"), userLine+"\n")
 
-	if err := Toggle("ash", true); err != nil {
+	if _, err := Toggle("ash", true); err != nil {
 		t.Fatal(err)
 	}
-	if err := Toggle("ash", false); err != nil {
+	if _, err := Toggle("ash", false); err != nil {
 		t.Fatal(err)
 	}
 
@@ -188,7 +188,7 @@ func TestToggle_NuRendersSourcedFile(t *testing.T) {
 	home := t.TempDir()
 	setTestHome(t, home)
 
-	if err := Toggle("nu", true); err != nil {
+	if _, err := Toggle("nu", true); err != nil {
 		t.Fatalf("Toggle(nu, true): %v", err)
 	}
 
@@ -203,7 +203,7 @@ func TestToggle_NuRendersSourcedFile(t *testing.T) {
 		t.Errorf("config.nu does not source the generated script:\n%s", configNu)
 	}
 
-	if err := Toggle("nu", false); err != nil {
+	if _, err := Toggle("nu", false); err != nil {
 		t.Fatalf("Toggle(nu, false): %v", err)
 	}
 	if _, err := os.Stat(generated); !os.IsNotExist(err) {
@@ -215,7 +215,7 @@ func TestToggle_NuRendersSourcedFile(t *testing.T) {
 // actually accepted rather than just rejecting the input.
 func TestToggle_UnsupportedShellNamesTheSupportedOnes(t *testing.T) {
 	setTestHome(t, t.TempDir())
-	err := Toggle("elvish", true)
+	_, err := Toggle("elvish", true)
 	if err == nil {
 		t.Fatal("Toggle on an unsupported shell should fail")
 	}
