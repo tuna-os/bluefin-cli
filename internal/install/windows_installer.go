@@ -14,10 +14,6 @@ import (
 
 type WindowsInstaller struct{}
 
-func init() {
-	SetInstaller(&WindowsInstaller{})
-}
-
 func (i *WindowsInstaller) InstallBundle(packages ...string) error {
 	if len(packages) == 0 {
 		return nil

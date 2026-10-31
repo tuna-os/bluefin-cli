@@ -3,11 +3,13 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
 	"runtime/debug"
 
 	"charm.land/fang/v2"
 	"github.com/spf13/cobra"
 	"github.com/tuna-os/bluefin-cli/internal/countme"
+	"github.com/tuna-os/bluefin-cli/internal/install"
 )
 
 var (
@@ -71,6 +73,17 @@ func Execute() error {
 	return fang.Execute(context.Background(), rootCmd, fang.WithVersion(reportedVersion()))
 }
 
+func initInstaller() {
+	var inst install.Installer
+	if os.Getenv("BLUEFIN_INSTALLER") == "mock" {
+		inst = &install.MockInstaller{}
+	} else {
+		inst = defaultPlatformInstaller()
+	}
+	install.SetInstaller(inst)
+}
+
 func init() {
 	rootCmd.SetVersionTemplate(fmt.Sprintf("bluefin-cli version %s\n", reportedVersion()))
+	initInstaller()
 }
