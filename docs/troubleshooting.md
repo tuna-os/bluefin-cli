@@ -58,6 +58,9 @@ bluefin-cli doctor --fix
 This installs coldbrew rootless and sandboxed. Until it's set up, package
 installs fall back to `sudo apk add` one package at a time.
 
+For walkthroughs and tool options, see the
+[guide for shell experience setup](shell-experience.md).
+
 ### Shell integration isn't picking up changes
 
 - **Nushell** cannot evaluate a string, so `bluefin-cli shell nu on` writes

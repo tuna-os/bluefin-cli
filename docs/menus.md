@@ -41,6 +41,9 @@ graph TD
     Shell --> Shells["🐚 Other Shells (native multiselect)"]
     Shell --> Advanced["🎨 Advanced (native: dark mode, flavor)"]
 
+See the [Shell Experience setup guide](shell-experience.md) for command-line
+options and per-shell configuration files.
+
     Install --> AI["🤖 AI Tools"]
     Install --> CLI["💻 CLI Essentials"]
     Install --> CNCF["🌐 CNCF Tools"]
