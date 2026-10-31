@@ -104,5 +104,8 @@ bluefin-cli picks up any `*.Brewfile` in that directory automatically
 ([`internal/install/install.go`](../internal/install/install.go)) and lists
 it alongside the curated bundles (`ai`, `cli`, `cncf`, `experimental-ide`,
 `fonts`, `full-desktop`, `ide`, `k8s`, `all`) when you run
-`bluefin-cli install --list` or the TUI's Install Apps menu. User-defined
+`bluefin-cli install list` or the TUI's Install Apps menu. User-defined
 bundles extend the curated set — they do not shadow or replace any of it.
+
+For Brewfile syntax, Windows entries, and examples, refer to the
+[Brewfile guide](brewfile-guide.md).
