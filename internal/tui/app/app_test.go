@@ -142,9 +142,10 @@ func TestHelpOverlayToggles(t *testing.T) {
 }
 
 func TestPaletteOpensFromRegistry(t *testing.T) {
-	registry = nil
+	orig := SnapshotRegistry()
+	ResetRegistry()
 	Register(Action{ID: "test-action", Label: "Do The Thing", Do: func() tea.Cmd { return nil }})
-	t.Cleanup(func() { registry = nil })
+	t.Cleanup(func() { _ = RestoreRegistry(orig) })
 
 	m := drive(testTree(), tea.KeyPressMsg{Code: 'p', Mod: tea.ModCtrl}, key('t'), key('h'))
 	menu, ok := m.top().(*MenuScreen)
