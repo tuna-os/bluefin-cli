@@ -54,10 +54,93 @@ func TestShow(t *testing.T) {
 }
 
 func TestShowComponents(t *testing.T) {
-	// This test mainly verifies that Show runs without panicking
-	// We'll trust TestShow to verify the output content
 	err := Show("v0.1.0")
 	if err != nil {
 		t.Fatalf("Show() failed: %v", err)
 	}
+}
+
+func TestReportHelper(t *testing.T) {
+	enabled := stripAnsi(report(true, "zsh", "enabled", " ★ (default)"))
+	if !strings.Contains(enabled, "✓ zsh: enabled ★ (default)") {
+		t.Errorf("Unexpected report output for enabled: %q", enabled)
+	}
+
+	disabled := stripAnsi(report(false, "bash", "disabled"))
+	if !strings.Contains(disabled, "✗ bash: disabled") {
+		t.Errorf("Unexpected report output for disabled: %q", disabled)
+	}
+}
+
+func TestRenderLayouts(t *testing.T) {
+	wide, err := Render(100, "1.0.0")
+	if err != nil {
+		t.Fatalf("Render wide failed: %v", err)
+	}
+	cleanWide := stripAnsi(wide)
+	if !strings.Contains(cleanWide, "Bluefin CLI Status") {
+		t.Errorf("Expected title in wide output")
+	}
+
+	narrow, err := Render(50, "1.0.0")
+	if err != nil {
+		t.Fatalf("Render narrow failed: %v", err)
+	}
+	cleanNarrow := stripAnsi(narrow)
+	if !strings.Contains(cleanNarrow, "Bluefin CLI Status") {
+		t.Errorf("Expected title in narrow output")
+	}
+}
+
+func TestReportShellExperience(t *testing.T) {
+	// Test empty shells
+	emptyOut := stripAnsi(reportShellExperience(shellInfo{
+		shellsToShow: nil,
+	}))
+	if !strings.Contains(emptyOut, "(no compatible shells found)") {
+		t.Errorf("Expected no compatible shells notice, got %q", emptyOut)
+	}
+
+	// Test populated shells with markers
+	populatedOut := stripAnsi(reportShellExperience(shellInfo{
+		shellStatus:  map[string]bool{"zsh": true, "bash": false},
+		shellsToShow: []string{"zsh", "bash"},
+		defaultShell: "zsh",
+		currentShell: "zsh",
+	}))
+	if !strings.Contains(populatedOut, "✓ zsh: enabled ★ (default, current)") {
+		t.Errorf("Expected default and current marker for zsh, got %q", populatedOut)
+	}
+	if !strings.Contains(populatedOut, "✗ bash: disabled") {
+		t.Errorf("Expected disabled bash, got %q", populatedOut)
+	}
+}
+
+func TestReportMOTD(t *testing.T) {
+	motdOut := stripAnsi(reportMOTD([]string{"bash"}))
+	if !strings.Contains(motdOut, "Message of the Day:") {
+		t.Errorf("Expected Message of the Day header, got %q", motdOut)
+	}
+	if !strings.Contains(motdOut, "bash:") {
+		t.Errorf("Expected bash in MOTD report, got %q", motdOut)
+	}
+}
+
+func TestReportManagedTools(t *testing.T) {
+	toolsOut := stripAnsi(reportManagedTools("bash"))
+	if !strings.Contains(toolsOut, "Managed Tools:") {
+		t.Errorf("Expected Managed Tools header, got %q", toolsOut)
+	}
+}
+
+func TestReportPackageManager(t *testing.T) {
+	pmOut := stripAnsi(reportPackageManager())
+	if !strings.Contains(pmOut, "Package Manager:") {
+		t.Errorf("Expected Package Manager header, got %q", pmOut)
+	}
+}
+
+func TestReportSunset(t *testing.T) {
+	// Should not panic on any platform
+	_ = reportSunset()
 }
