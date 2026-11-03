@@ -27,7 +27,7 @@ jobs:
           go-version: '1.27'
 
       - name: Install just
-        uses: taiki-e/install-action@a058860aaa8db7b0a781c0fbe50b6716c4a40f47 # just
+        uses: taiki-e/install-action@0b43677d266e02f8bd34a2096b57e23a01a92aff # just
 
       - name: Update Brewfiles
         env:
