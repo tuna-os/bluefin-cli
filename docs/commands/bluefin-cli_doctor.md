@@ -12,6 +12,7 @@ bluefin-cli doctor [flags]
       --bench   Benchmark interactive shell startup vs a bare shell
       --fix     Apply safe automatic fixes before reporting
   -h, --help    help for doctor
+      --json    Output a versioned JSON diagnostic report (incompatible with --fix and --bench)
 ```
 
 ### SEE ALSO
