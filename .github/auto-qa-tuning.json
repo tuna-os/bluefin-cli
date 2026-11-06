@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "repository": "tuna-os/bluefin-cli",
+  "signals": {
+    "required_checks": [
+      "Run Tests",
+      "Integration Tests (standard)",
+      "Integration Tests (extra)",
+      "gofmt",
+      "go.mod tidy"
+    ],
+    "coverage": {
+      "provider": "codecov",
+      "flags": ["standard", "extra"]
+    }
+  },
+  "tuning": {
+    "window_runs": 20,
+    "minimum_successful_runs": 10,
+    "target_pass_rate": 0.95,
+    "maximum_threshold_change": 0.02,
+    "rules": [
+      "Raise a threshold only when the full observation window meets the target pass rate.",
+      "Do not lower a threshold to make a failing change pass.",
+      "Require maintainer review before applying a proposed threshold change."
+    ]
+  }
+}
