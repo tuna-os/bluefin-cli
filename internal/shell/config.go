@@ -79,6 +79,30 @@ func LoadConfig(shell string) (*Config, error) {
 	return &config, nil
 }
 
+// MOTDEnabled reports the saved MOTD setting, falling back to the default
+// when the shell configuration cannot be read, as the menu historically did.
+func MOTDEnabled(shellName string) bool {
+	cfg, err := LoadConfig(shellName)
+	if err != nil {
+		cfg = DefaultConfig(shellName)
+	}
+	return cfg.IsEnabled("Motd")
+}
+
+// ToggleMOTD flips and saves the MOTD setting, returning the new state.
+func ToggleMOTD(shellName string) (bool, error) {
+	cfg, err := LoadConfig(shellName)
+	if err != nil {
+		cfg = DefaultConfig(shellName)
+	}
+	enabled := !cfg.IsEnabled("Motd")
+	cfg.SetEnabled("Motd", enabled)
+	if err := SaveConfig(cfg); err != nil {
+		return false, err
+	}
+	return enabled, nil
+}
+
 func SaveConfig(config *Config) error {
 	configPath, err := getConfigPath()
 	if err != nil {

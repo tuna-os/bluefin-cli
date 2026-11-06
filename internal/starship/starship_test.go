@@ -146,6 +146,47 @@ func TestInstall(t *testing.T) {
 	}
 }
 
+func TestInstallAndApplyTheme(t *testing.T) {
+	origExec, origRun, origLook := execCommand, runCommand, lookPath
+	t.Cleanup(func() { execCommand, runCommand, lookPath = origExec, origRun, origLook })
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	lookPath = func(name string) (string, error) {
+		if name == "brew" {
+			return "brew", nil
+		}
+		return "", fmt.Errorf("not found")
+	}
+	var commands []string
+	execCommand = func(name string, args ...string) *exec.Cmd {
+		commands = append(commands, strings.Join(append([]string{name}, args...), " "))
+		return &exec.Cmd{}
+	}
+	runCommand = func(*exec.Cmd) error { return nil }
+	if err := InstallAndApplyTheme("tokyo-night"); err != nil {
+		t.Fatal(err)
+	}
+	if len(commands) != 2 || commands[0] != "brew install starship" || !strings.HasPrefix(commands[1], "starship preset tokyo-night -o ") {
+		t.Fatalf("unexpected commands: %v", commands)
+	}
+	commands = nil
+	runCommand = func(*exec.Cmd) error { return fmt.Errorf("failed") }
+	if err := InstallAndApplyTheme("tokyo-night"); err == nil || len(commands) != 1 {
+		t.Fatalf("install failure should stop before applying: %v, %v", commands, err)
+	}
+	commands = nil
+	runCommand = func(*exec.Cmd) error {
+		if len(commands) == 2 {
+			return fmt.Errorf("preset failed")
+		}
+		return nil
+	}
+	if err := InstallAndApplyTheme("tokyo-night"); err == nil || !strings.Contains(err.Error(), "preset failed") {
+		t.Fatalf("expected preset failure, got %v", err)
+	}
+}
+
 func TestApplyTheme(t *testing.T) {
 	// Backup and restore original variables
 	origExecCommand := execCommand

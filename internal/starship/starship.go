@@ -55,6 +55,14 @@ func Install() error {
 	return nil
 }
 
+// InstallAndApplyTheme installs Starship if necessary before applying a preset.
+func InstallAndApplyTheme(themeName string) error {
+	if err := Install(); err != nil {
+		return err
+	}
+	return ApplyTheme(themeName)
+}
+
 // ApplyTheme applies a Starship preset theme
 func ApplyTheme(themeName string) error {
 	homeDir, err := os.UserHomeDir()
