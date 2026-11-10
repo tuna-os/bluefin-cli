@@ -93,9 +93,9 @@ release:
   name_template: "{{.Tag}}"
 
 # Binary formula published to the tuna-os tap on every release.
-# Requires the tuna-os/homebrew-tap repo to exist and a HOMEBREW_TAP_TOKEN
-# secret (PAT with contents:write on that repo). skip_upload: auto keeps
-# prereleases out of the tap.
+# Requires the tuna-os/homebrew-tap repo to exist and a HOMEBREW_TAP_SSH_KEY
+# secret (private half of a write deploy key on that repo). GoReleaser pushes
+# over SSH with it. skip_upload: auto keeps prereleases out of the tap.
 # NOTE: goreleaser deprecated `brews` in favor of `homebrew_casks`, but casks
 # are macOS-only and Linux users are a primary audience — keep the formula.
 brews:
@@ -106,14 +106,16 @@ brews:
       owner: tuna-os
       name: homebrew-tap
       branch: main
-      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+      git:
+        url: git@github.com:tuna-os/homebrew-tap.git
+        private_key: "{{ .Env.HOMEBREW_TAP_SSH_KEY }}"
     directory: Formula
     homepage: "https://github.com/tuna-os/bluefin-cli"
     description: "Make your terminal experience awesome — shell config, tool bundles, and theming for any OS"
     license: Apache-2.0
-    # Skip until the HOMEBREW_TAP_TOKEN secret is configured, so a missing
-    # token can't fail the release.
-    skip_upload: '{{ if envOrDefault "HOMEBREW_TAP_TOKEN" "" }}auto{{ else }}true{{ end }}'
+    # Skip until the HOMEBREW_TAP_SSH_KEY secret is configured, so a missing
+    # key can't fail the release.
+    skip_upload: '{{ if envOrDefault "HOMEBREW_TAP_SSH_KEY" "" }}auto{{ else }}true{{ end }}'
     test: |
       assert_match version.to_s, shell_output("#{bin}/bluefin-cli --version")
 

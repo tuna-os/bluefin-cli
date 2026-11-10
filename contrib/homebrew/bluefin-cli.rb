@@ -6,7 +6,7 @@
 #      binary formula and publishes it to the tap's Formula/ directory on every
 #      tagged release (see the `brews` block in .goreleaser.yaml and
 #      docs/adr/0003-release-pipeline.md). No manual step beyond configuring
-#      the HOMEBREW_TAP_TOKEN secret.
+#      the HOMEBREW_TAP_SSH_KEY secret.
 #
 #   2. External taps that build from source, e.g.
 #      ublue-os/homebrew-experimental-tap: copy this file into the tap's

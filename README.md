@@ -84,9 +84,10 @@ brew install bluefin-cli
 > **Status (2026-10-17):** use `ublue-os/homebrew-experimental-tap` above.
 > The primary tap [`tuna-os/homebrew-tap`](https://github.com/tuna-os/homebrew-tap)
 > is not available yet. The GoReleaser configuration includes the Homebrew
-> publisher, but GoReleaser skips it until an organization administrator sets
-> the `HOMEBREW_TAP_TOKEN` repository secret ([#295](https://github.com/tuna-os/bluefin-cli/issues/295)).
-> For maintainer token and setup details, see
+> publisher. It pushes to the tap with the `HOMEBREW_TAP_SSH_KEY` deploy key,
+> but the team has not verified a publication yet
+> ([#295](https://github.com/tuna-os/bluefin-cli/issues/295)). For maintainer
+> key and setup details, see
 > [`docs/release-publishing.md`](docs/release-publishing.md). Once published,
 > `brew tap tuna-os/tap && brew install bluefin-cli` will be the primary path.
 
@@ -173,13 +174,13 @@ A Scoop release needs the `SCOOP_BUCKET_TOKEN` repository secret. GoReleaser
 uses it to upload the Scoop manifest to the bucket. Without it, GoReleaser
 skips that upload. See [release details](docs/release-publishing.md).
 
-A Homebrew tap release needs the `HOMEBREW_TAP_TOKEN` repository secret.
-GoReleaser uses it to upload the formula to the tap. Without it, GoReleaser
+A Homebrew tap release needs the `HOMEBREW_TAP_SSH_KEY` repository secret.
+GoReleaser uses it to push the formula to the tap. Without it, GoReleaser
 skips that upload. See [release details](docs/release-publishing.md).
 
 Homebrew release process: when semantic-release finds that a merge to
 `main` warrants a release, it invokes GoReleaser. GoReleaser then sends the
-binary formula to `tuna-os/homebrew-tap` when `HOMEBREW_TAP_TOKEN` is set.
+binary formula to `tuna-os/homebrew-tap` when `HOMEBREW_TAP_SSH_KEY` is set.
 For external taps that build from source, such as
 `ublue-os/homebrew-experimental-tap`, sync the tap by hand. Bump `url` and
 `sha256` in [`contrib/homebrew/bluefin-cli.rb`](contrib/homebrew/bluefin-cli.rb)
