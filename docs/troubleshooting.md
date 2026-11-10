@@ -26,7 +26,7 @@ bluefin-cli doctor --bench   # measures shell startup cost vs. a bare shell (bas
 bluefin-cli doctor --json    # prints a machine-readable diagnostic report
 ```
 
-`--json` emits one JSON object on stdout, without terminal formatting. Version 1
+`--json` writes a single JSON object to stdout, with no terminal styles. Version 1
 has `schema_version` (the integer `1`), `checks` (an array), and `failures`
 (the number of hard failures). Each check has `name` (display text), `ok` and
 `warn` booleans, and an optional `note` string. An `ok` check passed; a check
@@ -36,10 +36,11 @@ should ignore unknown fields; incompatible schema changes will increment
 `schema_version`.
 
 A report with only warnings exits successfully, while hard failures produce a
-nonzero exit after the JSON is written. Errors, including output write failures,
-are reported on stderr and exit nonzero. `--json` cannot be combined with
-`--fix` or `--bench`: those modes produce separate human-oriented output. The
-combination is rejected before running checks or applying fixes.
+nonzero exit after the command writes the JSON. The command reports errors,
+including output write failures, on stderr and exits nonzero. You cannot use
+`--json` together with `--fix` or `--bench`: those modes write their own output
+for humans. The command rejects the combination before it runs checks or applies
+fixes.
 
 `--fix` handles three cases. It enables shell integration, sets up `coldbrew`
 on Alpine/musl systems, and installs `eza`, `fzf`, and `starship` when they
