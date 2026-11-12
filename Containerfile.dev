@@ -7,7 +7,7 @@
 # breaking `dnf install` in Container-based Tests (tuna-os/bluefin-cli#167;
 # same defect as wootc#135, protota#226, tacklebox#205). Revisit once the
 # rawhide/fedora:46 image keyring is consistent.
-FROM registry.fedoraproject.org/fedora:45@sha256:b68e9c913030593d87875f7b6441b3d8a909aa434579a10dc7dea255a8d7d894
+FROM registry.fedoraproject.org/fedora:45@sha256:fa773d10382c082ff2cccaf7982a5c162f11f296f91274b994357f2d3d473770
 
 # Install all dependencies in one layer
 RUN dnf install -y \
