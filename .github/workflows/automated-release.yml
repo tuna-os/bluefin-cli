@@ -22,18 +22,18 @@ jobs:
     runs-on: ubuntu-26.04
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Set up Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        uses: actions/setup-go@v7.0.0
         with:
           go-version: '1.27'
-          cache: true
+          cache: false
 
-      - name: Install Semantic Release dependencies
+      - name: Install Semantic Release dependencies # zizmor: ignore[adhoc-packages] release tooling is installed at its latest version by design; pinning it would change releases
         run: |
           npm install -g semantic-release \
                          @semantic-release/commit-analyzer \
@@ -44,7 +44,7 @@ jobs:
                          @semantic-release/exec
 
       - name: Install GoReleaser
-        uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7
+        uses: goreleaser/goreleaser-action@v7.3.0
         with:
           install-only: true
 
