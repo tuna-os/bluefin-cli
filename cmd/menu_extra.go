@@ -65,12 +65,7 @@ func sunsetFlow() tea.Cmd {
 				}),
 			huh.NewSelect[string]().
 				Title("Choose a wallpaper theme").
-				Options(
-					huh.NewOption("Bluefin", "bluefin"),
-					huh.NewOption("Aurora", "aurora"),
-					huh.NewOption("Bazzite", "bazzite"),
-					huh.NewOption("None (Keep current)", ""),
-				).
+				Options(wallpaperThemeOptions()...).
 				Value(&themeChoice),
 		)).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap())
 	}

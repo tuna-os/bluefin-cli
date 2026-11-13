@@ -9,19 +9,11 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+
+	"github.com/tuna-os/bluefin-cli/internal/wallpaper"
 )
 
 const wallpapersTap = "ublue-os/tap"
-
-const (
-	wallpaperUserInstallRootName = "BluefinCLI"
-)
-
-var knownWallpaperCasks = []string{
-	"bluefin-wallpapers",
-	"aurora-wallpapers",
-	"bazzite-wallpapers",
-}
 
 func EnsureBrew() error {
 	if _, err := exec.LookPath("brew"); err != nil {
@@ -53,10 +45,6 @@ func InstallWallpaperCasks(casks []string) error {
 	return GetInstaller().InstallWallpapers(casks)
 }
 
-func postInstallWallpaperSetup(casks []string) {
-	// Legacy function, no-op now.
-}
-
 func CleanupWallpapers(all bool) error {
 	return GetInstaller().CleanupWallpapers(all)
 }
@@ -71,8 +59,8 @@ func uninstallKnownWallpaperCasks() error {
 	}
 
 	args := []string{"uninstall", "--cask"}
-	for _, cask := range knownWallpaperCasks {
-		args = append(args, wallpapersTap+"/"+cask)
+	for _, c := range wallpaper.Collections {
+		args = append(args, wallpapersTap+"/"+c.Cask)
 	}
 
 	cmd := exec.Command("brew", args...)
@@ -94,7 +82,7 @@ func removeKnownLinuxWallpaperDirs() error {
 		if err != nil {
 			return fmt.Errorf("failed to resolve home directory: %w", err)
 		}
-		windowsDir := filepath.Join(homeDir, "Pictures", wallpaperUserInstallRootName)
+		windowsDir := wallpaper.CollectionRoot(homeDir)
 		if err := os.RemoveAll(windowsDir); err != nil {
 			return fmt.Errorf("failed to remove %s: %w", windowsDir, err)
 		}
@@ -106,13 +94,11 @@ func removeKnownLinuxWallpaperDirs() error {
 		return fmt.Errorf("failed to resolve home directory: %w", err)
 	}
 
-	dirs := []string{
-		filepath.Join(homeDir, ".local", "share", "backgrounds", "bluefin"),
-		filepath.Join(homeDir, ".local", "share", "backgrounds", "aurora"),
-		filepath.Join(homeDir, ".local", "share", "backgrounds", "bazzite"),
-		filepath.Join(homeDir, ".local", "share", "wallpapers", "bluefin"),
-		filepath.Join(homeDir, ".local", "share", "wallpapers", "aurora"),
-		filepath.Join(homeDir, ".local", "share", "wallpapers", "bazzite"),
+	var dirs []string
+	for _, kind := range []string{"backgrounds", "wallpapers"} {
+		for _, c := range wallpaper.Collections {
+			dirs = append(dirs, filepath.Join(homeDir, ".local", "share", kind, c.ID))
+		}
 	}
 
 	for _, dir := range dirs {
@@ -127,39 +113,4 @@ func removeKnownLinuxWallpaperDirs() error {
 func normalizeCaskName(cask string) string {
 	parts := strings.Split(cask, "/")
 	return parts[len(parts)-1]
-}
-
-func detectThemeName(cask string) (string, bool) {
-	name := strings.ToLower(cask)
-	switch {
-	case strings.Contains(name, "bluefin"):
-		return "Bluefin", true
-	case strings.Contains(name, "aurora"):
-		return "Aurora", true
-	case strings.Contains(name, "bazzite"):
-		return "Bazzite", true
-	default:
-		return "", false
-	}
-}
-
-func ThemesFromWallpaperCasks(casks []string) []string {
-	seen := map[string]struct{}{}
-	themes := make([]string, 0, len(casks))
-
-	for _, cask := range casks {
-		normalized := normalizeCaskName(cask)
-		themeName, ok := detectThemeName(normalized)
-		if !ok {
-			continue
-		}
-		if _, exists := seen[themeName]; exists {
-			continue
-		}
-		seen[themeName] = struct{}{}
-		themes = append(themes, themeName)
-	}
-
-	sort.Strings(themes)
-	return themes
 }

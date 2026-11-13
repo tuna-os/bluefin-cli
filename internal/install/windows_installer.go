@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"charm.land/lipgloss/v2"
+	"github.com/tuna-os/bluefin-cli/internal/wallpaper"
 )
 
 type WindowsInstaller struct{}
@@ -31,7 +31,7 @@ func (i *WindowsInstaller) InstallWallpapers(casks []string) error {
 		return fmt.Errorf("failed to resolve home directory: %w", err)
 	}
 
-	installRoot := filepath.Join(homeDir, "Pictures", wallpaperUserInstallRootName)
+	installRoot := wallpaper.CollectionRoot(homeDir)
 	if err := os.MkdirAll(installRoot, 0755); err != nil {
 		return fmt.Errorf("failed to create wallpaper install directory: %w", err)
 	}
@@ -52,11 +52,10 @@ func (i *WindowsInstaller) InstallWallpapers(casks []string) error {
 				return
 			}
 
-			targetDirName := normalized
-			if themeName, ok := detectThemeName(normalized); ok {
-				targetDirName = strings.ToLower(themeName)
+			targetDir = filepath.Join(installRoot, normalized)
+			if c, ok := wallpaper.CollectionForCask(normalized); ok {
+				targetDir = wallpaper.CollectionDir(homeDir, c.ID)
 			}
-			targetDir = filepath.Join(installRoot, targetDirName)
 
 			if err := downloadAndExtractWallpaperArchive(archiveURL, targetDir); err != nil {
 				errChan <- err

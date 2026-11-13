@@ -198,3 +198,37 @@ func TestUnixInstaller_CleanupWallpapers_AllUninstalls(t *testing.T) {
 		t.Errorf("missing brew uninstall --cask call, calls: %v", joined)
 	}
 }
+
+// The Linux cleanup removes one directory per collection under each of
+// ~/.local/share/{backgrounds,wallpapers}, and nothing else there.
+func TestUnixInstaller_CleanupWallpapers_AllRemovesCollectionDirs(t *testing.T) {
+	installFakeBrew(t)
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	var removed []string
+	for _, kind := range []string{"backgrounds", "wallpapers"} {
+		for _, id := range []string{"bluefin", "aurora", "bazzite"} {
+			removed = append(removed, filepath.Join(home, ".local", "share", kind, id))
+		}
+	}
+	kept := filepath.Join(home, ".local", "share", "backgrounds", "gnome")
+	for _, dir := range append(removed, kept) {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := (&UnixInstaller{}).CleanupWallpapers(true); err != nil {
+		t.Fatalf("CleanupWallpapers(true): %v", err)
+	}
+
+	for _, dir := range removed {
+		if _, err := os.Stat(dir); !os.IsNotExist(err) {
+			t.Errorf("%s still exists after cleanup (stat err: %v)", dir, err)
+		}
+	}
+	if _, err := os.Stat(kept); err != nil {
+		t.Errorf("cleanup removed unrelated %s: %v", kept, err)
+	}
+}
