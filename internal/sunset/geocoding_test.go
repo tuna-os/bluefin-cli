@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/tuna-os/bluefin-cli/internal/wallpaper"
 )
 
 func TestGeocodeCity(t *testing.T) {
@@ -68,5 +70,38 @@ func TestGetMonthlyWallpaper(t *testing.T) {
 	}
 	if filepath.Base(path) != "03-day.jpg" {
 		t.Errorf("Expected 03-day.jpg, got %s", filepath.Base(path))
+	}
+}
+
+// Sunset reads monthly wallpapers from the directory the installer writes
+// each collection to, whichever form of the theme name the config holds.
+func TestGetMonthlyWallpaper_ReadsInstalledCollectionDir(t *testing.T) {
+	tmpHome := t.TempDir()
+	originalGetHomeDir := getHomeDir
+	getHomeDir = func() (string, error) { return tmpHome, nil }
+	t.Cleanup(func() { getHomeDir = originalGetHomeDir })
+
+	originalCurrentTime := currentTime
+	currentTime = func() time.Time { return time.Date(2024, 3, 15, 12, 0, 0, 0, time.UTC) }
+	t.Cleanup(func() { currentTime = originalCurrentTime })
+
+	for _, c := range wallpaper.Collections {
+		dir := wallpaper.CollectionDir(tmpHome, c.ID)
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		want := filepath.Join(dir, "03-night.jpg")
+		if err := os.WriteFile(want, []byte("fake"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		for _, theme := range []string{c.ID, c.Name} {
+			got, err := GetMonthlyWallpaper(theme, false)
+			if err != nil {
+				t.Fatalf("GetMonthlyWallpaper(%q): %v", theme, err)
+			}
+			if got != want {
+				t.Errorf("GetMonthlyWallpaper(%q) = %q, want %q", theme, got, want)
+			}
+		}
 	}
 }

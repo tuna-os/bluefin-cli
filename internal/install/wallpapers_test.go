@@ -19,38 +19,3 @@ func TestNormalizeCaskName(t *testing.T) {
 		}
 	}
 }
-
-func TestDetectThemeName(t *testing.T) {
-	tests := []struct {
-		input string
-		want  string
-		ok    bool
-	}{
-		{input: "bluefin-wallpaper", want: "Bluefin", ok: true},
-		{input: "aurora-dynamic-wallpaper", want: "Aurora", ok: true},
-		{input: "bazzite-wallpaper", want: "Bazzite", ok: true},
-		{input: "some-other-wallpaper", want: "", ok: false},
-	}
-
-	for _, tt := range tests {
-		got, ok := detectThemeName(tt.input)
-		if got != tt.want || ok != tt.ok {
-			t.Fatalf("detectThemeName(%q) = (%q, %v), want (%q, %v)", tt.input, got, ok, tt.want, tt.ok)
-		}
-	}
-}
-
-func TestThemesFromWallpaperCasks(t *testing.T) {
-	casks := []string{
-		"ublue-os/tap/bluefin-wallpapers",
-		"aurora-wallpapers",
-		"bazzite-wallpapers",
-		"bluefin-wallpapers",
-		"something-else",
-	}
-
-	themes := ThemesFromWallpaperCasks(casks)
-	if len(themes) != 3 {
-		t.Fatalf("expected 3 themes, got %d (%v)", len(themes), themes)
-	}
-}

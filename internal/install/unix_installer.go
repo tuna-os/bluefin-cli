@@ -81,8 +81,6 @@ func (i *UnixInstaller) InstallWallpapers(casks []string) error {
 	}
 	fmt.Println(successStyle.Render("✓ Wallpaper casks installed!"))
 
-	postInstallWallpaperSetup(casks)
-
 	// macOS specific instructions
 	if runtime.GOOS == "darwin" {
 		home, _ := os.UserHomeDir()
