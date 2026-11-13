@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tuna-os/bluefin-cli/internal/config"
+	"github.com/tuna-os/bluefin-cli/internal/tui"
 	"github.com/tuna-os/bluefin-cli/internal/tui/theme"
 )
 
@@ -50,5 +51,5 @@ func applyThemeFlavor() {
 		return
 	}
 	theme.Flavor = flavor
-	theme.DefaultTheme = theme.Resolve(theme.DefaultTheme.IsDark)
+	tui.ApplyTheme(theme.Resolve(theme.DefaultTheme.IsDark))
 }
