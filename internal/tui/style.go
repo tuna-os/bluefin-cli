@@ -7,33 +7,62 @@ import (
 	"github.com/tuna-os/bluefin-cli/internal/tui/theme"
 )
 
+// CurrentTheme and the shared styles below are derived from the active theme.
+// They are rebuilt by ApplyTheme, so every writer of the theme must go
+// through it; assigning theme.DefaultTheme directly leaves them stale.
 var (
 	// Current Theme
-	CurrentTheme = theme.DefaultTheme
+	CurrentTheme theme.Theme
 
 	// Styles
+	TitleStyle    lipgloss.Style
+	SubtitleStyle lipgloss.Style
+	SuccessStyle  lipgloss.Style
+	ErrorStyle    lipgloss.Style
+	WarningStyle  lipgloss.Style
+	InfoStyle     lipgloss.Style
+	PopupStyle    lipgloss.Style
+)
+
+func init() {
+	buildStyles(theme.DefaultTheme)
+}
+
+// ApplyTheme makes t the active theme: it sets theme.DefaultTheme and
+// CurrentTheme and rebuilds the shared styles from it.
+//
+// Not safe to call while other goroutines render with the shared styles;
+// callers apply it at startup or from the UI loop when no runner is active.
+func ApplyTheme(t theme.Theme) {
+	theme.DefaultTheme = t
+	buildStyles(t)
+}
+
+func buildStyles(t theme.Theme) {
+	CurrentTheme = t
+
 	TitleStyle = lipgloss.NewStyle().
-			Foreground(CurrentTheme.PrimaryBorder).
-			Bold(true).
-			Padding(0, 1).
-			Border(lipgloss.RoundedBorder(), false, false, true, false).
-			BorderForeground(CurrentTheme.FaintBorder)
+		Foreground(t.PrimaryBorder).
+		Bold(true).
+		Padding(0, 1).
+		Border(lipgloss.RoundedBorder(), false, false, true, false).
+		BorderForeground(t.FaintBorder)
 
 	SubtitleStyle = lipgloss.NewStyle().
-			Foreground(CurrentTheme.SecondaryText).
-			PaddingLeft(1)
+		Foreground(t.SecondaryText).
+		PaddingLeft(1)
 
-	SuccessStyle = lipgloss.NewStyle().Foreground(CurrentTheme.SuccessText).Bold(true)
-	ErrorStyle   = lipgloss.NewStyle().Foreground(CurrentTheme.ErrorText).Bold(true)
-	WarningStyle = lipgloss.NewStyle().Foreground(CurrentTheme.WarningText)
-	InfoStyle    = lipgloss.NewStyle().Foreground(CurrentTheme.InfoText)
+	SuccessStyle = lipgloss.NewStyle().Foreground(t.SuccessText).Bold(true)
+	ErrorStyle = lipgloss.NewStyle().Foreground(t.ErrorText).Bold(true)
+	WarningStyle = lipgloss.NewStyle().Foreground(t.WarningText)
+	InfoStyle = lipgloss.NewStyle().Foreground(t.InfoText)
 
 	PopupStyle = lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(CurrentTheme.ErrorText).
-			Padding(1, 2).
-			Align(lipgloss.Center)
-)
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(t.ErrorText).
+		Padding(1, 2).
+		Align(lipgloss.Center)
+}
 
 type appTheme struct{}
 

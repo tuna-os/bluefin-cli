@@ -350,7 +350,7 @@ func advancedMenuScreen() app.Screen {
 				if next != "auto" {
 					theme.Flavor = next
 				}
-				theme.DefaultTheme = theme.Resolve(theme.DefaultTheme.IsDark)
+				tui.ApplyTheme(theme.Resolve(theme.DefaultTheme.IsDark))
 				return app.ToastMsg{Text: "Flavor: " + next}
 			}, app.ReloadTop())
 		}

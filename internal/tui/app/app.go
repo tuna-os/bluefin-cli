@@ -15,6 +15,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	colorful "github.com/lucasb-eyer/go-colorful"
+	"github.com/tuna-os/bluefin-cli/internal/tui"
 	"github.com/tuna-os/bluefin-cli/internal/tui/theme"
 )
 
@@ -144,7 +145,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.BackgroundColorMsg:
 		m.theme = theme.Resolve(isDarkColor(msg))
-		theme.DefaultTheme = m.theme
+		tui.ApplyTheme(m.theme)
 		return m, nil
 
 	case dinoTickMsg:
