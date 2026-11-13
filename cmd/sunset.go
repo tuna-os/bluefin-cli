@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 
 	"charm.land/huh/v2"
 	"github.com/spf13/cobra"
 	"github.com/tuna-os/bluefin-cli/internal/env"
 	"github.com/tuna-os/bluefin-cli/internal/sunset"
 	"github.com/tuna-os/bluefin-cli/internal/tui"
+	"github.com/tuna-os/bluefin-cli/internal/wallpaper"
 )
 
 var (
@@ -116,12 +118,7 @@ func RunSunsetSetupFlow() error {
 				}),
 			huh.NewSelect[string]().
 				Title("Choose a wallpaper theme").
-				Options(
-					huh.NewOption("Bluefin", "bluefin"),
-					huh.NewOption("Aurora", "aurora"),
-					huh.NewOption("Bazzite", "bazzite"),
-					huh.NewOption("None (Keep current)", ""),
-				).
+				Options(wallpaperThemeOptions()...).
 				Value(&themeChoice),
 		),
 	).WithTheme(tui.AppTheme).WithKeyMap(tui.MenuKeyMap())
@@ -185,6 +182,25 @@ func init() {
 	sunsetCmd.Flags().Float64Var(&lon, "longitude", 0, "Longitude for solar calculations")
 	sunsetCmd.Flags().StringVar(&dayWall, "day-wallpaper", "", "Path to the day wallpaper image")
 	sunsetCmd.Flags().StringVar(&nightWall, "night-wallpaper", "", "Path to the night wallpaper image")
-	sunsetCmd.Flags().StringVar(&wallTheme, "wallpaper-theme", "", "Theme for monthly wallpapers (bluefin, aurora, bazzite)")
+	sunsetCmd.Flags().StringVar(&wallTheme, "wallpaper-theme", "", "Theme for monthly wallpapers ("+strings.Join(wallpaperThemeIDs(), ", ")+")")
 	sunsetCmd.Flags().BoolVar(&enable, "enable", false, "Enable or disable sunset switching")
+}
+
+// wallpaperThemeOptions lists the installable wallpaper collections for the
+// sunset theme pickers, followed by the option to keep the current wallpaper.
+func wallpaperThemeOptions() []huh.Option[string] {
+	opts := make([]huh.Option[string], 0, len(wallpaper.Collections)+1)
+	for _, c := range wallpaper.Collections {
+		opts = append(opts, huh.NewOption(c.Name, c.ID))
+	}
+	return append(opts, huh.NewOption("None (Keep current)", ""))
+}
+
+// wallpaperThemeIDs lists the values --wallpaper-theme accepts.
+func wallpaperThemeIDs() []string {
+	ids := make([]string, 0, len(wallpaper.Collections))
+	for _, c := range wallpaper.Collections {
+		ids = append(ids, c.ID)
+	}
+	return ids
 }

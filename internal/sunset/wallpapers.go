@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/tuna-os/bluefin-cli/internal/wallpaper"
 )
 
 var (
@@ -14,7 +16,7 @@ var (
 )
 
 // GetMonthlyWallpaper returns the path to the wallpaper for the current month and state.
-// theme: "Bluefin", "Aurora", "Bazzite"
+// theme: a wallpaper.Collections ID or display name (matched case-insensitively)
 // isDay: true for day, false for night
 func GetMonthlyWallpaper(theme string, isDay bool) (string, error) {
 	if theme == "" {
@@ -26,8 +28,7 @@ func GetMonthlyWallpaper(theme string, isDay bool) (string, error) {
 		return "", fmt.Errorf("failed to get home directory: %w", err)
 	}
 
-	// BluefinCLI wallpapers are stored in ~/Pictures/BluefinCLI/<theme>
-	wallpaperDir := filepath.Join(home, "Pictures", "BluefinCLI", strings.ToLower(theme))
+	wallpaperDir := wallpaper.CollectionDir(home, theme)
 
 	if _, err := os.Stat(wallpaperDir); os.IsNotExist(err) {
 		return "", fmt.Errorf("wallpaper directory not found: %s", wallpaperDir)
