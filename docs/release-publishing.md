@@ -66,7 +66,7 @@ Status as of 2026-10-17:
 | GitHub archives and one-line installers | Supported | Every stable release; archives are covered by `checksums.txt`. |
 | GitHub deb and rpm assets | Supported | Every stable release; direct packages only, not a distro repository. |
 | `ublue-os/homebrew-experimental-tap` | Preview | Source formula is synchronized manually and may lag. |
-| `tuna-os/homebrew-tap` | Unavailable | Publisher is configured but skipped until `HOMEBREW_TAP_TOKEN` is installed and publication is verified. |
+| `tuna-os/homebrew-tap` | Unavailable | Publisher is configured with the `HOMEBREW_TAP_SSH_KEY` deploy key; publication is not verified yet. |
 | Winget (`Hanthor.BluefinCLI`) | Preview | Installable v0.8.1 is stale; normal publication is disabled pending token repair, with a manual resubmission workflow available. |
 | `tuna-os/scoop-bucket` | Unavailable | Publisher is configured but skipped until `SCOOP_BUCKET_TOKEN` is installed and publication is verified. |
 | Chocolatey | Unavailable | No package is published; the release invocation explicitly skips this publisher. |
@@ -101,10 +101,10 @@ GoReleaser configuration, forks, or documentation.
 
 ### Homebrew
 
-Create a fine-grained GitHub token. Restrict it to `tuna-os/homebrew-tap` with
-`Contents: Read and write`, then store it in this repository as
-`HOMEBREW_TAP_TOKEN`. The token's account must be able to push to the tap's
-`main` branch. A successful publication writes `Formula/bluefin-cli.rb`.
+Create an SSH key pair. Add the public key to `tuna-os/homebrew-tap` as a
+deploy key with write access. Store the private key in this repository as
+`HOMEBREW_TAP_SSH_KEY`. GoReleaser uses it to push over SSH to the tap's `main`
+branch. A successful publication writes `Formula/bluefin-cli.rb`.
 
 ### Scoop
 

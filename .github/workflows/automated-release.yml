@@ -54,7 +54,7 @@ jobs:
           # Use a PAT if you want to trigger other workflows or if you need to bypass branch protection
           # GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           WINGET_TOKEN: ${{ secrets.WINGET_CREATE_GITHUB_TOKEN }}
-          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          HOMEBREW_TAP_SSH_KEY: ${{ secrets.HOMEBREW_TAP_SSH_KEY }}
           SCOOP_BUCKET_TOKEN: ${{ secrets.SCOOP_BUCKET_TOKEN }}
           AUR_KEY: ${{ secrets.AUR_KEY }}
         run: npx semantic-release
