@@ -347,7 +347,7 @@ Non-interactive wallpaper flags:
 - `--yes`: Skip the prompt and run `bluefin-cli sunset setup` after the install.
 
 Both flags apply on WSL and Windows only. There, an install that names casks
-offers to set up solar-based theme and wallpaper switching. `bluefin-cli sunset setup` runs the
+offers to set up theme and wallpaper changes that follow the sun. `bluefin-cli sunset setup` runs the
 same setup at any time; see the [`sunset` reference](docs/commands/bluefin-cli_sunset.md).
 
 #### Starship Themes
