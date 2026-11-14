@@ -37,7 +37,8 @@ GitHub Releases is the source distribution channel. A complete release contains:
 - `checksums.txt` with a SHA-256 digest for every published artifact;
 - release notes from commits that meet release rules.
 
-The Unix installer uses `checksums.txt` to reject archives that do not match it.
+The Unix and Windows installers use `checksums.txt` to reject archives that do
+not match it.
 The built-in self-update path uses `checksums.txt` to reject the same archives.
 Other consumers should compare the downloaded artifact's SHA-256 digest with its
 entry before installation.

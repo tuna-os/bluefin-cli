@@ -25,7 +25,9 @@ if ($env:BLUEFIN_CLI_VERSION) {
 $version = $tag.TrimStart("v")
 
 $binDir = if ($env:BLUEFIN_CLI_BIN_DIR) { $env:BLUEFIN_CLI_BIN_DIR } else { Join-Path $env:LOCALAPPDATA "Programs\BluefinCLI" }
-$url = "https://github.com/$repo/releases/download/$tag/${binary}_${version}_windows_${arch}.zip"
+$archive = "${binary}_${version}_windows_${arch}.zip"
+$url = "https://github.com/$repo/releases/download/$tag/$archive"
+$checksumUrl = "https://github.com/$repo/releases/download/$tag/checksums.txt"
 
 Write-Host "Downloading $binary $tag (windows/$arch)..."
 $tmp = Join-Path ([IO.Path]::GetTempPath()) ("bluefin-cli-install-" + [Guid]::NewGuid())
@@ -33,6 +35,33 @@ New-Item -ItemType Directory -Path $tmp -Force | Out-Null
 try {
     $zip = Join-Path $tmp "bluefin-cli.zip"
     Invoke-WebRequest -Uri $url -OutFile $zip
+
+    # Mirror install.sh: refuse to unpack an archive unless checksums.txt has a
+    # valid SHA-256 entry for it and the digest matches.
+    $checksums = Join-Path $tmp "checksums.txt"
+    try {
+        Invoke-WebRequest -Uri $checksumUrl -OutFile $checksums
+    } catch {
+        throw "could not download checksums for $archive"
+    }
+
+    $expectedSha = ""
+    foreach ($line in Get-Content -Path $checksums) {
+        $fields = $line.Trim() -split "\s+"
+        if ($fields.Count -ge 2 -and $fields[1] -eq $archive) {
+            $expectedSha = $fields[0]
+            break
+        }
+    }
+    if ($expectedSha -notmatch "^[0-9A-Fa-f]{64}$") {
+        throw "checksums.txt has no valid SHA-256 entry for $archive"
+    }
+
+    $actualSha = (Get-FileHash -Path $zip -Algorithm SHA256).Hash
+    if ($actualSha -ne $expectedSha) {
+        throw "checksum verification failed for $archive"
+    }
+
     Expand-Archive -Path $zip -DestinationPath $tmp -Force
 
     $exe = Join-Path $tmp "$binary.exe"
