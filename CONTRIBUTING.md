@@ -18,7 +18,7 @@ Never post account credentials or API keys in issues or pull requests.
 ## Getting Started
 
 1. Fork the repo and clone it locally.
-2. Install Go 1.26.0 or later (see the `go` directive in `go.mod`) and
+2. Install Go 1.26.7 or later (see the `go` directive in `go.mod`) and
    [`just`](https://just.systems/). Install
    Podman if you want to use the container-based recipes.
 3. Open an issue to discuss your change before you submit a PR.
