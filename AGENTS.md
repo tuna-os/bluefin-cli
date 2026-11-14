@@ -45,7 +45,7 @@ The repository produces two binaries from the same source:
 
 ## Development workflow
 
-The module needs Go 1.26.0 or later -- the `go` directive in `go.mod` is the
+The module needs Go 1.26.7 or later -- the `go` directive in `go.mod` is the
 source of truth for this number. CI now runs Go 1.27.
 
 ```bash

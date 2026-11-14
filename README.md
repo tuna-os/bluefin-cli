@@ -155,7 +155,7 @@ go install github.com/tuna-os/bluefin-cli@latest
 ### Build from Source (Any OS)
 
 **Prerequisites:**
-- Go 1.26.0 or later
+- Go 1.26.7 or later
 
 ```bash
 git clone https://github.com/tuna-os/bluefin-cli.git
@@ -455,7 +455,7 @@ This project consolidates and modernizes functionality from:
 
 ### Prerequisites
 
-- Go 1.26.0 or later, matching the `go` directive in `go.mod` (the CI jobs validate with Go 1.27)
+- Go 1.26.7 or later, matching the `go` directive in `go.mod` (the CI jobs validate with Go 1.27)
 - Podman (for container tests)
 - `just` (to run recipes)
 
