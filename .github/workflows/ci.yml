@@ -60,13 +60,22 @@ jobs:
     - name: Run unit tests
       run: go test ${{ matrix.tags && format('-tags {0}', matrix.tags) || '' }} -v -race -coverprofile=coverage.txt -covermode=atomic ./...
       
+    - name: Coverage summary
+      if: ${{ !cancelled() && hashFiles('coverage.txt') != '' }}
+      run: |
+        {
+          echo "### Coverage (${{ matrix.variant }})"
+          echo
+          go tool cover -func=coverage.txt | tail -1
+        } >> "$GITHUB_STEP_SUMMARY"
+
     - name: Upload coverage
       uses: codecov/codecov-action@v7.1.1
       with:
         files: ./coverage.txt
         flags: ${{ matrix.variant }}
         token: ${{ secrets.CODECOV_TOKEN }}
-        fail_ci_if_error: false
+        fail_ci_if_error: ${{ secrets.CODECOV_TOKEN != '' }}
 
   tui-smoke:
     name: TUI Smoke (tmux)
