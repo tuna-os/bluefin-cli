@@ -38,10 +38,18 @@ go test ./...
 go test -tags extra -race ./...
 ```
 
-Run the lint checks required by CI:
+Run the lint check that CI runs. You need golangci-lint version 2, because
+`.golangci.yml` uses the version 2 format. To install it, see the
+[golangci-lint install guide](https://golangci-lint.run/docs/welcome/install/).
+Then run this command from the repository root:
+
 ```bash
-just lint
+golangci-lint run
 ```
+
+Do not use `just lint` for this check. The development container does not
+include golangci-lint, so the recipe skips the check and exits with 0.
+
 For the containerized integration suite, run:
 
 ```bash
