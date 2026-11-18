@@ -118,9 +118,18 @@ Create a fine-grained GitHub token. Restrict it to `tuna-os/scoop-bucket` with
 
 `WINGET_CREATE_GITHUB_TOKEN` must be a classic GitHub token with `public_repo`
 scope. A fine-grained token cannot open the required pull request against
-`microsoft/winget-pkgs`. Automated releases now skip Winget. After you repair
-the token, use `.github/workflows/winget.yml` to resubmit an existing tag.
-Verify the package. Then remove the release skip.
+`microsoft/winget-pkgs`. Automated releases now skip Winget, and the
+`Semantic Release` step in `.github/workflows/automated-release.yml` does not
+get the token. After you repair the token, use `.github/workflows/winget.yml`
+to resubmit an existing tag. Verify the package. Then make these two changes
+in one pull request:
+
+1. Remove `--skip=winget` from `publishCmd` in `.releaserc.json`.
+2. Add `WINGET_TOKEN: ${{ secrets.WINGET_CREATE_GITHUB_TOKEN }}` to the `env`
+   of the `Semantic Release` step.
+
+If you make only the first change, GoReleaser skips Winget and shows no error.
+Its `winget` publisher uploads only when `WINGET_TOKEN` is set.
 
 ### AUR
 
