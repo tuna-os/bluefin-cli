@@ -19,9 +19,25 @@ type Action struct {
 var registry []Action
 
 // Register adds actions to the global registry. Called from init-time wiring
-// in cmd; the extra build variant registers additional actions.
+// in cmd; the extra build variant registers additional actions. It panics on
+// an empty ID, a nil Do callback, or an ID that is already registered: these
+// are programmer errors and would otherwise surface as a dead or shadowed
+// palette entry.
 func Register(actions ...Action) {
-	registry = append(registry, actions...)
+	for _, a := range actions {
+		if a.ID == "" {
+			panic("app: Register: action with empty ID")
+		}
+		if a.Do == nil {
+			panic("app: Register: action " + a.ID + " has nil Do")
+		}
+		for _, r := range registry {
+			if r.ID == a.ID {
+				panic("app: Register: duplicate action ID " + a.ID)
+			}
+		}
+		registry = append(registry, a)
+	}
 }
 
 // Actions returns the currently-available registered actions.
