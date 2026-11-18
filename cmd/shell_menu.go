@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"runtime"
 
 	tea "charm.land/bubbletea/v2"
@@ -14,15 +12,9 @@ import (
 	"github.com/tuna-os/bluefin-cli/internal/tui/app"
 )
 
+// currentShellName is the login shell; see shell.LoginName.
 func currentShellName() string {
-	name := filepath.Base(os.Getenv("SHELL"))
-	if name == "" || name == "." {
-		if env.IsWindows() {
-			return "powershell"
-		}
-		return "bash"
-	}
-	return name
+	return shell.LoginName()
 }
 
 // runWithHomebrew runs task in a RunnerScreen, first settling the question of
