@@ -3,6 +3,7 @@ package doctor
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 )
 
 // CommandExists checks if the specified binary is executable on PATH.
@@ -67,17 +68,20 @@ func CheckShellIntegration(opts Options) CheckResult {
 	}
 }
 
-// CheckTools checks whether eza, fzf, starship are installed.
+// essentialTools are the managed tools doctor probes for and --fix installs.
+var essentialTools = []string{"eza", "fzf", "starship"}
+
+// CheckTools checks whether the essential managed tools are installed.
 func CheckTools(opts Options) CheckResult {
 	o := opts.withDefaults()
 	missing := []string{}
-	for _, tool := range []string{"eza", "fzf", "starship"} {
+	for _, tool := range essentialTools {
 		if _, err := o.LookPath(tool); err != nil {
 			missing = append(missing, tool)
 		}
 	}
 	if len(missing) == 0 {
-		return CheckResult{OK: true, Name: "Managed tools installed (eza, fzf, starship)"}
+		return CheckResult{OK: true, Name: fmt.Sprintf("Managed tools installed (%s)", strings.Join(essentialTools, ", "))}
 	}
 	return CheckResult{
 		Name: "Managed tools installed",

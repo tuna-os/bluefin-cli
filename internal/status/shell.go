@@ -1,12 +1,8 @@
 package status
 
 import (
-	"context"
-	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"charm.land/lipgloss/v2"
 	"github.com/tuna-os/bluefin-cli/internal/env"
@@ -45,20 +41,8 @@ func getShellInfo() shellInfo {
 	defaultShellPath := os.Getenv("SHELL")
 	defaultShell := filepath.Base(defaultShellPath)
 
-	// Get current shell (heuristic using parent process)
-	// We use `ps -p $PPID -o comm=` to get the command name of the parent process
-	var currentShell string
-	if ppid := os.Getppid(); ppid > 0 {
-		ctx, cancel := context.WithTimeout(context.Background(), commandTimeout)
-		defer cancel()
-		cmd := exec.CommandContext(ctx, "ps", "-p", fmt.Sprintf("%d", ppid), "-o", "comm=")
-		if out, err := cmd.Output(); err == nil {
-			comm := strings.TrimSpace(string(out))
-			// Handle e.g. /bin/zsh or -zsh
-			comm = strings.TrimPrefix(comm, "-")
-			currentShell = filepath.Base(comm)
-		}
-	}
+	// Get current shell: the parent process, which may differ from $SHELL.
+	currentShell := shell.RunningName()
 
 	return shellInfo{
 		shellStatus:  shellStatus,

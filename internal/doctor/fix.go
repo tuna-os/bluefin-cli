@@ -67,7 +67,7 @@ func RunFixes(opts FixOptions) {
 		_, _ = fmt.Fprintln(o.Output, "fix: setting up coldbrew")
 		_ = o.EnsureColdbrew()
 	}
-	for _, tool := range []string{"eza", "fzf", "starship"} {
+	for _, tool := range essentialTools {
 		if !o.CommandExists(tool) {
 			_, _ = fmt.Fprintln(o.Output, "fix: installing "+tool)
 			if err := o.EnsureInstalled(tool); err != nil {
