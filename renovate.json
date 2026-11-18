@@ -32,6 +32,16 @@
       ],
       "automerge": false,
       "enabled": false
+    },
+    {
+      "description": "semantic-release 26 requires Node >=26.13 but the ubuntu-26.04 runner ships Node 24 and automated-release.yml has no setup-node step (#507). Hold at 25.x; remove once the workflow provisions Node >=26.13.",
+      "matchManagers": [
+        "npm"
+      ],
+      "matchPackageNames": [
+        "semantic-release"
+      ],
+      "allowedVersions": "<26"
     }
   ]
 }
