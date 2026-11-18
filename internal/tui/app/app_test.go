@@ -160,6 +160,32 @@ func TestPaletteOpensFromRegistry(t *testing.T) {
 	}
 }
 
+func TestRegisterRejectsInvalidActions(t *testing.T) {
+	registry = nil
+	t.Cleanup(func() { registry = nil })
+	do := func() tea.Cmd { return nil }
+	Register(Action{ID: "ok", Do: do})
+
+	cases := map[string]Action{
+		"empty id":     {Do: do},
+		"nil callback": {ID: "nodo"},
+		"duplicate id": {ID: "ok", Do: do},
+	}
+	for name, a := range cases {
+		func() {
+			defer func() {
+				if recover() == nil {
+					t.Errorf("%s: Register did not panic", name)
+				}
+			}()
+			Register(a)
+		}()
+	}
+	if len(registry) != 1 {
+		t.Errorf("registry has %d entries, want 1", len(registry))
+	}
+}
+
 func TestQuitAtRootViaEscape(t *testing.T) {
 	tm := teatest.NewTestModel(t, New(testTree()), teatest.WithInitialTermSize(80, 24))
 	tm.Send(special(tea.KeyEscape)) // pop at root quits the program
