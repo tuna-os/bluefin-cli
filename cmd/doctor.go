@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tuna-os/bluefin-cli/internal/doctor"
 	doctorrender "github.com/tuna-os/bluefin-cli/internal/doctor/render"
+	"github.com/tuna-os/bluefin-cli/internal/shell"
 	"github.com/tuna-os/bluefin-cli/internal/tui/app"
 )
 
@@ -40,7 +41,7 @@ func init() {
 
 func defaultDoctorOptions() doctor.Options {
 	return doctor.Options{
-		CurrentShell: currentShellName(),
+		CurrentShell: shell.ActiveName(),
 		Version:      version,
 	}
 }
@@ -49,7 +50,7 @@ func defaultDoctorOptions() doctor.Options {
 // enabling shell integration and installing missing managed tools.
 func runDoctorFixes() {
 	doctor.RunFixes(doctor.FixOptions{
-		CurrentShell: currentShellName(),
+		CurrentShell: shell.ActiveName(),
 	})
 }
 
@@ -57,7 +58,7 @@ func runDoctorFixes() {
 // against a bare --norc baseline.
 func runBench() error {
 	res, err := doctor.RunBench(doctor.BenchOptions{
-		Shell: currentShellName(),
+		Shell: shell.ActiveName(),
 	})
 	if err != nil {
 		return err

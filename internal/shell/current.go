@@ -59,3 +59,17 @@ func processShellName(comm string) string {
 	}
 	return filepath.Base(comm)
 }
+
+// ActiveName returns the shell the user is actually in: the running shell
+// when it is a managed shell, otherwise the login shell. This is the rule
+// status uses for its "current" marker; doctor acts on the same shell.
+func ActiveName() string {
+	return pickActiveName(RunningName(), LoginName())
+}
+
+func pickActiveName(running, login string) string {
+	if _, ok := LookupShell(running); ok || isPowerShellShell(running) {
+		return NormalizeShell(running)
+	}
+	return login
+}
