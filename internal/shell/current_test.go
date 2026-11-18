@@ -44,3 +44,17 @@ func TestProcessShellName(t *testing.T) {
 		}
 	}
 }
+
+func TestPickActiveName(t *testing.T) {
+	cases := []struct{ running, login, want string }{
+		{"fish", "bash", "fish"},
+		{"pwsh", "bash", "powershell"},
+		{"", "bash", "bash"},
+		{"sudo", "zsh", "zsh"},
+	}
+	for _, c := range cases {
+		if got := pickActiveName(c.running, c.login); got != c.want {
+			t.Errorf("pickActiveName(%q, %q) = %q, want %q", c.running, c.login, got, c.want)
+		}
+	}
+}

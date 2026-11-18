@@ -78,7 +78,7 @@ These are read directly in Go code and are not part of the Viper config:
 | `BLUEFIN_DISABLE_COUNTME` | Set to any non-empty value to opt out of the anonymous countme usage ping ([`internal/countme/countme.go`](../internal/countme/countme.go)). |
 | `WSL_DISTRO_NAME`, `WSL_INTEROP` | Used (alongside `/proc` markers) to detect WSL; affects Windows-specific install paths. |
 | `LOCALAPPDATA` | Used on Windows to locate per-user app data for terminal/font registration. |
-| `SHELL` | Used to detect your current shell for `bluefin-cli status` and the shell-integration menu. |
+| `SHELL` | Your login shell. Marks the default shell in `bluefin-cli status` and selects the shell for the shell-integration menu and profiles. `status`, `doctor` and `doctor --fix` act on the shell you are running (the parent process), falling back to `SHELL` when that cannot be determined. |
 | `XDG_CURRENT_DESKTOP` | Consulted by the installer to tailor desktop-specific install steps on Linux. |
 
 ### XDG Base Directory support
