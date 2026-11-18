@@ -68,7 +68,7 @@ func ActiveName() string {
 }
 
 func pickActiveName(running, login string) string {
-	if _, ok := LookupShell(running); ok {
+	if _, ok := LookupShell(running); ok || isPowerShellShell(running) {
 		return NormalizeShell(running)
 	}
 	return login
