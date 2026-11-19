@@ -1,8 +1,8 @@
 # Developer guide: code organization
 
 This guide maps the repository so you can find where a change belongs. For
-build, test, and lint commands, see [CONTRIBUTING.md](../CONTRIBUTING.md). For
-the test layers, see [testing.md](testing.md). For architecture rules that
+build, test, and lint commands, see [`CONTRIBUTING.md`](../CONTRIBUTING.md). For
+the test layers, see [`testing.md`](testing.md). For architecture rules that
 reviewers enforce, see [AGENTS.md](../AGENTS.md).
 
 ## Top-level layout
@@ -28,7 +28,7 @@ The repository builds two binaries from one source tree: `bluefin-cli`
 
 Each file registers a Cobra command on the root command in `cmd/root.go`
 (for example `doctor.go`, `install.go`, `shell.go`, `profile.go`, `update.go`).
-Keep argument parsing and wiring here. Put reusable behavior in `internal/`.
+Keep argument parse and wiring code here. Put reusable behavior in `internal/`.
 
 The `menu*.go`, `shell_menu.go`, and `install_menu.go` files assemble the
 interactive menu:
@@ -47,7 +47,7 @@ interactive menu:
 Features that only ship in the plus build (wallpapers, fonts, sunset) sit
 behind the `extra` build tag. Files marked `//go:build extra` hold the real
 code. `cmd/extra_stubs.go` (`//go:build !extra`) supplies no-op stand-ins so
-the standard build compiles. After touching a conditional feature, check both
+the standard build compiles. After you change a conditional feature, check both
 builds. `cmd/variant_contract_test.go` and the `*_extra_test.go` files cover
 this split.
 
@@ -79,7 +79,7 @@ this split.
   `Update`, `View`, and `KeyHints`.
 - Screen types: `MenuScreen` (`menu.go`), `FormScreen` (`form.go`),
   `TextScreen` (`text.go`), and `RunnerScreen` (`runner.go`) for captured
-  task output. `wallpaper_picker.go`, `game.go`, and `dino.go` are specialized
+  task output. `wallpaper_picker.go`, `game.go`, and `dino.go` hold special
   screens and art.
 - An `Action` (`action.go`) is a registered capability. Menus and the
   `ctrl+p` command palette read the same registry, so each action is
@@ -93,9 +93,10 @@ this split.
   syntax flavor. Add a shell there.
 - `resources/` holds the init scripts (`shell.sh`, `shell.fish`, `shell.nu`,
   `shell.ps1`). `nu_aliases.go` generates the Nushell aliases.
-- Installation backends are separate from rendering: `installers.go` (shared
-  entry points and Homebrew), `windows_tools.go` (winget), `install_alpine.go`
-  (coldbrew/apk). `shell.go` keeps enablement, init rendering, and status.
+- Installation backends are separate from the shell init code: `installers.go`
+  (shared entry points and Homebrew), `windows_tools.go` (winget),
+  `install_alpine.go` (coldbrew/apk). `shell.go` keeps enablement, the init
+  output, and status.
 
 ### Embedded resources (`internal/install/resources`)
 
@@ -117,10 +118,11 @@ them by hand.
 - **Add a command.** Create `cmd/<name>.go`, register it with
   `rootCmd.AddCommand` in `init`, put the logic in `internal/`, then run
   `just gen-docs` to regenerate `docs/commands/`. CI fails on a stale diff.
-- **Add a TUI destination.** Implement `app.Screen` or register an
-  `app.Action`. Reuse `RunnerScreen` for output-producing tasks.
+- **Add a TUI destination.** Make a type that satisfies `app.Screen`, or
+  register an `app.Action`. Reuse `RunnerScreen` for tasks that show command
+  output.
 - **Fix or extend shell integration.** Start in `internal/shell`
-  (`shells.go`, `resources/`), and see the scoping rules in
+  (`shells.go`, `resources/`), and see the scope rules in
   [AGENTS.md](../AGENTS.md).
 - **Add a package or bundle.** Update the embedded resources with
   `just update-resources`. See [brewfile-guide.md](brewfile-guide.md).
@@ -138,4 +140,4 @@ them by hand.
 - `scripts/` holds the shell suites: `tui-smoke.sh`, `tui-state.sh`, and
   `shell-experience.sh`.
 
-See [testing.md](testing.md) for how to run each layer and add tests.
+See [`testing.md`](testing.md) for how to run each layer and add tests.
