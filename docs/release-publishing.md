@@ -60,14 +60,14 @@ Channel states mean:
 - **Unavailable**: not an advertised installation path, even when publisher
   configuration exists in the repository.
 
-Status as of 2026-10-17:
+Status as of 2026-10-17, with the `tuna-os/homebrew-tap` row updated 2026-11-19:
 
 | Channel | State | Contract |
 |---|---|---|
 | GitHub archives and one-line installers | Supported | Every stable release; archives are covered by `checksums.txt`. |
 | GitHub deb and rpm assets | Supported | Every stable release; direct packages only, not a distro repository. |
 | `ublue-os/homebrew-experimental-tap` | Preview | Source formula is synchronized manually and may lag. |
-| `tuna-os/homebrew-tap` | Unavailable | Publisher is configured with the `HOMEBREW_TAP_SSH_KEY` deploy key; publication is not verified yet. |
+| `tuna-os/homebrew-tap` | Preview | GoReleaser publishes the binary formula with the `HOMEBREW_TAP_SSH_KEY` deploy key on each release (each release since v0.11.17); no install check is recorded yet. |
 | Winget (`Hanthor.BluefinCLI`) | Preview | Installable v0.8.1 is stale; normal publication is disabled pending token repair, with a manual resubmission workflow available. |
 | `tuna-os/scoop-bucket` | Unavailable | Publisher is configured but skipped until `SCOOP_BUCKET_TOKEN` is installed and publication is verified. |
 | Chocolatey | Unavailable | No package is published; the release invocation explicitly skips this publisher. |
