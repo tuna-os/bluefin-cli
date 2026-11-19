@@ -36,10 +36,14 @@ Never post account credentials or API keys in issues or pull requests.
 
 ## 🚀 Installation
 
-> **Status (2026-10-07):** each release ships prebuilt binary assets:
-> tarballs for Linux, macOS and Windows, plus native deb and rpm packages.
-> The one-liner scripts and direct downloads below work today. A note
-> marks each package-manager path that does not work yet.
+> **Status (2026-11-19):** each release ships prebuilt binary assets:
+> archives for Linux, macOS and Windows, plus native deb and rpm packages
+> (see `.goreleaser.yaml`). The latest tag in the repository is v0.11.23; the
+> [releases page](https://github.com/tuna-os/bluefin-cli/releases/latest) is
+> authoritative for the current version. Package-manager channels depend on
+> external registries that this repository cannot check. Their states come
+> from [`docs/release-publishing.md`](docs/release-publishing.md), last
+> recorded 2026-10-17, and a note marks each path that is not available.
 
 ### One-liner (Linux / macOS)
 
@@ -49,8 +53,8 @@ For more Linux and macOS steps, see the [Linux Setup Guide](docs/setup-linux.md)
 curl -fsSL https://raw.githubusercontent.com/tuna-os/bluefin-cli/main/install.sh | sh
 ```
 
-> **Status (2026-10-07):** the script downloads the binary from GitHub release
-> assets, published on every release since v0.10.6.
+> **Status (2026-11-19):** the script downloads the binary from GitHub release
+> assets. Releases have published these assets since v0.10.6.
 
 ### One-liner (Windows PowerShell)
 
@@ -66,9 +70,9 @@ Then enable shell integration:
 bluefin-cli shell powershell on
 ```
 
-> **Status (2026-10-07):** same as the Linux/macOS one-liner — the script
-> downloads from GitHub release assets, published on every release since
-> v0.10.6.
+> **Status (2026-11-19):** same as the Linux/macOS one-liner — the script
+> downloads from GitHub release assets. Releases have published these assets
+> since v0.10.6.
 
 ### Homebrew (Linux / macOS)
 
@@ -81,7 +85,7 @@ brew tap ublue-os/homebrew-experimental-tap
 brew install bluefin-cli
 ```
 
-> **Status (2026-10-17):** use `ublue-os/homebrew-experimental-tap` above.
+> **Status (last recorded 2026-10-17; not re-verified):** use `ublue-os/homebrew-experimental-tap` above.
 > The primary tap [`tuna-os/homebrew-tap`](https://github.com/tuna-os/homebrew-tap)
 > is not available yet. The GoReleaser configuration includes the Homebrew
 > publisher. It pushes to the tap with the `HOMEBREW_TAP_SSH_KEY` deploy key,
@@ -97,11 +101,13 @@ brew install bluefin-cli
 winget install --id Hanthor.BluefinCLI --exact
 ```
 
-> **Status (2026-10-07):** the winget repository has `Hanthor.BluefinCLI`
-> **v0.8.1** (microsoft/winget-pkgs#407090). That version predates the
-> current v0.11.x release line — **installable, though not current**. A
-> newer manifest awaits review; `.github/workflows/winget.yml` is the manual
-> fallback to resubmit one.
+> **Status (last recorded 2026-10-17; not re-verified):** the winget
+> repository had `Hanthor.BluefinCLI` **v0.8.1** (microsoft/winget-pkgs#407090).
+> That version predates the current v0.11.x release line — **installable,
+> though not current**. Check the
+> [winget-pkgs listing](https://github.com/microsoft/winget-pkgs/tree/master/manifests/h/Hanthor/BluefinCLI)
+> for the live version. `.github/workflows/winget.yml` is the manual fallback
+> to resubmit one.
 
 ### Chocolatey (Windows)
 
@@ -109,8 +115,9 @@ winget install --id Hanthor.BluefinCLI --exact
 choco install bluefin-cli
 ```
 
-> **Status (2026-10-07):** the Chocolatey community repository has no
-> `bluefin-cli` package yet — **not available**.
+> **Status (last recorded 2026-10-17; not re-verified):** no `bluefin-cli`
+> package was in the Chocolatey community repository — **not available**.
+> The release invocation skips this publisher.
 
 ### Scoop (Windows)
 
@@ -119,7 +126,7 @@ scoop bucket add tuna-os https://github.com/tuna-os/scoop-bucket
 scoop install bluefin-cli
 ```
 
-> **Status (2026-10-07):** still not published — `tuna-os/scoop-bucket`
+> **Status (last recorded 2026-10-17; not re-verified):** not published — `tuna-os/scoop-bucket`
 > ships no manifests at all. Like the Homebrew tap above, GoReleaser skips
 > the Scoop publisher because no one has set the `SCOOP_BUCKET_TOKEN`
 > repository secret; see
@@ -143,8 +150,8 @@ sudo rpm -i bluefin-cli_<version>_linux_amd64.rpm
 yay -S bluefin-cli-bin
 ```
 
-> **Status (2026-10-07):** no `bluefin-cli-bin` package exists in the AUR yet
-> — **not available**.
+> **Status (last recorded 2026-10-17; not re-verified):** no
+> `bluefin-cli-bin` package existed in the AUR — **not available**.
 
 ### Go Install
 
