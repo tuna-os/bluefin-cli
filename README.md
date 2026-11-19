@@ -426,8 +426,8 @@ grep    # ugrep (if installed)
   output, and fixes for common setup problems.
 - [`docs/testing.md`](docs/testing.md): how to run the TUI tests, the test
   layers, and how to add a test.
-- [`docs/development.md`](docs/development.md): how the code is organized and
-  where to start a change.
+- [`docs/development.md`](docs/development.md): where each part of the code
+  lives and where to start a change.
 
 Maintainers can find package-channel credentials and release checks in
 [release details](docs/release-publishing.md). The
