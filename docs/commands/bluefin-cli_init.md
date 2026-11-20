@@ -40,11 +40,13 @@ bluefin-cli init [bash|zsh|fish|ash|nu|powershell|pwsh] [flags]
       --atuin             Enable Atuin
       --bat               Enable Bat (default true)
       --carapace          Enable Carapace
+      --direnv            Enable Direnv
       --eza               Enable Eza (default true)
       --fzf               Enable Fzf (default true)
       --glow              Enable Glow (default true)
       --gsudo             Enable Gsudo (default true)
   -h, --help              help for init
+      --mise              Enable Mise
       --motd              Enable MOTD (default true)
       --starship          Enable Starship (default true)
       --ugrep             Enable Ugrep (default true)

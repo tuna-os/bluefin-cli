@@ -17,6 +17,9 @@ import (
 //go:embed resources/shell.sh
 var shellShScript string
 
+//go:embed resources/bash-preexec-rearm.sh
+var bashPreexecRearmScript string
+
 //go:embed resources/shell.fish
 var shellFishScript string
 

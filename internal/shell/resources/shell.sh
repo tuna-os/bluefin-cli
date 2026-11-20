@@ -26,6 +26,8 @@ SOURCED_BLUEFIN_SHELL=1
 
 # Default disabled tools
 : "${BLUEFIN_SHELL_ENABLE_CARAPACE:=0}"
+: "${BLUEFIN_SHELL_ENABLE_DIRENV:=0}"
+: "${BLUEFIN_SHELL_ENABLE_MISE:=0}"
 
 # eza
 # ls aliases
@@ -47,9 +49,16 @@ if [ "$BLUEFIN_SHELL_ENABLE_UGREP" -eq 1 ] && [ "$(command -v ug)" ]; then
     alias xzfgrep='ug -zF'
 fi
 
-# bat for cat
-if [ "$BLUEFIN_SHELL_ENABLE_BAT" -eq 1 ]; then
-    alias cat='bat --style=plain --pager=never' 2>/dev/null
+# bat for cat. Check the binary too: `cat` is the one alias a missing tool
+# must never break, and a cached init script can outlive an uninstalled bat.
+if [ "$BLUEFIN_SHELL_ENABLE_BAT" -eq 1 ] && [ "$(command -v bat)" ]; then
+    alias cat='bat --style=plain --pager=never'
+fi
+
+# open -> xdg-open, the macOS-style opener. Only where no `open` command
+# exists already: macOS has its own, and Debian's is an alternatives link.
+if [ "$(command -v xdg-open)" ] && [ ! -e /usr/bin/open ]; then
+    alias open='xdg-open >/dev/null 2>&1'
 fi
 
 HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-}"
@@ -125,6 +134,10 @@ if [ "${BLING_SHELL}" = "zsh" ]; then
     fi
 fi
 
+# direnv goes before bash-preexec: both write PROMPT_COMMAND, and direnv's hook
+# has to be in place first (https://github.com/rcaloras/bash-preexec/pull/143).
+[ "$BLUEFIN_SHELL_HAS_NATIVE_INIT" -eq 1 ] && [ "$BLUEFIN_SHELL_ENABLE_DIRENV" -eq 1 ] && [ "$(command -v direnv)" ] && eval "$(direnv hook ${BLING_SHELL})"
+
 if [ "${BLING_SHELL}" = "bash" ]; then
     [ -f "/etc/profile.d/bash-preexec.sh" ] && . "/etc/profile.d/bash-preexec.sh"
     [ -f "/usr/share/bash-prexec" ] && . "/usr/share/bash-prexec"
@@ -141,6 +154,15 @@ fi
 [ "$BLUEFIN_SHELL_ENABLE_ZOXIDE" -eq 1 ] && [ "$(command -v zoxide)" ] && eval "$(zoxide init ${ZOXIDE_TARGET} ${ZOXIDE_HOOK_ARGS})"
 
 [ "$BLUEFIN_SHELL_HAS_NATIVE_INIT" -eq 1 ] && [ "$BLUEFIN_SHELL_ENABLE_CARAPACE" -eq 1 ] && [ "$(command -v carapace)" ] && eval "$(carapace _carapace ${BLING_SHELL})"
+
+# mise: MISE_BASH_AUTO_ACTIVATE=0 or MISE_ZSH_AUTO_ACTIVATE=0 keeps it out of
+# that shell, as Universal Blue's bling.sh allowed.
+if [ "$BLUEFIN_SHELL_ENABLE_MISE" -eq 1 ] && [ "$(command -v mise)" ]; then
+    case "$BLING_SHELL" in
+        bash) [ "${MISE_BASH_AUTO_ACTIVATE:-1}" != 0 ] && eval "$(mise activate bash)" ;;
+        zsh) [ "${MISE_ZSH_AUTO_ACTIVATE:-1}" != 0 ] && eval "$(mise activate zsh)" ;;
+    esac
+fi
 
 if [ "$BLUEFIN_SHELL_ENABLE_MOTD" -eq 1 ] && [ -n "$PS1" ] && [ -t 1 ] && [ "$(command -v bluefin-cli)" ]; then
     bluefin-cli motd show

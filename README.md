@@ -274,6 +274,7 @@ Features:
 - **atuin**: Shell history sync
 - **starship**: Cross-shell prompt
 - **uutils**: Rust rewrite of coreutils
+- **direnv** and **mise**: hooked when installed (bash, zsh, fish)
 
 #### MOTD - Message of the Day
 

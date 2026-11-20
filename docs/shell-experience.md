@@ -99,7 +99,19 @@ only when its binary is on `PATH`.
 | Zoxide | Smarter `cd` | yes |
 | UutilsCoreutils, UutilsFindutils, UutilsDiffutils | Rust rewrites of GNU coreutils, findutils, diffutils | yes |
 | Carapace | Completion for many commands | no |
+| Direnv | Per-directory environment variables (bash, zsh, fish) | when installed |
+| Mise | Tool versions and environments (bash, zsh, fish); `MISE_<SHELL>_AUTO_ACTIVATE=0` opts a shell out | when installed |
 | Glow | Markdown renderer for the MOTD | yes |
+
+"When installed" tools are not installed by `shell <shell> on`; the init
+script hooks them once their binary is on `PATH`. On Linux, `open` is an
+alias for `xdg-open` where the system has no `open` command of its own.
+In bash, the init script keeps the bash-preexec `DEBUG` trap armed after other
+hooks rewrite `PROMPT_COMMAND`, so atuin keeps recording history.
+
+These are the hooks and aliases of Universal Blue's `bling.sh` and
+`bling.fish`, so turning on the shell experience replaces sourcing those
+files.
 
 The MOTD is also on by default and is configured separately with
 `bluefin-cli motd`.

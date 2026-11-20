@@ -84,5 +84,11 @@ var Tools = []Tool{
 	{Name: "UutilsFindutils", Description: "Rust rewrite of GNU findutils", Binary: "ufind", Pkg: "uutils-findutils", BrewPkg: "uutils-findutils", ApkPkg: "uutils-findutils", Default: true, UnsupportedShells: map[string]bool{"powershell": true}},
 	{Name: "UutilsDiffutils", Description: "Rust rewrite of GNU diffutils", Binary: "udiffutils", Pkg: "uutils-diffutils", BrewPkg: "uutils-diffutils", ApkPkg: "uutils-diffutils", Default: true, UnsupportedShells: map[string]bool{"powershell": true}},
 	{Name: "Carapace", Description: "Completion for many shells and commands", Binary: "carapace", Pkg: "rsteube.carapace", BrewPkg: "carapace", Default: false},
+	// Direnv and Mise are hooks, not aliases: off by default so `shell on`
+	// does not install them, and switched on by the init sync once their
+	// binary is on PATH -- the "hook it if it is there" behavior Universal
+	// Blue's bling.sh had.
+	{Name: "Direnv", Description: "Load and unload environment variables per directory", Binary: "direnv", Pkg: "direnv.direnv", BrewPkg: "direnv", ApkPkg: "direnv", Default: false, SupportedShells: map[string]bool{"bash": true, "zsh": true, "fish": true}},
+	{Name: "Mise", Description: "Polyglot tool version and environment manager", Binary: "mise", Pkg: "jdx.mise", BrewPkg: "mise", ApkPkg: "mise", Default: false, SupportedShells: map[string]bool{"bash": true, "zsh": true, "fish": true}},
 	{Name: "Glow", Description: "Terminal markdown renderer for MOTD", Binary: "glow", Pkg: "charmbracelet.glow", BrewPkg: "glow", Default: true},
 }
