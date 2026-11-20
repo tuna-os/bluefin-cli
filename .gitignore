@@ -44,3 +44,6 @@ hack/
 
 # Local scratch: test binaries and GOTMPDIR (see CLAUDE.md)
 tmp/
+
+# Vendored module archive written by scripts/vendor-archive.sh
+.release/

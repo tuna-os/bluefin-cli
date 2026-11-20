@@ -5,6 +5,9 @@ version: 2
 before:
   hooks:
     - go mod tidy
+    # The vendored module tree, for packagers who build from source offline.
+    # See scripts/vendor-archive.sh.
+    - ./scripts/vendor-archive.sh {{ .Version }}
 
 builds:
   - id: standard
@@ -73,6 +76,8 @@ nfpms:
 
 checksum:
   name_template: 'checksums.txt'
+  extra_files:
+    - glob: ./.release/bluefin-cli-{{ .Version }}-vendor.tar.gz
 
 snapshot:
   version_template: "{{ .Version }}-snapshot"
@@ -91,6 +96,8 @@ release:
   draft: false
   prerelease: auto
   name_template: "{{.Tag}}"
+  extra_files:
+    - glob: ./.release/bluefin-cli-{{ .Version }}-vendor.tar.gz
 
 # Binary formula published to the tuna-os tap on every release.
 # Requires the tuna-os/homebrew-tap repo to exist and a HOMEBREW_TAP_SSH_KEY
