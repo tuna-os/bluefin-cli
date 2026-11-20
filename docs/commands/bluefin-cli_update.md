@@ -6,8 +6,9 @@ Get the latest bluefin-cli release
 
 Check for and install the latest bluefin-cli release.
 
-Binaries from a package manager (Homebrew, Winget, Scoop) do not update themselves.
-This command shows the upgrade command to use.
+Binaries from a package manager (Homebrew, Winget, Scoop, or the deb and rpm
+packages in /usr/bin, including OS images that ship bluefin-cli) do not update
+themselves. This command shows the upgrade command to use.
 
 ```
 bluefin-cli update [flags]
