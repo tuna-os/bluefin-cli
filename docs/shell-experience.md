@@ -111,7 +111,10 @@ hooks rewrite `PROMPT_COMMAND`. This lets atuin save your history.
 
 These are the hooks and aliases of Universal Blue's `bling.sh` and
 `bling.fish`. When you enable the shell experience, you do not need to load
-those files.
+those files. `bluefin-cli shell <shell> on` and `off` both remove the block
+that `ublue-bling` wrote (`### bling.sh source start` to `end`). They also
+remove each line that loads `/usr/share/ublue-os/bling/bling.sh` or
+`bling.fish`.
 
 The MOTD is also on by default. Use `bluefin-cli motd` to configure it
 separately.
