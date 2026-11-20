@@ -170,8 +170,21 @@ func initCacheMtime(shell string) (time.Time, error) {
 	return info.ModTime(), nil
 }
 
-// loadInitCache returns the cached init script for shell if it's still fresh
-// (binary and config haven't changed since the cache was written).
+// Version is the running bluefin-cli release; cmd sets it at startup. The
+// init cache records it, because the binary's mtime cannot be trusted to move
+// on an update: image-based systems (bootc, ostree, composefs) ship every file
+// in /usr with the same fixed mtime, so a cache written under the old release
+// looks newer than the new binary forever.
+var Version = "dev"
+
+// initCacheHeader is the first line of a cache file: the release that wrote it.
+// A comment in every shell the cache serves.
+func initCacheHeader() string {
+	return "# bluefin-cli init cache " + Version + "\n"
+}
+
+// loadInitCache returns the cached init script for shell if it's still fresh:
+// written by this release, and newer than the binary and the shell config.
 func loadInitCache(shell string) (string, bool) {
 	cachePath, err := getInitCachePath(shell)
 	if err != nil {
@@ -203,10 +216,15 @@ func loadInitCache(shell string) (string, bool) {
 	if err != nil {
 		return "", false
 	}
-	return string(content), true
+	script, ok := strings.CutPrefix(string(content), initCacheHeader())
+	if !ok {
+		return "", false
+	}
+	return script, true
 }
 
-// saveInitCache writes the generated init script to a cache file.
+// saveInitCache writes the generated init script to a cache file, stamped
+// with the release that generated it.
 func saveInitCache(shell, script string) {
 	cachePath, err := getInitCachePath(shell)
 	if err != nil {
@@ -215,7 +233,7 @@ func saveInitCache(shell, script string) {
 	if err := os.MkdirAll(filepath.Dir(cachePath), 0755); err != nil {
 		return
 	}
-	_ = os.WriteFile(cachePath, []byte(script), 0644)
+	_ = os.WriteFile(cachePath, []byte(initCacheHeader()+script), 0644)
 }
 
 // getInitCachePath returns the path to the cached init script for a shell.
