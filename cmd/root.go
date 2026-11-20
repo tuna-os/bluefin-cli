@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tuna-os/bluefin-cli/internal/countme"
 	"github.com/tuna-os/bluefin-cli/internal/install"
+	"github.com/tuna-os/bluefin-cli/internal/shell"
 )
 
 var (
@@ -89,5 +90,6 @@ func initInstaller() {
 
 func init() {
 	rootCmd.SetVersionTemplate(fmt.Sprintf("bluefin-cli version %s\n", reportedVersion()))
+	shell.Version = reportedVersion()
 	initInstaller()
 }
