@@ -92,9 +92,9 @@ template that exists. The order is: template-file in motd.json,
 one. Tips come the same way from tips-directory, /etc/bluefin-cli/tips and
 /usr/share/bluefin-cli/tips.
 
-With --if-enabled it prints nothing when the MOTD is off
-('bluefin-cli motd toggle all off', or uwelcome's own switch), for login hooks
-that greet every terminal.`,
+With --if-enabled it prints nothing when the MOTD is off, for login hooks
+that greet every terminal. Turn the MOTD off with
+'bluefin-cli motd toggle all off' or with uwelcome's own switch.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if ifEnabled, _ := cmd.Flags().GetBool("if-enabled"); ifEnabled {
 			if motd.Uwelcome() {
