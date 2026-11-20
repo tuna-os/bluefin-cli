@@ -88,14 +88,13 @@ brew install tuna-os/tap/bluefin-cli
 > The [release policy](docs/release-publishing.md) keeps this channel at
 > **preview** until a maintainer records a `brew install` check.
 
-A source-build preview formula is also available from
-`ublue-os/homebrew-experimental-tap`. A maintainer syncs it by hand from
-[`contrib/homebrew/bluefin-cli.rb`](contrib/homebrew/bluefin-cli.rb), so it
-can lag behind the current release:
+`ublue-os/homebrew-experimental-tap` removed its `bluefin-cli` formula on
+2026-11-19. If you installed `bluefin-cli` from that tap, change to
+`tuna-os/tap`:
 
 ```bash
-brew tap ublue-os/homebrew-experimental-tap
-brew install bluefin-cli
+brew uninstall bluefin-cli
+brew install tuna-os/tap/bluefin-cli
 ```
 
 ### Winget (Windows)
@@ -191,10 +190,10 @@ skips that upload. See [release details](docs/release-publishing.md).
 Homebrew release process: when semantic-release finds that a merge to
 `main` warrants a release, it invokes GoReleaser. GoReleaser then sends the
 binary formula to `tuna-os/homebrew-tap` when `HOMEBREW_TAP_SSH_KEY` is set.
-For external taps that build from source, such as
-`ublue-os/homebrew-experimental-tap`, sync the tap by hand. Bump `url` and
-`sha256` in [`contrib/homebrew/bluefin-cli.rb`](contrib/homebrew/bluefin-cli.rb)
-and open a PR in that tap.
+No external tap builds `bluefin-cli` from source now.
+[`contrib/homebrew/bluefin-cli.rb`](contrib/homebrew/bluefin-cli.rb) is a
+source formula for a tap that builds from source. Bump its `url` and `sha256`
+before you copy it into such a tap.
 
 ## 📖 Usage
 

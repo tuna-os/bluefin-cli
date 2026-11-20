@@ -14,8 +14,8 @@ This guide shows how to install and set up `bluefin-cli` on Linux.
 - Homebrew on Linux:
 
   ```bash
-  brew tap ublue-os/homebrew-experimental-tap
-  brew install bluefin-cli
+  brew tap tuna-os/tap
+  brew install tuna-os/tap/bluefin-cli
   ```
 
 ## Alpine Linux and musl
