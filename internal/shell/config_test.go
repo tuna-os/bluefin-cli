@@ -82,8 +82,15 @@ func TestInitSyncSkipsOptInTools(t *testing.T) {
 
 	bin := t.TempDir()
 	for _, name := range []string{"atuin", "direnv", "ug"} {
+<<<<<<< Updated upstream
 		if runtime.GOOS == "windows" {
 			name += ".exe" // LookPath only finds PATHEXT extensions on Windows
+||||||| Stash base
+=======
+		// exec.LookPath on Windows only finds names with a PATHEXT suffix.
+		if runtime.GOOS == "windows" {
+			name += ".exe"
+>>>>>>> Stashed changes
 		}
 		if err := os.WriteFile(filepath.Join(bin, name), []byte("#!/bin/sh\n"), 0o755); err != nil {
 			t.Fatal(err)

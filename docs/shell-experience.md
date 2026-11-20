@@ -106,7 +106,9 @@ only when its binary is on `PATH`.
 `shell <shell> on` does not install the "when installed" tools. The init
 script adds hooks for them when their binary is on `PATH`. Atuin stays off
 even when it is installed, because Bluefin removed its shell integration.
-Turn it on with `bluefin-cli shell config`. On Linux, `open` is an
+Turn it on with `bluefin-cli shell config`.
+
+On Linux, `open` is an
 alias for `xdg-open` where the system has no `open` command of its own.
 In bash, the init script keeps the bash-preexec `DEBUG` trap armed after other
 hooks rewrite `PROMPT_COMMAND`. This lets preexec hooks, such as atuin's, run.
