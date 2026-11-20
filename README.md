@@ -409,7 +409,7 @@ grep    # ugrep (if installed)
 - [Command reference](docs/commands/bluefin-cli.md): Generated documentation for
   every command and flag.
 - [Shell experience guide](docs/shell-experience.md): Per-shell setup, managed
-  tools, verification, and troubleshooting.
+  tools, verification, and fixes for common problems.
 - [Interactive menu structure](docs/menus.md): Menu hierarchy, navigation, and
   available actions.
 - [Standard and plus builds](docs/vanilla-vs-extra.md): Feature differences
