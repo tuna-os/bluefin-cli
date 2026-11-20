@@ -63,8 +63,22 @@ var motdToggleCmd = &cobra.Command{
 var motdShowCmd = &cobra.Command{
 	Use:   "show",
 	Short: "Display the MOTD",
-	Long:  `Display the Message of the Day with system information and a random tip.`,
+	Long: `Display the Message of the Day with system information and a random tip.
+
+The message comes from the first template that exists: template-file in
+motd.json, /etc/bluefin-cli/motd.md, /usr/share/bluefin-cli/motd.md, then the
+built-in one. Tips come the same way from tips-directory, /etc/bluefin-cli/tips
+and /usr/share/bluefin-cli/tips.
+
+With --if-enabled it prints nothing when the MOTD is turned off
+('bluefin-cli motd toggle all off'), for login hooks that greet every terminal.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if ifEnabled, _ := cmd.Flags().GetBool("if-enabled"); ifEnabled {
+			cfg, err := shell.LoadConfig(currentShellName())
+			if err == nil && !cfg.IsEnabled("Motd") {
+				return nil
+			}
+		}
 		return motd.Show()
 	},
 }
@@ -107,6 +121,7 @@ var motdConfigCmd = &cobra.Command{
 }
 
 func init() {
+	motdShowCmd.Flags().Bool("if-enabled", false, "Show nothing when the MOTD is turned off")
 	rootCmd.AddCommand(motdCmd)
 	motdCmd.AddCommand(motdToggleCmd)
 	motdCmd.AddCommand(motdShowCmd)

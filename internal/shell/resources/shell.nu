@@ -70,6 +70,8 @@ if ($env.BLUEFIN_SKIP_AUTOLOAD_REFRESH? | default "0") != "1" {
     }
 }
 
-if $env.BLUEFIN_SHELL_ENABLE_MOTD == "1" and (which bluefin-cli | is-not-empty) {
+# Greet once per terminal; see BLUEFIN_MOTD_SHOWN in shell.sh
+if $env.BLUEFIN_SHELL_ENABLE_MOTD == "1" and ($env.BLUEFIN_MOTD_SHOWN? | is-empty) and (which bluefin-cli | is-not-empty) {
+    $env.BLUEFIN_MOTD_SHOWN = "1"
     bluefin-cli motd show
 }

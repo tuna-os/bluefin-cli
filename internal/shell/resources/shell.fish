@@ -120,7 +120,9 @@ if status is-interactive
         mise activate fish | source
     end
 
-    if test "$BLUEFIN_SHELL_ENABLE_MOTD" -eq 1; and type -q bluefin-cli
+    # Greet once per terminal; see BLUEFIN_MOTD_SHOWN in shell.sh
+    if test "$BLUEFIN_SHELL_ENABLE_MOTD" -eq 1; and not set -q BLUEFIN_MOTD_SHOWN; and type -q bluefin-cli
+        set -gx BLUEFIN_MOTD_SHOWN 1
         bluefin-cli motd show
     end
 end
