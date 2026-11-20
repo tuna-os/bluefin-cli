@@ -35,9 +35,9 @@ GitHub Releases is the source distribution channel. A complete release contains:
   on amd64 and arm64;
 - deb and rpm packages for the standard Linux build on amd64 and arm64;
 - `bluefin-cli-<version>-vendor.tar.gz`, the `vendor/` tree of every module
-  `go.sum` pins, written reproducibly by `scripts/vendor-archive.sh`. Unpacked
-  in the tag's source tree (GitHub's `archive/v<version>` tarball), it builds
-  without network access; distribution packagers (the projectbluefin/utah-packages
+  `go.sum` pins, written reproducibly by `scripts/vendor-archive.sh`. Unpack it
+  in the tag's source tree (GitHub's `archive/v<version>` tarball) to build
+  without network access. Distribution packagers (the projectbluefin/utah-packages
   RPM) lock and build from the pair;
 - `checksums.txt` with a SHA-256 digest for every published artifact;
 - release notes from commits that meet release rules.
