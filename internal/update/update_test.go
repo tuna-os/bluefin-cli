@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -64,5 +65,39 @@ func TestVerifyChecksum(t *testing.T) {
 
 	if err := verifyChecksum(&Release{TagName: "v1.0.0"}, "x.tar.gz", data); err == nil {
 		t.Error("release without checksums.txt accepted")
+	}
+}
+
+func TestDetectPath(t *testing.T) {
+	cases := map[string]InstallMethod{
+		"/usr/bin/bluefin-cli":                                  MethodSystem,
+		"/usr/sbin/bluefin-cli":                                 MethodSystem,
+		"/usr/local/bin/bluefin-cli":                            MethodDirect,
+		"/home/me/.local/bin/bluefin-cli":                       MethodDirect,
+		"/home/linuxbrew/.linuxbrew/Cellar/bluefin-cli/1/bin/x": MethodHomebrew,
+		"/home/me/go/bin/bluefin-cli":                           MethodGoInstall,
+	}
+	for path, want := range cases {
+		if got := detectPath(path); got != want {
+			t.Errorf("detectPath(%q) = %q, want %q", path, got, want)
+		}
+	}
+}
+
+func TestSystemUpdateHint(t *testing.T) {
+	none := func(string) bool { return false }
+	only := func(want string) func(string) bool { return func(s string) bool { return s == want } }
+
+	if got := systemUpdateHint(only("/run/ostree-booted"), only("dnf")); !strings.HasPrefix(got, "sudo bootc upgrade") {
+		t.Errorf("image-based system: hint = %q, want the image update", got)
+	}
+	if got := systemUpdateHint(none, only("dnf")); got != "sudo dnf upgrade bluefin-cli" {
+		t.Errorf("dnf system: hint = %q", got)
+	}
+	if got := systemUpdateHint(none, only("apt-get")); got != "sudo apt-get install --only-upgrade bluefin-cli" {
+		t.Errorf("apt system: hint = %q", got)
+	}
+	if got := systemUpdateHint(none, none); got == "" {
+		t.Error("a system-owned binary must never fall through to self-update")
 	}
 }

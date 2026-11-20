@@ -18,6 +18,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -41,6 +42,11 @@ const (
 	MethodScoop     InstallMethod = "scoop"
 	MethodWinget    InstallMethod = "winget"
 	MethodGoInstall InstallMethod = "go install"
+	// MethodSystem is a binary the operating system owns: the deb or rpm
+	// package, or a distribution image that ships bluefin-cli. Overwriting it
+	// would fight the package database, and on an image-based system /usr is
+	// read-only anyway.
+	MethodSystem InstallMethod = "system package"
 )
 
 // UpdateHint returns the command a user should run to update for a
@@ -55,8 +61,31 @@ func (m InstallMethod) UpdateHint() string {
 		return "winget upgrade Hanthor.BluefinCLI"
 	case MethodGoInstall:
 		return "go install github.com/tuna-os/bluefin-cli@latest"
+	case MethodSystem:
+		return systemUpdateHint(fileExists, lookPath)
 	default:
 		return ""
+	}
+}
+
+var (
+	fileExists = func(path string) bool { _, err := os.Stat(path); return err == nil }
+	lookPath   = func(name string) bool { _, err := exec.LookPath(name); return err == nil }
+)
+
+// systemUpdateHint names the tool that updates a system-owned binary: the
+// image update on an ostree or bootc system (/run/ostree-booted), otherwise
+// the package manager that installed the deb or rpm.
+func systemUpdateHint(exists, has func(string) bool) string {
+	switch {
+	case exists("/run/ostree-booted"):
+		return "sudo bootc upgrade   (bluefin-cli ships with the system image)"
+	case has("dnf"):
+		return "sudo dnf upgrade bluefin-cli"
+	case has("apt-get"):
+		return "sudo apt-get install --only-upgrade bluefin-cli"
+	default:
+		return "update bluefin-cli with your system package manager"
 	}
 }
 
@@ -69,6 +98,11 @@ func Detect() InstallMethod {
 	if resolved, err := filepath.EvalSymlinks(exe); err == nil {
 		exe = resolved
 	}
+	return detectPath(exe)
+}
+
+// detectPath maps an executable path to the install method that owns it.
+func detectPath(exe string) InstallMethod {
 	p := strings.ToLower(filepath.ToSlash(exe))
 	switch {
 	case strings.Contains(p, "/cellar/") || strings.Contains(p, "/linuxbrew/") || strings.Contains(p, "/homebrew/"):
@@ -79,6 +113,11 @@ func Detect() InstallMethod {
 		return MethodWinget
 	case strings.Contains(p, "/go/bin/"):
 		return MethodGoInstall
+	// The deb and rpm packages install to /usr/bin. install.sh never does: it
+	// uses ~/.local/bin, or /usr/local/bin as root, which stays self-updating.
+	case strings.HasPrefix(p, "/usr/bin/") || strings.HasPrefix(p, "/usr/sbin/") ||
+		strings.HasPrefix(p, "/bin/") || strings.HasPrefix(p, "/sbin/"):
+		return MethodSystem
 	default:
 		return MethodDirect
 	}
