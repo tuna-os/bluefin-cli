@@ -14,6 +14,8 @@ The shell command manages these modern shell replacements and enhancements.
 | `starship` | The cross-shell prompt |
 | `zoxide` | A smarter cd command that learns your habits |
 | `uutils` | Cross-platform Rust rewrite of GNU Coreutils |
+| `direnv` | Per-directory environment variables, hooked when installed |
+| `mise` | Tool versions and environments, activated when installed |
 
 ## Bundles
 You can install these bundles using `bluefin-cli install <bundle>`.

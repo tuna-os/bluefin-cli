@@ -1,16 +1,16 @@
 # Shell experience guide
 
 The **shell experience** is the set of aliases, tool initializers, and prompt
-settings that Bluefin CLI adds to your shell. Turning it on does three things:
+settings that Bluefin CLI adds to your shell. When you enable it, it does three things:
 
-1. Appends one managed line to your shell's startup file. That line runs
+1. Adds one managed line to your shell's startup file. That line runs
    `bluefin-cli init <shell>`, which prints the init script for that shell.
 2. Tries to install the enabled tools (Homebrew on Linux and macOS, winget on
    Windows, coldbrew or `apk` on Alpine).
 3. Records which tools are enabled in `shell.json` in the
    [config directory](configuration.md).
 
-Open a new terminal after enabling it. Run `bluefin-cli status` to see the
+Open a new terminal after you enable it. Run `bluefin-cli status` to see the
 result.
 
 ## Supported shells
@@ -55,8 +55,8 @@ bluefin-cli shell ash on
 ```
 
 ash has no rc-file convention, so Bluefin CLI writes `~/.ashrc` and sets `ENV`
-from `~/.profile`. atuin, starship, and carapace have no ash target and are
-skipped there. See [Alpine and musl](#alpine-and-musl).
+from `~/.profile`. atuin, starship, and carapace have no ash target, so
+they are not available there. See [Alpine and musl](#alpine-and-musl).
 
 ### Nushell
 
@@ -77,10 +77,10 @@ bluefin-cli shell powershell on
 
 The profile line caches the output of `bluefin-cli init powershell` under
 `%LOCALAPPDATA%\bluefin-cli\shell-cache\init.ps1` and rebuilds the cache when
-the binary or `shell.json` changes. If PowerShell blocks scripts, see the
-execution policy notes in [troubleshooting](troubleshooting.md). Tools install
-with winget; `gsudo` is offered on PowerShell only, and ugrep and the uutils
-packages are not offered there.
+the binary or `shell.json` changes. If PowerShell blocks scripts, read the
+execution policy notes in [the problem guide](troubleshooting.md). Tools install
+with winget. Bluefin CLI offers `gsudo` on PowerShell only. It does not offer
+ugrep or the uutils packages there.
 
 ## Managed tools
 
@@ -99,10 +99,25 @@ only when its binary is on `PATH`.
 | Zoxide | Smarter `cd` | yes |
 | UutilsCoreutils, UutilsFindutils, UutilsDiffutils | Rust rewrites of GNU coreutils, findutils, diffutils | yes |
 | Carapace | Completion for many commands | no |
+| Direnv | Per-directory environment variables (bash, zsh, fish) | when installed |
+| Mise | Tool versions and environments (bash, zsh, fish); `MISE_<SHELL>_AUTO_ACTIVATE=0` opts a shell out | when installed |
 | Glow | Markdown renderer for the MOTD | yes |
 
-The MOTD is also on by default and is configured separately with
-`bluefin-cli motd`.
+`shell <shell> on` does not install the "when installed" tools. The init
+script adds hooks for them when their binary is on `PATH`. On Linux, `open` is an
+alias for `xdg-open` where the system has no `open` command of its own.
+In bash, the init script keeps the bash-preexec `DEBUG` trap armed after other
+hooks rewrite `PROMPT_COMMAND`. This lets atuin save your history.
+
+These are the hooks and aliases of Universal Blue's `bling.sh` and
+`bling.fish`. When you enable the shell experience, you do not need to load
+those files. `bluefin-cli shell <shell> on` and `off` both remove the block
+that `ublue-bling` wrote (`### bling.sh source start` to `end`). They also
+remove each line that loads `/usr/share/ublue-os/bling/bling.sh` or
+`bling.fish`.
+
+The MOTD is also on by default. Use `bluefin-cli motd` to configure it
+separately.
 
 ## Enable or disable individual tools
 
@@ -113,15 +128,15 @@ bluefin-cli shell config
 ```
 
 You can reach the same choices from **Bluefin Shell** > **Configure
-Components** in `bluefin-cli menu`. Choices are saved in `shell.json`. Re-run
+Components** in `bluefin-cli menu`. Bluefin CLI saves your choices in `shell.json`. Re-run
 `bluefin-cli shell <shell> on` afterwards so generated files, such as the
 Nushell init file, pick up the change.
 
 ## Alpine and musl
 
-Homebrew does not run on musl libc, so on Alpine-based systems Bluefin CLI uses
-`coldbrew`, and falls back to `sudo apk add` one package at a time until
-coldbrew is set up. To set it up:
+Homebrew does not run on musl libc. On Alpine systems, Bluefin CLI uses
+`coldbrew`. Until you set up coldbrew, it uses `sudo apk add` for one package
+at a time. To set it up:
 
 ```sh
 bluefin-cli doctor --fix
@@ -136,8 +151,8 @@ bluefin-cli status   # enabled shells and installed tools
 bluefin-cli doctor   # checks package manager, shell integration, and tools
 ```
 
-`doctor` and `status` act on the shell you are running, falling back to the
-`SHELL` environment variable. `doctor --fix` enables shell integration and
+`doctor` and `status` act on the shell you use now. If they cannot find it, they
+use the `SHELL` environment variable. `doctor --fix` enables shell integration and
 installs missing `eza`, `fzf`, and `starship`.
 
 ## Performance
@@ -146,20 +161,21 @@ installs missing `eza`, `fzf`, and `starship`.
 bluefin-cli doctor --bench
 ```
 
-This compares interactive startup time against a bare shell (bash, zsh, and
-fish). If startup is slow, turn off tools you do not use with
+This compares the startup time of an interactive shell with a bare shell (bash,
+zsh, and fish). If startup is slow, turn off tools you do not use with
 `bluefin-cli shell config`.
 
 ## Troubleshooting
 
-- **Nothing changes in a new terminal.** Check that the startup file in the
-  table above contains the managed line, then re-run
+- **Nothing changes in a new terminal.** Make sure the startup file in the
+  table above has the managed line. Then re-run
   `bluefin-cli shell <shell> on`.
 - **An alias is missing.** The tool behind it is probably not installed or is
   disabled. Run `bluefin-cli status`, then `bluefin-cli doctor --fix`.
-- **Changes not picked up in Nushell or ash.** See
-  [Shell integration isn't picking up changes](troubleshooting.md#shell-integration-isnt-picking-up-changes).
-- **Homebrew not found.** See [troubleshooting](troubleshooting.md#homebrew-is-installed-but-not-found).
+- **Nushell or ash does not use your changes.** Read
+  [the notes on stale shell integration](troubleshooting.md#shell-integration-isnt-picking-up-changes).
+- **Homebrew not found.** Read [the problem guide](troubleshooting.md#homebrew-is-installed-but-not-found).
 
 After you update Bluefin CLI, re-run `bluefin-cli shell <shell> on` if the init
-script behaves unexpectedly; for Nushell this regenerates the sourced file.
+script does not work as you expect. For Nushell, this regenerates the sourced
+file.

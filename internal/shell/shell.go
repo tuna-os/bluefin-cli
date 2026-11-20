@@ -17,6 +17,9 @@ import (
 //go:embed resources/shell.sh
 var shellShScript string
 
+//go:embed resources/bash-preexec-rearm.sh
+var bashPreexecRearmScript string
+
 //go:embed resources/shell.fish
 var shellFishScript string
 
@@ -74,6 +77,18 @@ func Toggle(shell string, enable bool) error {
 	}
 
 	text := string(content)
+
+	// The shell experience replaces Universal Blue's bling: turning it on or
+	// off takes out the lines ublue-bling wrote, so bling.sh is neither run
+	// twice nor left running after "off".
+	if migrated := stripUblueBling(text); migrated != text {
+		if err := os.WriteFile(configFile, []byte(migrated), 0644); err != nil {
+			return err
+		}
+		text = migrated
+		fmt.Println(infoStyle.Render(fmt.Sprintf("Removed Universal Blue bling from %s", configFile)))
+	}
+
 	hasLine := strings.Contains(text, shellMaker)
 
 	if enable {

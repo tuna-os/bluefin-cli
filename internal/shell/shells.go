@@ -201,6 +201,9 @@ func (s Shell) script() string {
 	case "nu":
 		return shellNuScript
 	default:
+		if s.Name == "bash" {
+			return shellShScript + bashPreexecRearmScript
+		}
 		return shellShScript
 	}
 }

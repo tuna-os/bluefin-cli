@@ -19,6 +19,8 @@ The Shell Experience provides:
   - UutilsFindutils: Rust rewrite of GNU findutils
   - UutilsDiffutils: Rust rewrite of GNU diffutils
   - Carapace: Completion for many shells and commands
+  - Direnv: Load and unload environment variables per directory
+  - Mise: Polyglot tool version and environment manager
   - Glow: Terminal markdown renderer for MOTD
 
 
