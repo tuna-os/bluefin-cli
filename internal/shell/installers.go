@@ -17,6 +17,7 @@ import (
 
 	"charm.land/huh/v2"
 	"github.com/tuna-os/bluefin-cli/internal/env"
+	"github.com/tuna-os/bluefin-cli/internal/motd"
 )
 
 func toolsForCurrentPlatform() []Tool {
@@ -38,8 +39,9 @@ func toolsForCurrentPlatform() []Tool {
 
 // InstallTools iterates through the config and installs enabled tools
 func InstallTools(shell string, cfg *Config) {
-	// If MOTD is enabled, ensure Glow is also considered enabled for installation
-	if cfg.IsEnabled("Motd") {
+	// If MOTD is enabled, ensure Glow is also considered enabled for
+	// installation: it renders bluefin-cli's own MOTD, which uwelcome replaces.
+	if cfg.IsEnabled("Motd") && !motd.Uwelcome() {
 		cfg.SetEnabled("Glow", true)
 	}
 

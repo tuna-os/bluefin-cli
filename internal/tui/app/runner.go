@@ -91,13 +91,19 @@ func (s *RunnerScreen) wait() tea.Cmd {
 func (s *RunnerScreen) exec() {
 	// The task may print, but Bubble Tea still holds the keyboard, so it must
 	// not prompt. Anything that would has to see the terminal as taken
-	// (tuna-os/bluefin-cli#273).
-	defer env.HoldTerminal()()
+	// (tuna-os/bluefin-cli#273). Release before the done event is sent, so a
+	// receiver of that event never sees the terminal still held.
+	release := env.HoldTerminal()
+	err := s.runCaptured()
+	release()
+	s.ch <- runnerEvent{done: true, err: err}
+}
 
+// runCaptured runs the task with stdout and stderr captured as line events.
+func (s *RunnerScreen) runCaptured() error {
 	r, w, err := os.Pipe()
 	if err != nil {
-		s.ch <- runnerEvent{done: true, err: s.run()}
-		return
+		return s.run()
 	}
 	oldOut, oldErr := os.Stdout, os.Stderr
 	os.Stdout, os.Stderr = w, w
@@ -117,7 +123,7 @@ func (s *RunnerScreen) exec() {
 	_ = w.Close()
 	<-scanDone
 	_ = r.Close()
-	s.ch <- runnerEvent{done: true, err: runErr}
+	return runErr
 }
 
 func (s *RunnerScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {

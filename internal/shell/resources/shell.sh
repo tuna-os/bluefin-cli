@@ -166,10 +166,13 @@ fi
 
 # Greet once per terminal: a shell started from a greeted one (bash starting
 # zsh, or a login hook that already ran `bluefin-cli motd show --if-enabled`)
-# inherits BLUEFIN_MOTD_SHOWN and stays quiet.
-if [ "$BLUEFIN_SHELL_ENABLE_MOTD" -eq 1 ] && [ -z "${BLUEFIN_MOTD_SHOWN:-}" ] && [ -n "$PS1" ] && [ -t 1 ] && [ "$(command -v bluefin-cli)" ]; then
+# inherits BLUEFIN_MOTD_SHOWN and stays quiet. Where uwelcome is installed the
+# greeting is uwelcome's: its own hooks export UWELCOME_SHOWN when they greet,
+# and when they have not, `motd show` runs uwelcome, so it appears once.
+if [ "$BLUEFIN_SHELL_ENABLE_MOTD" -eq 1 ] && [ -z "${BLUEFIN_MOTD_SHOWN:-}" ] && [ -z "${UWELCOME_SHOWN:-}" ] && [ -n "$PS1" ] && [ -t 1 ] && [ "$(command -v bluefin-cli)" ]; then
     BLUEFIN_MOTD_SHOWN=1
-    export BLUEFIN_MOTD_SHOWN
-    bluefin-cli motd show
+    UWELCOME_SHOWN=1
+    export BLUEFIN_MOTD_SHOWN UWELCOME_SHOWN
+    bluefin-cli motd show --if-enabled
 fi
 fi

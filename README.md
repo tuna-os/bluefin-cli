@@ -299,6 +299,12 @@ bluefin-cli motd toggle zsh on
 bluefin-cli motd toggle all off
 ```
 
+On Bluefin and other systems with
+[uwelcome](https://github.com/projectbluefin/uwelcome), uwelcome stays the
+terminal welcome. `motd show` shows it, `motd toggle` turns it on or off for
+every shell (`~/.config/uwelcome/disabled`), and the shell experience never
+greets a second time. bluefin-cli's own MOTD is used where uwelcome is absent.
+
 #### Install Tool Bundles
 
 Install curated Homebrew bundles:

@@ -32,7 +32,7 @@ var defaultTips = []string{
 	"Use `eza -l --icons` for a beautiful file listing with icons and colors",
 	"The `bat` command is like `cat` but with syntax highlighting and Git integration",
 	"Navigate directories faster with `zoxide` - just use `z <partial-name>` to jump around",
-	"Search your shell history with `atuin` using Ctrl+R for a better history search experience",
+	"Turn shell tools such as `atuin` history search on or off with `bluefin-cli shell config`",
 	"Customize your prompt with `starship config` to modify colors, icons, and modules",
 }
 
@@ -99,8 +99,12 @@ type TemplateData struct {
 	Tip       string
 }
 
-// Show displays the MOTD
+// Show displays the MOTD: uwelcome's greeting where uwelcome is installed,
+// else bluefin-cli's own.
 func Show() error {
+	if Uwelcome() {
+		return showUwelcome()
+	}
 	content := Render()
 
 	// Render with glow if available

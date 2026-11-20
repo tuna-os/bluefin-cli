@@ -126,7 +126,11 @@ remove each line that loads `/usr/share/ublue-os/bling/bling.sh` or
 `bling.fish`.
 
 The MOTD is also on by default. Use `bluefin-cli motd` to configure it
-separately.
+separately. Where uwelcome is installed, the init script shows the welcome message through
+it once per terminal. It stays quiet when uwelcome's own hook already
+showed the welcome message (`UWELCOME_SHOWN`).
+In bash, zsh, ash and fish, the welcome message appears only when output goes
+to a terminal. A pipe or an editor gets no welcome message.
 
 ## Enable or disable individual tools
 

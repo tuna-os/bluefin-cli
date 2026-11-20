@@ -115,6 +115,12 @@ For Brewfile syntax, Windows entries, and examples, refer to the
 
 ## MOTD template and tips
 
+Where [uwelcome](https://github.com/projectbluefin/uwelcome) is installed
+(Bluefin and other Universal Blue images), it is the welcome message.
+`motd show` runs it, `motd toggle` switches it with `uwelcome enable|disable`, and its
+own config (`/etc/uwelcome/config.toml`) sets what it says. The templates
+below are for systems without it.
+
 `bluefin-cli motd show` renders Markdown (through `glow` when it is
 installed). The first source that exists wins:
 
