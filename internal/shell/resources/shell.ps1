@@ -115,8 +115,9 @@ function bluefin_init {
         Invoke-CachedInit $zoxideExe
     }
 
+    # atuin is opt-in (see tools.go), so it is hooked only when switched on.
     $atuinExe = Get-BluefinExecutable "atuin"
-    if ($atuinExe) {
+    if ($env:BLUEFIN_SHELL_ENABLE_ATUIN -eq "1" -and $atuinExe) {
         Invoke-CachedInit $atuinExe
     }
 

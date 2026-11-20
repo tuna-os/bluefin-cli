@@ -49,7 +49,7 @@ bluefin-cli init [bash|zsh|fish|ash|nu|powershell|pwsh] [flags]
       --mise              Enable Mise
       --motd              Enable MOTD (default true)
       --starship          Enable Starship (default true)
-      --ugrep             Enable Ugrep (default true)
+      --ugrep             Enable Ugrep
       --uutilscoreutils   Enable UutilsCoreutils (default true)
       --uutilsdiffutils   Enable UutilsDiffutils (default true)
       --uutilsfindutils   Enable UutilsFindutils (default true)

@@ -18,8 +18,8 @@ var shellCmd = &cobra.Command{
 The Shell Experience provides:
   - Modern ls replacement with eza (ll, ls aliases)
   - bat for cat with syntax highlighting
-  - ugrep for faster grep
-  - Initialization for atuin, starship, and zoxide`,
+  - ugrep for faster grep, when installed
+  - Initialization for starship, zoxide, direnv, and mise`,
 	Args: cobra.MaximumNArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {

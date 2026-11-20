@@ -298,7 +298,7 @@ func Init(shell string, config *Config) (string, error) {
 			if tool.Name == "Glow" && motdNeedsGlow {
 				config.SetEnabled("Motd", false)
 			}
-		} else if !isEnabled && isInstalled {
+		} else if !isEnabled && isInstalled && !tool.OptIn {
 			// Auto-enable if found and previously disabled
 			config.SetEnabled(tool.Name, true)
 			configUpdated = true

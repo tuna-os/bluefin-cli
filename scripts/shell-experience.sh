@@ -69,9 +69,9 @@ run_in() {
 
 # Per-shell probe syntax. Keeping these in one place is what lets the assertion
 # bodies below stay shell-agnostic.
-probe_alias() {   # is <name> defined as an alias/function?
+probe_alias() {   # is <name> defined as an alias/function (or fish abbreviation)?
     case "$1" in
-      fish) printf 'functions -q %s; and echo YES' "$2" ;;
+      fish) printf 'if abbr -q %s; or functions -q %s; echo YES; end' "$2" "$2" ;;
       nu)   printf 'if (scope aliases | where name == "%s" | is-not-empty) { print "YES" }' "$2" ;;
       pwsh) printf 'if (Get-Command %s -CommandType Function -EA SilentlyContinue) { "YES" }' "$2" ;;
       *)    printf 'alias %s >/dev/null 2>&1 && echo YES' "$2" ;;
@@ -322,25 +322,35 @@ test_shell() {
 
 # 6. Loading twice must be quiet and must not run the body again -- re-running
 #    re-initializes atuin, which is the bug the load-once guard exists for.
-#    Only the POSIX shells carry that guard today.
+#    The POSIX shells and fish carry that guard.
 test_double_load() {
     sh_name=$1
     available "$sh_name" || return
-    case "$sh_name" in bash|zsh|ash|dash) ;; *) return ;; esac
+    case "$sh_name" in bash|zsh|ash|dash|fish) ;; *) return ;; esac
 
     tag=$($BIN init "$([ "$sh_name" = dash ] && echo ash || echo "$sh_name")" 2>/dev/null >/dev/null; echo ok)
     [ "$tag" = ok ] || return
 
     case "$sh_name" in
-      bash) sh_bin="bash"; arg=bash ;;
-      zsh)  sh_bin="zsh";  arg=zsh ;;
-      ash)  sh_bin="busybox ash"; arg=ash ;;
-      dash) sh_bin="dash"; arg=ash ;;
+      bash) sh_bin="bash -c"; arg=bash ;;
+      zsh)  sh_bin="zsh -c";  arg=zsh ;;
+      ash)  sh_bin="busybox ash -c"; arg=ash ;;
+      dash) sh_bin="dash -c"; arg=ash ;;
+      fish) sh_bin="fish -i -c"; arg=fish ;;
     esac
+    if [ "$sh_name" = fish ]; then
+        load="$BIN init fish 2>/dev/null | source"
+        drop_ll="abbr -e ll 2>/dev/null; functions -e ll"
+        has_ll="if abbr -q ll; or functions -q ll; echo RERAN; end"
+    else
+        load="eval \"\$($BIN init $arg 2>/dev/null)\""
+        drop_ll="unalias ll 2>/dev/null"
+        has_ll="alias ll >/dev/null 2>&1 && echo RERAN"
+    fi
 
-    err=$(HOME=$SANDBOX $sh_bin -c "
-        eval \"\$($BIN init $arg 2>/dev/null)\"
-        eval \"\$($BIN init $arg 2>/dev/null)\"
+    err=$(HOME=$SANDBOX $sh_bin "
+        $load
+        $load
     " 2>&1 >/dev/null)
     if [ -n "$err" ]; then
         bad "$sh_name: loading twice wrote to stderr: $err"
@@ -351,11 +361,11 @@ test_double_load() {
     # The guard has to actually skip the body, not merely survive it. Removing
     # an alias and reloading proves which: if the body re-runs, it comes back.
     if have eza; then
-        got=$(HOME=$SANDBOX $sh_bin -c "
-            eval \"\$($BIN init $arg 2>/dev/null)\"
-            unalias ll 2>/dev/null
-            eval \"\$($BIN init $arg 2>/dev/null)\"
-            alias ll >/dev/null 2>&1 && echo RERAN
+        got=$(HOME=$SANDBOX $sh_bin "
+            $load
+            $drop_ll
+            $load
+            $has_ll
         " 2>/dev/null | tr -d '\r')
         [ "$got" = "RERAN" ] && bad "$sh_name: the load-once guard did not stop the body re-running" \
                              || ok "$sh_name: load-once guard held"

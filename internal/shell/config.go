@@ -43,11 +43,7 @@ func DefaultConfig(shell string) *Config {
 			continue
 		}
 
-		def := tool.Default
-		if val, ok := tool.ShellDefaults[shell]; ok {
-			def = val
-		}
-		cfg[strings.ToLower(tool.Name)] = def
+		cfg[strings.ToLower(tool.Name)] = tool.Default
 	}
 
 	// MOTD is enabled by default (managed separately from tools)
