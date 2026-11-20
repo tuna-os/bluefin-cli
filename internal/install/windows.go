@@ -1,12 +1,10 @@
 package install
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"sort"
 	"strings"
@@ -41,13 +39,7 @@ var (
 	windowsBootstrapManagersOnce sync.Once
 	windowsBootstrapManagers     []string
 	windowsBootstrapErr          error
-	brewDeclLine                 = regexp.MustCompile(`^\s*(brew|cask)\s+["']([^"']+)["']`)
 )
-
-type brewfilePackage struct {
-	kind string
-	name string
-}
 
 func BundleWindows(nameOrPath string) error {
 	if runtime.GOOS != "windows" {
@@ -360,39 +352,4 @@ func writeWingetUnavailableList(unmatched []string) (string, error) {
 	}
 
 	return path, nil
-}
-
-func parseBrewfilePackages(path string) ([]brewfilePackage, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		_ = f.Close()
-	}()
-
-	var packages []brewfilePackage
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		matches := brewDeclLine.FindStringSubmatch(line)
-		if len(matches) != 3 {
-			continue
-		}
-
-		packages = append(packages, brewfilePackage{
-			kind: matches[1],
-			name: strings.TrimSpace(matches[2]),
-		})
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
-
-	return packages, nil
 }

@@ -128,42 +128,6 @@ func TestDownloadFileInvalidURL(t *testing.T) {
 	}
 }
 
-func TestParseBrewfilePackages(t *testing.T) {
-	tmpFile, err := os.CreateTemp("", "windows-brewfile-*.Brewfile")
-	if err != nil {
-		t.Fatalf("failed to create temp file: %v", err)
-	}
-	defer func() {
-		_ = os.Remove(tmpFile.Name())
-	}()
-
-	content := `tap "homebrew/core"
-brew "git"
-cask "visual-studio-code"
-# comment
-`
-
-	if _, err := tmpFile.WriteString(content); err != nil {
-		t.Fatalf("failed to write temp Brewfile: %v", err)
-	}
-	if err := tmpFile.Close(); err != nil {
-		t.Fatalf("failed to close temp Brewfile: %v", err)
-	}
-
-	pkgs, err := parseBrewfilePackages(tmpFile.Name())
-	if err != nil {
-		t.Fatalf("parseBrewfilePackages returned error: %v", err)
-	}
-
-	if len(pkgs) != 2 {
-		t.Fatalf("expected 2 parsed packages, got %d", len(pkgs))
-	}
-
-	if pkgs[0].name != "git" || pkgs[1].name != "visual-studio-code" {
-		t.Fatalf("unexpected parsed package names: %+v", pkgs)
-	}
-}
-
 func TestWindowsCandidatesIncludesAliases(t *testing.T) {
 	candidates := windowsCandidates("visual-studio-code")
 	if len(candidates) < 2 {
