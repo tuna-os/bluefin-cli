@@ -164,7 +164,12 @@ if [ "$BLUEFIN_SHELL_ENABLE_MISE" -eq 1 ] && [ "$(command -v mise)" ]; then
     esac
 fi
 
-if [ "$BLUEFIN_SHELL_ENABLE_MOTD" -eq 1 ] && [ -n "$PS1" ] && [ -t 1 ] && [ "$(command -v bluefin-cli)" ]; then
+# Greet once per terminal: a shell started from a greeted one (bash starting
+# zsh, or a login hook that already ran `bluefin-cli motd show --if-enabled`)
+# inherits BLUEFIN_MOTD_SHOWN and stays quiet.
+if [ "$BLUEFIN_SHELL_ENABLE_MOTD" -eq 1 ] && [ -z "${BLUEFIN_MOTD_SHOWN:-}" ] && [ -n "$PS1" ] && [ -t 1 ] && [ "$(command -v bluefin-cli)" ]; then
+    BLUEFIN_MOTD_SHOWN=1
+    export BLUEFIN_MOTD_SHOWN
     bluefin-cli motd show
 fi
 fi

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/tuna-os/bluefin-cli/internal/env"
@@ -79,36 +80,28 @@ func Toggle(target string, enable bool) error {
 	return nil
 }
 
+// System MOTD sources, for distributions that ship bluefin-cli as their
+// terminal greeting. An administrator's /etc overrides the distribution's
+// /usr/share; a user's motd.json (template-file, tips-directory) overrides
+// both. Variables so tests can point them elsewhere.
+var (
+	systemTemplatePaths = []string{"/etc/bluefin-cli/motd.md", "/usr/share/bluefin-cli/motd.md"}
+	systemTipsDirs      = []string{"/etc/bluefin-cli/tips", "/usr/share/bluefin-cli/tips"}
+	// imageInfoPath is Universal Blue's image metadata, which ImageInfo mirrors.
+	imageInfoPath = "/usr/share/ublue-os/image-info.json"
+)
+
+// TemplateData is what a MOTD template file can use: {{.ImageName}},
+// {{.ImageTag}} and {{.Tip}} (Go text/template syntax).
+type TemplateData struct {
+	ImageName string
+	ImageTag  string
+	Tip       string
+}
+
 // Show displays the MOTD
 func Show() error {
-	// Get OS info
-	info := getImageInfo()
-
-	// Get configuration (defaults if file missing)
-	config, err := loadConfig()
-	if err != nil {
-		// If error loading config, just use defaults
-		config = DefaultConfig()
-	}
-
-	// Get random tip
-	// First check if user has custom tips in the config directory
-	var tip string
-	if config.TipsDirectory != "" {
-		// Try to find custom tips
-		customTip := getRandomTipFromDir(config.TipsDirectory)
-		if customTip != "" {
-			tip = customTip
-		}
-	}
-
-	// Fallback to default tips if no custom tip found
-	if tip == "" {
-		tip = getRandomDefaultTip()
-	}
-
-	// Format template
-	content := fmt.Sprintf(defaultTemplate, info.ImageName, info.ImageTag, tip)
+	content := Render()
 
 	// Render with glow if available
 	if glowPath, err := exec.LookPath("glow"); err == nil {
@@ -124,6 +117,64 @@ func Show() error {
 	// Fallback to plain text
 	fmt.Println(content)
 	return nil
+}
+
+// Render returns the MOTD as Markdown: the first template that exists and
+// renders (user, /etc, /usr/share), else the built-in one, filled with the
+// image name, tag and a random tip.
+func Render() string {
+	info := getImageInfo()
+
+	config, err := loadConfig()
+	if err != nil {
+		config = DefaultConfig()
+	}
+	data := TemplateData{ImageName: info.ImageName, ImageTag: info.ImageTag, Tip: pickTip(config)}
+
+	paths := systemTemplatePaths
+	if config.TemplateFile != "" {
+		paths = append([]string{config.TemplateFile}, paths...)
+	}
+	for _, path := range paths {
+		if content, ok := renderTemplateFile(path, data); ok {
+			return content
+		}
+	}
+	return fmt.Sprintf(defaultTemplate, data.ImageName, data.ImageTag, data.Tip)
+}
+
+// renderTemplateFile renders one template file. A missing file is skipped
+// silently; a broken one is reported and skipped, so the greeting still
+// appears.
+func renderTemplateFile(path string, data TemplateData) (string, bool) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return "", false
+	}
+	tmpl, err := template.New(filepath.Base(path)).Option("missingkey=error").Parse(string(raw))
+	if err == nil {
+		var b strings.Builder
+		if err = tmpl.Execute(&b, data); err == nil {
+			return b.String(), true
+		}
+	}
+	fmt.Fprintf(os.Stderr, "bluefin-cli: ignoring MOTD template %s: %v\n", path, err)
+	return "", false
+}
+
+// pickTip takes a random tip from the first tips directory that has one
+// (user, /etc, /usr/share), else from the built-in tips.
+func pickTip(config Config) string {
+	dirs := systemTipsDirs
+	if config.TipsDirectory != "" {
+		dirs = append([]string{config.TipsDirectory}, dirs...)
+	}
+	for _, dir := range dirs {
+		if tip := getRandomTipFromDir(dir); tip != "" {
+			return tip
+		}
+	}
+	return getRandomDefaultTip()
 }
 
 // SetTheme sets the MOTD theme
@@ -202,6 +253,16 @@ func getImageInfo() ImageInfo {
 			info.ImageTag = strings.TrimSpace(string(output))
 		}
 	case "linux":
+		// Universal Blue images (Bluefin, Aurora, Utah) describe themselves
+		// in image-info.json; anything else falls back to os-release.
+		if data, err := os.ReadFile(imageInfoPath); err == nil {
+			var image ImageInfo
+			if json.Unmarshal(data, &image) == nil && image.ImageName != "" {
+				info.ImageName = image.ImageName
+				info.ImageTag = image.ImageTag
+				break
+			}
+		}
 		if data, err := os.ReadFile("/etc/os-release"); err == nil {
 			lines := strings.Split(string(data), "\n")
 			for _, line := range lines {
