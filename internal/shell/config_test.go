@@ -2,6 +2,8 @@ package shell
 
 import (
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -53,13 +55,49 @@ func TestDefaultConfigPerShell(t *testing.T) {
 		t.Error("Default powershell config should have Gsudo enabled")
 	}
 
-	// bash should have Ugrep enabled
-	if !bashCfg.IsEnabled("Ugrep") {
-		t.Error("Default bash config should have Ugrep enabled")
+	// Ugrep and Atuin follow Bluefin's cli bundle, which installs neither:
+	// ugrep is aliased once present, atuin only when switched on.
+	for _, tool := range []string{"Ugrep", "Atuin"} {
+		if bashCfg.IsEnabled(tool) {
+			t.Errorf("Default bash config should have %s disabled", tool)
+		}
 	}
 
 	// powershell should NOT have Ugrep enabled
 	if pwshCfg.IsEnabled("Ugrep") {
 		t.Error("Default powershell config should have Ugrep disabled")
+	}
+}
+
+// Finding a tool's binary turns it on, except for opt-in tools: Bluefin
+// dropped atuin's shell integration, so having atuin installed must not
+// hook it.
+func TestInitSyncSkipsOptInTools(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
+	t.Setenv("HOMEBREW_PREFIX", home)
+
+	bin := t.TempDir()
+	for _, name := range []string{"atuin", "direnv", "ug"} {
+		if err := os.WriteFile(filepath.Join(bin, name), []byte("#!/bin/sh\n"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Setenv("PATH", bin)
+
+	cfg := DefaultConfig("bash")
+	script, err := Init("bash", cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for tool, want := range map[string]bool{"Atuin": false, "Direnv": true, "Ugrep": true} {
+		if got := cfg.IsEnabled(tool); got != want {
+			t.Errorf("after sync %s enabled = %v, want %v", tool, got, want)
+		}
+	}
+	if !strings.Contains(script, "export BLUEFIN_SHELL_ENABLE_ATUIN=0") {
+		t.Error("init script turned atuin on although it is opt-in")
 	}
 }

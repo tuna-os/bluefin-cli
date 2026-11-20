@@ -1,20 +1,16 @@
 #!/usr/bin/env fish
 
-# Source the configuration environment file if it exists
-
+# Load once per shell, as shell.sh does: re-reading config.fish must not run
+# every hook a second time.
+set -q SOURCED_BLUEFIN_SHELL; and return
+set -g SOURCED_BLUEFIN_SHELL 1
 
 # Default to enabled if variable is not set (backwards compatibility)
 if not set -q BLUEFIN_SHELL_ENABLE_EZA
     set BLUEFIN_SHELL_ENABLE_EZA 1
 end
-if not set -q BLUEFIN_SHELL_ENABLE_UGREP
-    set BLUEFIN_SHELL_ENABLE_UGREP 1
-end
 if not set -q BLUEFIN_SHELL_ENABLE_BAT
     set BLUEFIN_SHELL_ENABLE_BAT 1
-end
-if not set -q BLUEFIN_SHELL_ENABLE_ATUIN
-    set BLUEFIN_SHELL_ENABLE_ATUIN 1
 end
 if not set -q BLUEFIN_SHELL_ENABLE_STARSHIP
     set BLUEFIN_SHELL_ENABLE_STARSHIP 1
@@ -40,31 +36,48 @@ end
 if not set -q BLUEFIN_SHELL_ENABLE_MISE
     set BLUEFIN_SHELL_ENABLE_MISE 0
 end
+if not set -q BLUEFIN_SHELL_ENABLE_UGREP
+    set BLUEFIN_SHELL_ENABLE_UGREP 0
+end
+if not set -q BLUEFIN_SHELL_ENABLE_ATUIN
+    set BLUEFIN_SHELL_ENABLE_ATUIN 0
+end
 if not set -q BLUEFIN_SHELL_ENABLE_MOTD
     set BLUEFIN_SHELL_ENABLE_MOTD 1
 end
 
+# Abbreviations by default, as Bluefin's bling.fish does: they expand on the
+# command line, so you see the command that runs. BLING_USE_ABBR=0 keeps
+# plain aliases instead.
+function __bluefin_abbr -d "Create an abbreviation or alias"
+    if test "$BLING_USE_ABBR" != 0
+        abbr -a $argv
+    else
+        alias $argv
+    end
+end
+
 # ls aliases
 if test "$BLUEFIN_SHELL_ENABLE_EZA" -eq 1; and type -q eza
-    alias ll='eza -l --icons=auto --group-directories-first'
-    alias l.='eza -d .*'
-    alias ls='eza'
-    alias l1='eza -1'
+    __bluefin_abbr ll 'eza -l --icons=auto --group-directories-first'
+    __bluefin_abbr l. 'eza -d .*'
+    __bluefin_abbr ls 'eza'
+    __bluefin_abbr l1 'eza -1'
 end
 
 # ugrep for grep
 if test "$BLUEFIN_SHELL_ENABLE_UGREP" -eq 1; and type -q ug
-    alias grep='ug'
-    alias egrep='ug -E'
-    alias fgrep='ug -F'
-    alias xzgrep='ug -z'
-    alias xzegrep='ug -zE'
-    alias xzfgrep='ug -zF'
+    __bluefin_abbr grep 'ug'
+    __bluefin_abbr egrep 'ug -E'
+    __bluefin_abbr fgrep 'ug -F'
+    __bluefin_abbr xzgrep 'ug -z'
+    __bluefin_abbr xzegrep 'ug -zE'
+    __bluefin_abbr xzfgrep 'ug -zF'
 end
 
 # bat for cat, only when bat is there: a cached init script can outlive it
 if test "$BLUEFIN_SHELL_ENABLE_BAT" -eq 1; and type -q bat
-    alias cat='bat --style=plain --pager=never'
+    __bluefin_abbr cat 'bat --style=plain --pager=never'
 end
 
 # open -> xdg-open, where no `open` command exists already
