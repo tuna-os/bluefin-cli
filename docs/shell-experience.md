@@ -92,9 +92,9 @@ only when its binary is on `PATH`.
 | Eza | Modern replacement for `ls` | yes |
 | Gsudo | `sudo` for Windows (PowerShell only) | yes |
 | Fzf | Fuzzy finder | yes |
-| Ugrep | Fast grep with interactive mode | yes |
+| Ugrep | Fast grep with interactive mode | when installed |
 | Bat | `cat` with syntax highlighting | yes |
-| Atuin | Shell history | zsh and fish only |
+| Atuin | Shell history | no |
 | Starship | Prompt | yes |
 | Zoxide | Smarter `cd` | yes |
 | UutilsCoreutils, UutilsFindutils, UutilsDiffutils | Rust rewrites of GNU coreutils, findutils, diffutils | yes |
@@ -104,10 +104,19 @@ only when its binary is on `PATH`.
 | Glow | Markdown renderer for the MOTD | yes |
 
 `shell <shell> on` does not install the "when installed" tools. The init
-script adds hooks for them when their binary is on `PATH`. On Linux, `open` is an
+script adds hooks for them when their binary is on `PATH`. Atuin stays off
+even when it is installed, because Bluefin removed its shell integration.
+Turn it on with `bluefin-cli shell config`.
+
+On Linux, `open` is an
 alias for `xdg-open` where the system has no `open` command of its own.
 In bash, the init script keeps the bash-preexec `DEBUG` trap armed after other
-hooks rewrite `PROMPT_COMMAND`. This lets atuin save your history.
+hooks rewrite `PROMPT_COMMAND`. This lets preexec hooks, such as atuin's, run.
+
+In fish, the aliases are abbreviations, as in Bluefin's `bling.fish`. An
+abbreviation expands on the command line, so you see the full command before
+it runs. To use plain aliases, set `BLING_USE_ABBR` to `0` before the init
+line in `config.fish`.
 
 These are the hooks and aliases of Universal Blue's `bling.sh` and
 `bling.fish`. When you enable the shell experience, you do not need to load

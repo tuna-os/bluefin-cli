@@ -21,7 +21,7 @@ Never post account credentials or API keys in issues or pull requests.
 ## ✨ Features
 
 - **🎨 Interactive Menu**: Default TUI experience for easy navigation
-- **✨ Shell Experience**: Turn on modern tools for your shell (eza, bat, ugrep, zoxide, atuin, starship)
+- **✨ Shell Experience**: Turn on modern tools for your shell (eza, bat, ugrep, zoxide, starship, direnv, mise)
 - **📰 MOTD**: Beautiful Message of the Day with system info and random tips
 - **📦 Bundle Installer**: Install curated tool bundles (ai, cli, fonts, k8s) from Universal Blue
 - **🖼️ Wallpapers**: Install desktop wallpaper collections from ublue-os/tap
@@ -268,9 +268,9 @@ Two shells need a word of explanation:
 Features:
 - **eza**: Modern replacement for `ls`
 - **bat**: Syntax color for `cat`
-- **ugrep**: Faster grep
+- **ugrep**: Faster grep, aliased when installed
 - **zoxide**: Smarter `cd`
-- **atuin**: Shell history sync
+- **atuin**: Shell history (opt-in: `bluefin-cli shell config`)
 - **starship**: Cross-shell prompt
 - **uutils**: Rust rewrite of coreutils
 - **direnv** and **mise**: hooked when installed (bash, zsh, fish)

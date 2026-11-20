@@ -14,7 +14,7 @@ type Tool struct {
 	BrewPkg           string          // Homebrew package name (fallback to Pkg if empty)
 	ApkPkg            string          // Alpine/apk package name (Alpine, postmarketOS); see GetApkPkg for the fallback order
 	Default           bool            // Whether enabled by default
-	ShellDefaults     map[string]bool // Per-shell default overrides
+	OptIn             bool            // Never auto-enabled when its binary is found; only `shell config` turns it on
 	SupportedShells   map[string]bool // Optional allowlist for shell-specific tools
 	UnsupportedShells map[string]bool // Shells where this tool should not be managed
 }
@@ -75,9 +75,13 @@ var Tools = []Tool{
 	{Name: "Eza", Description: "Modern, maintained replacement for ls", Binary: "eza", Pkg: "eza-community.eza", BrewPkg: "eza", ApkPkg: "eza", Default: true},
 	{Name: "Gsudo", Description: "sudo for Windows (run commands elevated)", Binary: "gsudo", Pkg: "gerardog.gsudo", Default: true, SupportedShells: map[string]bool{"powershell": true}},
 	{Name: "Fzf", Description: "Command-line fuzzy finder", Binary: "fzf", Pkg: "junegunn.fzf", BrewPkg: "fzf", ApkPkg: "fzf", Default: true},
-	{Name: "Ugrep", Description: "Ultra fast grep with interactive mode", Binary: "ug", Pkg: "ugrep", ApkPkg: "ugrep", Default: true, UnsupportedShells: map[string]bool{"powershell": true}},
+	// Ugrep is aliased when present but not installed by `shell on`: Bluefin's
+	// cli.Brewfile stopped shipping it while bling.sh kept the grep aliases.
+	{Name: "Ugrep", Description: "Ultra fast grep with interactive mode", Binary: "ug", Pkg: "ugrep", ApkPkg: "ugrep", Default: false, UnsupportedShells: map[string]bool{"powershell": true}},
 	{Name: "Bat", Description: "A cat clone with wings", Binary: "bat", Pkg: "sharkdp.bat", BrewPkg: "bat", ApkPkg: "bat", Default: true},
-	{Name: "Atuin", Description: "Magical shell history", Binary: "atuin", Pkg: "atuin", ApkPkg: "atuin", Default: false, ShellDefaults: map[string]bool{"zsh": true, "fish": true}},
+	// Bluefin dropped atuin's shell integration (projectbluefin/common#1113),
+	// so finding the binary no longer hooks it; `shell config` still can.
+	{Name: "Atuin", Description: "Magical shell history", Binary: "atuin", Pkg: "atuin", ApkPkg: "atuin", Default: false, OptIn: true},
 	{Name: "Starship", Description: "A fast, flexible prompt", Binary: "starship", Pkg: "Starship.Starship", BrewPkg: "starship", ApkPkg: "starship", Default: true},
 	{Name: "Zoxide", Description: "A smarter cd command", Binary: "zoxide", Pkg: "ajeetdsouza.zoxide", BrewPkg: "zoxide", ApkPkg: "zoxide", Default: true},
 	{Name: "UutilsCoreutils", Description: "Rust rewrite of GNU coreutils", Binary: "ucat", Pkg: "uutils-coreutils", BrewPkg: "uutils-coreutils", ApkPkg: "uutils-coreutils", Default: true, UnsupportedShells: map[string]bool{"powershell": true}},
