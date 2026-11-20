@@ -129,11 +129,11 @@ Templates use Go [text/template](https://pkg.go.dev/text/template) syntax with
 three fields: `{{.ImageName}}`, `{{.ImageTag}}` and `{{.Tip}}`. On Linux the
 image name and tag come from `/usr/share/ublue-os/image-info.json` when it
 exists, otherwise from `NAME` and `VERSION_ID` in `/etc/os-release`. A template
-that fails to render is reported on stderr and skipped.
+that fails to render prints an error on stderr, and Bluefin CLI skips it.
 
 The shell experience shows the MOTD once per terminal: it exports
 `BLUEFIN_MOTD_SHOWN=1`, and a shell that inherits it stays quiet. A
-distribution that greets every terminal from a login hook (for example
-`/etc/profile.d`) runs `bluefin-cli motd show --if-enabled` and exports the
-same variable, so the hook honors `bluefin-cli motd toggle all off` and the
+distribution can greet every terminal from a login hook (for example
+`/etc/profile.d`). The hook runs `bluefin-cli motd show --if-enabled` and
+exports the same variable. The hook then honors `bluefin-cli motd toggle all off` and the
 shell experience does not greet a second time.
