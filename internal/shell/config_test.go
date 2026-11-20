@@ -3,6 +3,7 @@ package shell
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -81,6 +82,9 @@ func TestInitSyncSkipsOptInTools(t *testing.T) {
 
 	bin := t.TempDir()
 	for _, name := range []string{"atuin", "direnv", "ug"} {
+		if runtime.GOOS == "windows" {
+			name += ".exe" // LookPath only finds PATHEXT extensions on Windows
+		}
 		if err := os.WriteFile(filepath.Join(bin, name), []byte("#!/bin/sh\n"), 0o755); err != nil {
 			t.Fatal(err)
 		}
