@@ -135,8 +135,9 @@ if status is-interactive
 
     # Greet once per terminal; see BLUEFIN_MOTD_SHOWN and UWELCOME_SHOWN in
     # shell.sh. This runs before fish_greeting, so uwelcome's fish greeting
-    # finds UWELCOME_SHOWN and stays quiet.
-    if test "$BLUEFIN_SHELL_ENABLE_MOTD" -eq 1; and not set -q BLUEFIN_MOTD_SHOWN; and not set -q UWELCOME_SHOWN; and type -q bluefin-cli
+    # finds UWELCOME_SHOWN and stays quiet. As in shell.sh, only greet when
+    # output goes to a terminal.
+    if test "$BLUEFIN_SHELL_ENABLE_MOTD" -eq 1; and not set -q BLUEFIN_MOTD_SHOWN; and not set -q UWELCOME_SHOWN; and test -t 1; and type -q bluefin-cli
         set -gx BLUEFIN_MOTD_SHOWN 1
         set -gx UWELCOME_SHOWN 1
         bluefin-cli motd show --if-enabled

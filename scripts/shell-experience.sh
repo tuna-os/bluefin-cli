@@ -396,12 +396,47 @@ test_dumb_terminal() {
     fi
 }
 
+# The greeting belongs to a terminal: an interactive shell whose output goes
+# to a pipe (`fish -i -c ... | less`, an editor running the shell) must not
+# print it. A stub bluefin-cli first on PATH stands in for the real greeting,
+# so the check does not depend on glow, uwelcome or the MOTD settings. The
+# shells skip their rc files: a system greeting there would mark the terminal
+# greeted, or reorder PATH, before the init under test runs.
+test_greeting_needs_tty() {
+    sh_name=$1
+    available "$sh_name" || return
+    case "$sh_name" in
+      bash) arg=bash; sh_bin="bash --norc --noprofile -i -c" ;;
+      zsh)  arg=zsh;  sh_bin="zsh -f -i -c" ;;
+      fish) arg=fish; sh_bin="fish --no-config -i -c" ;;
+      *) return ;;
+    esac
+    stub=$SANDBOX/greet-stub
+    mkdir -p "$stub"
+    printf '#!/bin/sh\n[ "$1" = motd ] && echo GREETED\nexit 0\n' >"$stub/bluefin-cli"
+    chmod +x "$stub/bluefin-cli"
+    $BIN init "$arg" >"$SANDBOX/init.$arg" 2>/dev/null
+    if [ "$sh_name" = fish ]; then
+        load="source $SANDBOX/init.$arg"
+    else
+        load=". $SANDBOX/init.$arg"
+    fi
+    out=$(HOME=$SANDBOX PATH=$stub:$PATH BLUEFIN_SHELL_ENABLE_MOTD=1 env -u BLUEFIN_MOTD_SHOWN -u UWELCOME_SHOWN \
+        $sh_bin "$load; true" 2>/dev/null </dev/null)
+    case "$out" in
+      *GREETED*) bad "$sh_name: greeted although output is not a terminal" ;;
+      *)         ok "$sh_name: no greeting when output is not a terminal" ;;
+    esac
+}
+
 SHELLS=${*:-"bash zsh ash dash fish nu pwsh"}
 for s in $SHELLS; do test_shell "$s"; done
 printf '\n── load-once guard ──\n'
 for s in $SHELLS; do test_double_load "$s"; done
 printf '\n── dumb terminal ──\n'
 for s in $SHELLS; do test_dumb_terminal "$s"; done
+printf '\n── greeting needs a terminal ──\n'
+for s in $SHELLS; do test_greeting_needs_tty "$s"; done
 
 printf '\n'
 if [ "$fail" -eq 0 ]; then
