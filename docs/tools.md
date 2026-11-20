@@ -31,26 +31,19 @@ You can install these bundles using `bluefin-cli install <bundle>`.
 - `framework-wallpapers`
 
 ### CLI Essentials (`cli`)
-- [atuin](https://atuin.sh/): Improved shell history for zsh, bash, fish and nushell
 - [bat](https://github.com/sharkdp/bat): Clone of cat(1) with syntax support and Git integration
-- [bash-preexec](https://github.com/rcaloras/bash-preexec): Preexec and precmd functions for Bash (like Zsh)
-- [bbrew](https://github.com/Valkyrie00/bold-brew): A simple TUI tool to make your homebrew bold
 - [chezmoi](https://chezmoi.io/): Manage your dotfiles across multiple diverse machines, securely
 - [direnv](https://direnv.net/): Load/unload environment variables based on $PWD
 - [dysk](https://dystroy.org/dysk/): Linux utility to get information on filesystems, like df but better
 - [eza](https://github.com/eza-community/eza): Modern, maintained replacement for ls
 - [fd](https://github.com/sharkdp/fd): Simple, fast and user-friendly alternative to find
 - [gh](https://cli.github.com/): GitHub command-line tool
-- [glab](https://gitlab.com/gitlab-org/cli): Open-source tool for GitLab commands
-- [rg](https://github.com/BurntSushi/ripgrep): Search tool similar to grep and The Silver Searcher
+- [mise](https://mise.jdx.dev/): Polyglot tool version and environment manager
+- [podman-tui](https://github.com/containers/podman-tui): Terminal UI for Podman
+- [ripgrep](https://github.com/BurntSushi/ripgrep): Search tool similar to grep and The Silver Searcher
 - [starship](https://starship.rs/): Cross-shell prompt for astronauts
-- [shellcheck](https://www.shellcheck.net/): Static analysis and lint tool, for (ba)sh scripts
-- [stress-ng](https://wiki.ubuntu.com/Kernel/Reference/stress-ng): Stress test a computer system in various selectable ways
 - [tealdeer](https://tealdeer-rs.github.io/tealdeer/): Fast implementation of tldr in Rust
 - [trash-cli](https://github.com/andrefrancia/trash-cli): Command-line interface to the freedesktop.org trashcan
-- [television](https://github.com/alexpasmantier/television): Fuzzy finder TUI for general use
-- [uutils-coreutils](https://uutils.github.io/coreutils/): Cross-platform Rust rewrite of the GNU coreutils
-- [ugrep](https://ugrep.com/): Ultra fast grep with query UI, fuzzy search, archive search, and more
 - [yq](https://github.com/mikefarah/yq): Process YAML, JSON, XML, CSV and properties documents from the CLI
 - [zoxide](https://github.com/ajeetdsouza/zoxide): Shell extension to navigate your filesystem faster
 
