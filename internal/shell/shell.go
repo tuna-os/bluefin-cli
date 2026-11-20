@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/tuna-os/bluefin-cli/internal/motd"
 )
 
 //go:embed resources/shell.sh
@@ -274,6 +276,9 @@ func Init(shell string, config *Config) (string, error) {
 
 	tools := ToolsForShell(shell)
 	configUpdated := false
+	// Glow renders bluefin-cli's own MOTD. uwelcome renders its greeting
+	// itself, so where it is installed the MOTD setting does not follow Glow.
+	motdNeedsGlow := !motd.Uwelcome()
 
 	// Synchronize configuration with installed tools in PATH
 	for _, tool := range tools {
@@ -290,7 +295,7 @@ func Init(shell string, config *Config) (string, error) {
 			configUpdated = true
 
 			// If Glow is disabled, also disable MOTD
-			if tool.Name == "Glow" {
+			if tool.Name == "Glow" && motdNeedsGlow {
 				config.SetEnabled("Motd", false)
 			}
 		} else if !isEnabled && isInstalled {
@@ -300,14 +305,14 @@ func Init(shell string, config *Config) (string, error) {
 			fmt.Fprintf(os.Stderr, "bluefin-cli: %s found in PATH, automatically enabling.\n", tool.Name)
 
 			// If Glow is found, also enable MOTD
-			if tool.Name == "Glow" {
+			if tool.Name == "Glow" && motdNeedsGlow {
 				config.SetEnabled("Motd", true)
 			}
 		}
 	}
 
 	// MOTD consistency check (if manual override happened)
-	if config.IsEnabled("Motd") && !config.IsEnabled("Glow") {
+	if motdNeedsGlow && config.IsEnabled("Motd") && !config.IsEnabled("Glow") {
 		// If MOTD enabled but Glow disabled, try to enable Glow
 		if _, err := exec.LookPath("glow"); err == nil {
 			config.SetEnabled("Glow", true)

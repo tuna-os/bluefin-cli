@@ -24,9 +24,29 @@ var motdCmd = &cobra.Command{
 var motdToggleCmd = &cobra.Command{
 	Use:   "toggle [shell|all] [on|off]",
 	Short: "Set MOTD display for shells",
-	Long:  `Enable or disable MOTD display on shell startup for bash, zsh, fish, or all shells.`,
-	Args:  cobra.MaximumNArgs(2),
+	Long: `Enable or disable MOTD display on shell startup for bash, zsh, fish, or all shells.
+
+Where uwelcome (the Bluefin and Universal Blue terminal greeting) is installed,
+this turns uwelcome on or off for every shell, and without on|off it flips
+uwelcome's current state.`,
+	Args: cobra.MaximumNArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if motd.Uwelcome() {
+			enable := !motd.UwelcomeEnabled()
+			if len(args) > 1 {
+				enable = args[1] == "on"
+			}
+			if err := motd.SetUwelcome(enable); err != nil {
+				return err
+			}
+			state := "off"
+			if enable {
+				state = "on"
+			}
+			fmt.Printf("uwelcome greeting turned %s.\n", state)
+			return nil
+		}
+
 		target := "all"
 		enable := true
 
@@ -65,17 +85,23 @@ var motdShowCmd = &cobra.Command{
 	Short: "Display the MOTD",
 	Long: `Display the Message of the Day with system information and a random tip.
 
-The message comes from the first template that exists. The order is: template-file in
-motd.json, /etc/bluefin-cli/motd.md, /usr/share/bluefin-cli/motd.md, then the
-built-in one. Tips come the same way from tips-directory, /etc/bluefin-cli/tips
-and /usr/share/bluefin-cli/tips.
+Where uwelcome (the Bluefin and Universal Blue terminal greeting) is installed,
+this shows uwelcome's greeting. Otherwise the message comes from the first
+template that exists. The order is: template-file in motd.json,
+/etc/bluefin-cli/motd.md, /usr/share/bluefin-cli/motd.md, then the built-in
+one. Tips come the same way from tips-directory, /etc/bluefin-cli/tips and
+/usr/share/bluefin-cli/tips.
 
 With --if-enabled it prints nothing when the MOTD is off
-('bluefin-cli motd toggle all off'), for login hooks that greet every terminal.`,
+('bluefin-cli motd toggle all off', or uwelcome's own switch), for login hooks
+that greet every terminal.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if ifEnabled, _ := cmd.Flags().GetBool("if-enabled"); ifEnabled {
-			cfg, err := shell.LoadConfig(currentShellName())
-			if err == nil && !cfg.IsEnabled("Motd") {
+			if motd.Uwelcome() {
+				if !motd.UwelcomeEnabled() {
+					return nil
+				}
+			} else if cfg, err := shell.LoadConfig(currentShellName()); err == nil && !cfg.IsEnabled("Motd") {
 				return nil
 			}
 		}

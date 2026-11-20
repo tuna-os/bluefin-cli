@@ -27,12 +27,8 @@ import (
 
 func motdMenuScreen() app.Screen {
 	items := func() []app.MenuItem {
-		cfg, err := shell.LoadConfig(currentShellName())
-		if err != nil {
-			cfg = shell.DefaultConfig(currentShellName())
-		}
 		toggle := "Enable MOTD"
-		if cfg.IsEnabled("Motd") {
+		if motdEnabled() {
 			toggle = "Disable MOTD"
 		}
 		return []app.MenuItem{
@@ -44,14 +40,8 @@ func motdMenuScreen() app.Screen {
 		switch it.Value {
 		case "toggle":
 			return tea.Sequence(func() tea.Msg {
-				sh := currentShellName()
-				cfg, err := shell.LoadConfig(sh)
-				if err != nil {
-					cfg = shell.DefaultConfig(sh)
-				}
-				enable := !cfg.IsEnabled("Motd")
-				cfg.SetEnabled("Motd", enable)
-				if err := shell.SaveConfig(cfg); err != nil {
+				enable := !motdEnabled()
+				if err := setMotd(enable); err != nil {
 					return app.ToastMsg{Text: "Error: " + err.Error(), IsErr: true}
 				}
 				if enable {
@@ -64,6 +54,33 @@ func motdMenuScreen() app.Screen {
 		}
 		return nil
 	})
+}
+
+// motdEnabled reports whether new terminals greet: uwelcome's switch where
+// uwelcome is installed, else the login shell's MOTD setting.
+func motdEnabled() bool {
+	if motd.Uwelcome() {
+		return motd.UwelcomeEnabled()
+	}
+	cfg, err := shell.LoadConfig(currentShellName())
+	if err != nil {
+		cfg = shell.DefaultConfig(currentShellName())
+	}
+	return cfg.IsEnabled("Motd")
+}
+
+// setMotd turns the greeting on or off where motdEnabled reads it.
+func setMotd(enable bool) error {
+	if motd.Uwelcome() {
+		return motd.SetUwelcome(enable)
+	}
+	sh := currentShellName()
+	cfg, err := shell.LoadConfig(sh)
+	if err != nil {
+		cfg = shell.DefaultConfig(sh)
+	}
+	cfg.SetEnabled("Motd", enable)
+	return shell.SaveConfig(cfg)
 }
 
 func shellsFormScreen() app.Screen {

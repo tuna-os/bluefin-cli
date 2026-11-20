@@ -99,8 +99,12 @@ type TemplateData struct {
 	Tip       string
 }
 
-// Show displays the MOTD
+// Show displays the MOTD: uwelcome's greeting where uwelcome is installed,
+// else bluefin-cli's own.
 func Show() error {
+	if Uwelcome() {
+		return showUwelcome()
+	}
 	content := Render()
 
 	// Render with glow if available

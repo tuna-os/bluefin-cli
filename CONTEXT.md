@@ -7,7 +7,8 @@
   projectbluefin/common by category id (ai, cli, cncf, ide, k8s…);
   installed with Homebrew (Linux/macOS) or winget (Windows).
 - **MOTD**: message-of-the-day printed on new terminals (image info + tip),
-  rendered with glow when available.
+  rendered with glow when available; where uwelcome is installed, uwelcome's
+  greeting instead (bluefin-cli shows and toggles it, never greets twice).
 - **Sunset switching**: Windows/WSL-only automation flipping light/dark
   theme + wallpapers at sunrise/sunset from geocoded coordinates.
 - **Variants**: `bluefin-cli` (standard) and `bluefin-cli-plus`
