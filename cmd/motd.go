@@ -26,9 +26,9 @@ var motdToggleCmd = &cobra.Command{
 	Short: "Set MOTD display for shells",
 	Long: `Enable or disable MOTD display on shell startup for bash, zsh, fish, or all shells.
 
-Where uwelcome (the Bluefin and Universal Blue terminal greeting) is installed,
-this turns uwelcome on or off for every shell, and without on|off it flips
-uwelcome's current state.`,
+Where uwelcome (the terminal welcome tool of Bluefin) is installed,
+this turns uwelcome on or off for every shell. Without on|off, it flips
+the current state of uwelcome.`,
 	Args: cobra.MaximumNArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if motd.Uwelcome() {
@@ -85,8 +85,8 @@ var motdShowCmd = &cobra.Command{
 	Short: "Display the MOTD",
 	Long: `Display the Message of the Day with system information and a random tip.
 
-Where uwelcome (the Bluefin and Universal Blue terminal greeting) is installed,
-this shows uwelcome's greeting. Otherwise the message comes from the first
+Where uwelcome (the terminal welcome tool of Bluefin) is installed,
+this shows the welcome of uwelcome. Otherwise the message comes from the first
 template that exists. The order is: template-file in motd.json,
 /etc/bluefin-cli/motd.md, /usr/share/bluefin-cli/motd.md, then the built-in
 one. Tips come the same way from tips-directory, /etc/bluefin-cli/tips and
