@@ -137,7 +137,7 @@ scoop install bluefin-cli
 ### deb / rpm (Debian, Ubuntu, Fedora, openSUSE…)
 
 Releases ship native packages (`nfpm`) since v0.10.6 — grab the one for your
-> distro from the [latest release](https://github.com/tuna-os/bluefin-cli/releases/latest):
+distro from the [latest release](https://github.com/tuna-os/bluefin-cli/releases/latest):
 
 ```bash
 # Debian/Ubuntu
