@@ -14,7 +14,7 @@ Refs #
 - [ ] Unit tests pass (`go test ./...`)
 - [ ] Tests with the `extra` tag pass (`go test -tags extra ./...`)
 - [ ] Lint checks pass (`just lint`)
-- [ ] Regenerate command documentation if flags or commands changed (`just gen-docs`)
+- [ ] Regenerate command documentation if flags or commands changed (`go build -tags extra -o bluefin-cli . && ./bluefin-cli docs --dest ./docs/commands`)
 
 ## Checklist
 

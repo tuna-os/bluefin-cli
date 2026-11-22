@@ -1,62 +1,30 @@
-# Workspace Setup Instructions
+# Copilot instructions
 
-- [x] Verify that the copilot-instructions.md file in the .github directory is created.
-- [x] Clarify Project Requirements - Go CLI tool for Homebrew/shell management
-- [x] Scaffold the Project - Created cmd/, internal/ structure with Cobra
-- [x] Customize the Project - Added brewfile, shell, starship commands
-- [x] Install Required Extensions - N/A (Go project, no extensions needed)
-- [x] Compile the Project - Successfully built with `go build`
-- [x] Create and Run Task - Can run with `./bluefin-cli` or `go run main.go`
-- [x] Launch the Project - Binary ready to use
-- [x] Ensure Documentation is Complete - README.md, FEATURES.md, LICENSE created
+Read [`AGENTS.md`](../AGENTS.md) before you change this repository. It
+describes the architecture, the two build variants and the development
+workflow. [`CLAUDE.md`](../CLAUDE.md) lists known traps, and
+[`CONTEXT.md`](../CONTEXT.md) defines the domain terms.
 
-## Project Details
-Go-based CLI tool for managing Homebrew brewfiles, shell setup, and customization with Charm TUI libraries.
+## Build and test
 
-## Project Structure
-```
-bluefin-cli/
-├── main.go              # Application entry point
-├── cmd/                 # Cobra commands
-│   ├── root.go         # Root command
-│   ├── brewfile.go     # Brewfile management
-│   ├── shell.go        # Shell configuration
-│   └── starship.go     # Starship theme management
-├── internal/            # Internal packages
-│   ├── brewfile/       # Brewfile logic
-│   ├── shell/          # Shell setup logic
-│   └── starship/       # Starship integration
-└── reference/           # Reference implementations (gitignored)
-```
-
-## Implemented Features
-✅ **shell Command** - Toggle shell enhancements (eza, bat, ugrep, zoxide, atuin, starship)
-✅ **MOTD System** - Message of the day with tips and system info
-✅ **Bundle Installer** - Install ai, cli, fonts, k8s bundles from Universal Blue
-✅ **Status Command** - Show configuration and tool installation status
-✅ **Brewfile Management** - Create, add, and apply Brewfiles
-✅ **Shell Setup** - Interactive shell configuration wizard
-✅ **Starship Themes** - Apply preset themes interactively
-✅ **Embedded Resources** - Bling scripts embedded in binary
-
-## Available Commands
 ```bash
-bluefin-cli status              # Show configuration status
-bluefin-cli bling [shell] on    # Enable bling
-bluefin-cli motd show           # Display MOTD
-bluefin-cli motd toggle all on  # Enable MOTD
-bluefin-cli install list        # List available bundles
-bluefin-cli install ai          # Install AI tools bundle
-bluefin-cli brewfile init       # Create Brewfile
-bluefin-cli shell setup         # Shell setup wizard
-bluefin-cli starship theme      # Apply Starship theme
+go build ./...                    # standard variant (bluefin-cli)
+go build -tags extra ./...        # plus variant (bluefin-cli-plus)
+go test -tags extra ./...         # the cmd tests need -tags extra
 ```
 
-## Next Steps
-The project is feature-complete! To enhance further:
+Both variants must compile before you commit.
 
-1. **Add fastfetch integration**: Display system info with custom logos
-2. **Add more bundle options**: Community-contributed Brewfiles
-3. **Enhanced TUI modes**: Full-screen Bubble Tea interfaces
-4. **Configuration file**: YAML/TOML config for user preferences
-5. **Package for distribution**: Create Homebrew formula and release artifacts
+## Command reference
+
+`docs/commands/` has one page for each command. A generator writes these pages
+from the Cobra command tree, so do not edit them by hand. After you change a
+command or a flag, generate the pages from the plus variant and commit the
+result:
+
+```bash
+go build -tags extra -o bluefin-cli .
+./bluefin-cli docs --dest ./docs/commands
+```
+
+CI fails when `docs/commands/` is not current.

@@ -87,6 +87,7 @@ the user-facing ones in `shell.ps1` must be `global:`.
   `app.Action` values. Use the existing runner/external-process bridge for
   commands that must temporarily own the terminal.
 - Do not edit the generated command pages by hand. Change the Cobra definition and
-  run `just gen-docs`. CI fails if a regeneration makes a diff.
+  regenerate the pages from the extra variant with the command under
+  Architecture. CI fails if a regeneration makes a diff.
 - Update the embedded package data with `just update-resources`. Do not add a
   runtime download for a resource that must ship in the binary.
