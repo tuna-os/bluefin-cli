@@ -27,7 +27,7 @@ A clear and concise description of what happened.
 ## Environment
 
 - OS: (e.g. Fedora 41, Ubuntu 24.04, macOS 15, Windows 11)
-- bluefin-cli version: (e.g. output of `bluefin-cli version` or `bluefin-cli --help`)
+- bluefin-cli version: (e.g. output of `bluefin-cli --version`)
 - Go version: (if built from source)
 
 ## Additional context

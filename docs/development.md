@@ -116,8 +116,9 @@ them by hand.
 ## Where to start
 
 - **Add a command.** Create `cmd/<name>.go`, register it with
-  `rootCmd.AddCommand` in `init`, put the logic in `internal/`, then run
-  `just gen-docs` to regenerate `docs/commands/`. CI fails on a stale diff.
+  `rootCmd.AddCommand` in `init`, and put the logic in `internal/`. Then
+  regenerate `docs/commands/` from the extra variant, as the
+  [contributor guide](../CONTRIBUTING.md) shows. CI fails on a stale diff.
 - **Add a TUI destination.** Make a type that satisfies `app.Screen`, or
   register an `app.Action`. Reuse `RunnerScreen` for tasks that show command
   output.
