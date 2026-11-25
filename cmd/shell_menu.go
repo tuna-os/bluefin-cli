@@ -59,8 +59,9 @@ func runWithHomebrew(title string, task func() error) tea.Cmd {
 }
 
 // homebrewConfirmNeeded reports whether this machine would hit the missing-brew
-// path. Windows installs through winget and Alpine through apk, so neither ever
-// asks.
+// path. Windows installs through winget and Alpine through apk, so neither
+// asks about Homebrew. Windows can still hit a missing-winget prompt outside a
+// TUI runner; inside one it returns an error instead of prompting.
 func homebrewConfirmNeeded() bool {
 	if runtime.GOOS == "windows" || env.IsAlpine() {
 		return false
