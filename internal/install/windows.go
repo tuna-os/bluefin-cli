@@ -11,6 +11,8 @@ import (
 	"sync"
 
 	"charm.land/huh/v2"
+
+	"github.com/tuna-os/bluefin-cli/internal/env"
 )
 
 type windowsManager string
@@ -202,6 +204,13 @@ func ensureWindowsManagersBootstrap(getAvailable func() []string) ([]string, err
 		available := getAvailable()
 		if len(available) > 0 {
 			windowsBootstrapManagers = available
+			return
+		}
+
+		// A TUI runner owns the keyboard and captures stdout, so a prompt
+		// opened here renders nowhere and blocks forever (#273, #532).
+		if env.TerminalOwned() {
+			windowsBootstrapErr = fmt.Errorf("winget is not installed; install App Installer from https://apps.microsoft.com/detail/9NBLGGH4NNS1 and run again")
 			return
 		}
 
