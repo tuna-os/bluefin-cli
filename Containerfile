@@ -27,7 +27,7 @@ COPY . .
 RUN go build -o bluefin-cli
 
 # Test stage - set up base environment first (cached)
-FROM registry.fedoraproject.org/fedora:46@sha256:301c729f479016f2cddd1e62b7e809cdf6ecd42c6c6e7ba2a85d82ead4a9671f
+FROM registry.fedoraproject.org/fedora:46@sha256:e6a12a27a823ca838a401a6820ced64ee508db3f4c0323cc2bc0042ff1829b85
 
 # Install runtime dependencies for testing (cached layer)
 RUN dnf install -y bash zsh fish curl git grep findutils coreutils && dnf clean all
