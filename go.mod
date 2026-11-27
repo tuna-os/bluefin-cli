@@ -4,13 +4,13 @@ go 1.26.7
 
 require (
 	charm.land/bubbles/v2 v2.2.2
-	charm.land/bubbletea/v2 v2.1.3
+	charm.land/bubbletea/v2 v2.2.0
 	charm.land/fang/v2 v2.0.1
 	charm.land/huh/v2 v2.0.3
 	charm.land/lipgloss/v2 v2.1.1
 	github.com/catppuccin/go v0.3.0
 	github.com/charmbracelet/colorprofile v0.4.3
-	github.com/charmbracelet/x/ansi v0.11.10
+	github.com/charmbracelet/x/ansi v0.12.0
 	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20261122002409-8aab43ea2d8f
 	github.com/charmbracelet/x/term v0.2.2
 	github.com/lucasb-eyer/go-colorful v1.4.1
